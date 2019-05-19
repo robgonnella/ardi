@@ -1,12 +1,14 @@
 FROM golang:latest
 
-WORKDIR /arduino-template
+ARG PROJECT=template
+
+WORKDIR /$PROJECT
 
 RUN mkdir -p data
 
-RUN go get -u github.com/arduino/arduino-cli
-
 ADD arduino-cli.yaml ./
+
+RUN go get -u github.com/arduino/arduino-cli
 
 RUN arduino-cli core update-index
 
