@@ -1,4 +1,4 @@
-# Aruduino Hacking
+# Arduino Hacking
 
 The following set of instructions deals with compiling and uploading programs
 to your usb conencted arduino board without needing to use their web or
@@ -6,33 +6,116 @@ desktop IDEs. Add your sketch to the sketches directory and
 run `./upload <sketch_name>`
 
 This script should work for the following boards:
-Board Name                       	FQBN
-Adafruit Circuit Playground      	arduino:avr:circuitplay32u4cat
-Arduino BT                       	arduino:avr:bt
-Arduino Duemilanove or Diecimila 	arduino:avr:diecimila
-Arduino Esplora                  	arduino:avr:esplora
-Arduino Ethernet                 	arduino:avr:ethernet
-Arduino Fio                      	arduino:avr:fio
-Arduino Gemma                    	arduino:avr:gemma
-Arduino Industrial 101           	arduino:avr:chiwawa
-Arduino Leonardo                 	arduino:avr:leonardo
-Arduino Leonardo ETH             	arduino:avr:leonardoeth
-Arduino Mega ADK                 	arduino:avr:megaADK
-Arduino Mini                     	arduino:avr:mini
-Arduino NG or older              	arduino:avr:atmegang
-Arduino Nano                     	arduino:avr:nano
-Arduino Pro or Pro Mini          	arduino:avr:pro
-Arduino Robot Control            	arduino:avr:robotControl
-Arduino Robot Motor              	arduino:avr:robotMotor
-Arduino Uno WiFi                 	arduino:avr:unowifi
-Arduino Yún                      	arduino:avr:yun
-Arduino Yún Mini                 	arduino:avr:yunmini
-Arduino/Genuino Mega or Mega 2560	arduino:avr:mega
-Arduino/Genuino Micro            	arduino:avr:micro
-Arduino/Genuino Uno              	arduino:avr:uno
-LilyPad Arduino                  	arduino:avr:lilypad
-LilyPad Arduino USB              	arduino:avr:LilyPadUSB
-Linino One                       	arduino:avr:one
+<table>
+  <th>
+    <tr>
+      <td>Board Name</td>
+      <td>FQBN</td>
+    </tr>
+  </th>
+  <tbody>
+    <tr>
+      <td>Adafruit Circuit Playground</td>
+      <td>arduino:avr:circuitplay32u4cat</td>
+    <tr>
+    <tr>
+      <td>Arduino BT</td>
+      <td>arduino:avr:bt</td>
+    <tr>
+    <tr>
+      <td>Arduino Duemilanove or Diecimila</td>
+      <td>arduino:avr:diecimila</td>
+    <tr>
+    <tr>
+      <td>Arduino Esplora</td>
+      <td>arduino:avr:esplora</td>
+    <tr>
+    <tr>
+      <td>Arduino Ethernet</td>
+      <td>arduino:avr:ethernet</td>
+    <tr>
+    <tr>
+      <td>Arduino Fio</td>
+      <td>arduino:avr:fio</td>
+    <tr>
+    <tr>
+      <td>Arduino Gemma</td>
+      <td>arduino:avr:gemma</td>
+    <tr>
+    <tr>
+      <td>Arduino Industrial 101</td>
+      <td>arduino:avr:chiwawa</td>
+    <tr>
+    <tr>
+      <td>Arduino Leonardo</td>
+      <td>arduino:avr:leonardo</td>
+    <tr>
+    <tr>
+      <td>Arduino Mega ADK</td>
+      <td>arduino:avr:megaADK</td>
+    <tr>
+    <tr>
+      <td>Arduino Mini</td>
+      <td>arduino:avr:mini</td>
+    <tr>
+    <tr>
+      <td>Arduino NG or older</td>
+      <td>arduino:avr:atmegang</td>
+    <tr>
+    <tr>
+      <td>Arduino Nano</td>
+      <td>arduino:avr:nano</td>
+    <tr>
+    <tr>
+      <td>Arduino Pro or Pro Mini</td>
+      <td>arduino:avr:pro</td>
+    <tr>
+    <tr>
+      <td>Arduino Robot Control</td>
+      <td>arduino:avr:robotControl</td>
+    <tr>
+    <tr>
+      <td>Arduino Robot Motor</td>
+      <td>arduino:avr:robotMotor</td>
+    <tr>
+    <tr>
+      <td>Arduino Uno WiFi</td>
+      <td>arduino:avr:unowifi</td>
+    <tr>
+    <tr>
+      <td>Arduino Yún</td>
+      <td>arduino:avr:yun</td>
+    <tr>
+    <tr>
+      <td>Arduino Yún Mini</td>
+      <td>arduino:avr:yunmini</td>
+    <tr>
+    <tr>
+      <td>Arduino/Genuino Mega or Mega 2560	arduino:avr:mega</td>
+      <td>arduino:avr:mega</td>
+    <tr>
+    <tr>
+      <td>Arduino/Genuino Micro</td>
+      <td>arduino:avr:micro</td>
+    <tr>
+    <tr>
+      <td>Arduino/Genuino Uno</td>
+      <td>arduino:avr:uno</td>
+    <tr>
+    <tr>
+      <td>LilyPad Arduino</td>
+      <td>arduino:avr:lilypad</td>
+    <tr>
+    <tr>
+      <td>LilyPad Arduino USB</td>
+      <td>arduino:avr:LilyPadUSB</td>
+    <tr>
+    <tr>
+      <td>Linino One</td>
+      <td>arduino:avr:one</td>
+    <tr>
+  </tbody>
+</table>
 
 if your board isn't in the above list you'll need to find which
 arduino core supports that board and change line 13 in the Dockerfile
