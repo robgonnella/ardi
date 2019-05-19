@@ -1,0 +1,22 @@
+#!/bin/bash
+
+set -euxo pipefail
+
+SERVICE=arduino
+
+trap "docker-compose kill $SERVICE && docker-compose down" EXIT
+
+docker-compose up --detach
+
+DEVICE="/dev/ttyACM0"
+FQBN="$(docker-compose exec $SERVICE arduino-cli board list | awk 'FNR == 2 {print $1}')"
+SKETCH="sketches/$1"
+
+COMPILE="arduino-cli compile --fqbn $FQBN $SKETCH"
+UPLOAD="arduino-cli upload -p $DEVICE --fqbn $FQBN $SKETCH"
+LISTEN="stty -F $DEVICE 9600 raw -clocal -echo; cat $DEVICE"
+
+
+docker-compose exec $SERVICE $COMPILE
+docker-compose exec $SERVICE $UPLOAD
+docker-compose exec $SERVICE bash -c "$LISTEN"

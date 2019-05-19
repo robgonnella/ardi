@@ -1,0 +1,11 @@
+version: "3.7"
+services:
+  arduino:
+    build: .
+    image: kraken:latest
+    working_dir: /kraken
+    volumes:
+      - ./sketches:/kraken/sketches
+      - ./arduino-cli.yaml:/kraken/arduino-cli.yaml
+    devices:
+      - /dev/ttyACM0:/dev/ttyACM0

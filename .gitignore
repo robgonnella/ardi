@@ -1,0 +1,5 @@
+.vscode/
+data/
+*.elf
+*.hex
+.env
