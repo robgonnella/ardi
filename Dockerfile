@@ -1,6 +1,6 @@
 FROM golang:latest
 
-WORKDIR /kraken
+WORKDIR /arduino-template
 
 RUN mkdir -p data
 

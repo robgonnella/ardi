@@ -91,7 +91,7 @@ This script should work for the following boards:
       <td>arduino:avr:yunmini</td>
     <tr>
     <tr>
-      <td>Arduino/Genuino Mega or Mega 2560	arduino:avr:mega</td>
+      <td>Arduino/Genuino Mega or Mega 2560</td>
       <td>arduino:avr:mega</td>
     <tr>
     <tr>

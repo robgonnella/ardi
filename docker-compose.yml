@@ -2,10 +2,10 @@ version: "3.7"
 services:
   arduino:
     build: .
-    image: kraken:latest
-    working_dir: /kraken
+    image: arduino-template:latest
+    working_dir: /arduino-template
     volumes:
-      - ./sketches:/kraken/sketches
-      - ./arduino-cli.yaml:/kraken/arduino-cli.yaml
+      - ./sketches:/arduino-template/sketches
+      - ./arduino-cli.yaml:/arduino-template/arduino-cli.yaml
     devices:
       - /dev/ttyACM0:/dev/ttyACM0
