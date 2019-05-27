@@ -2,8 +2,6 @@
 
 set -euxo pipefail
 
-export PROJECT="$(basename $(pwd))"
-
 SERVICE=arduino
 
 trap "docker-compose kill $SERVICE && docker-compose down" EXIT

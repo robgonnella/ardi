@@ -1,8 +1,6 @@
 FROM golang:latest
 
-ARG PROJECT=template
-
-WORKDIR /$PROJECT
+WORKDIR /arduino
 
 RUN mkdir -p data
 

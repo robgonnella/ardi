@@ -182,3 +182,8 @@ You may need to set permissions on /dev/ttyACM0
 ```
 sudo chmod a+rw /dev/ttyACM0
 ```
+
+### Adding Libraries
+
+Create a "libraries" directory in sketches. Add your libs to this directory
+and arduino-cli will automatically include them.

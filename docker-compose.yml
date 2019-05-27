@@ -1,13 +1,9 @@
 version: "3.7"
 services:
   arduino:
-    build:
-      context: .
-      args:
-        PROJECT: $PROJECT
-    image: $PROJECT:latest
+    build: .
+    image: arduino-uploader:latest
     volumes:
-      - ./sketches:/$PROJECT/sketches
-      - ./arduino-cli.yaml:/$PROJECT/arduino-cli.yaml
+      - ./sketches:/arduino/sketches
     devices:
       - /dev/ttyACM0:/dev/ttyACM0
