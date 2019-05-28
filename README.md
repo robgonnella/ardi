@@ -129,7 +129,7 @@ Install docker
 
 Install docker-compose
 
->follow instructions here: https://github.com/Yelp/docker-compose/blob/master/docs/install.md
+>follow instructions here: https://docs.docker.com/compose/install/
 
 Hook up your arduino board via USB
 
