@@ -1,21 +1,184 @@
 #!/bin/bash
 
-set -euxo pipefail
+set -eo pipefail
 
+: ${BAUD:=9600}
+OS=$(uname)
 SERVICE=arduino
+SKETCH_NAME=${1#"sketches/"}
+SKETCH="sketches/$SKETCH_NAME"
+BOARD_INFO=
+BOARD_FQBN=
+DEVICE=
+declare -a BOARDS
 
-trap "docker-compose kill $SERVICE && docker-compose down" EXIT
+if [ -z "$SKETCH_NAME" ]; then
+  echo -e "\nMust povide a sketch name as an argument, e.g. ./upload blink\n"
+  exit 1
+fi
 
-docker-compose up --detach
+get_parsed_board_fqbn()
+{
+  echo "$(echo $1 | awk '{print $1}')"
+}
 
-DEVICE="/dev/ttyACM0"
-FQBN="$(docker-compose exec $SERVICE arduino-cli board list | awk 'FNR == 2 {print $1}')"
-SKETCH="sketches/$1"
+get_parsed_board_device()
+{
+  echo "$(echo $1 | awk '{print $2}')"
+}
 
-COMPILE="arduino-cli compile --fqbn $FQBN $SKETCH"
-UPLOAD="arduino-cli upload -p $DEVICE --fqbn $FQBN $SKETCH"
-LISTEN="stty -F $DEVICE 9600 raw -clocal -echo; cat $DEVICE"
+set_target_board()
+{
+  if [ ${#BOARDS[@]} -eq 0 ]; then
+    echo -e "\nNo boards detected\n"
+    exit 1
+  elif [ ${#BOARDS[@]} -eq 1 ]; then
+    BOARD_FQBN=$(get_parsed_board_fqbn "${BOARDS[0]}")
+    DEVICE=$(get_parsed_board_device "${BOARDS[0]}")
+  else
+    local i=0
+    local first_line
+    echo ""
+    while read -r line; do
+      if [ -z "$first_line" ]; then
+        echo $line
+        first_line=$line
+      else
+        echo "$i: $line"
+        ((i++))
+      fi
+    done < <(echo "${BOARD_INFO}")
+    echo ""
+    read -p "Enter number for board you'd like to upload to: " i
+    BOARD_FQBN=$(get_parsed_board_fqbn "${BOARDS[$i]}")
+    DEVICE=$(get_parsed_board_device "${BOARDS[$i]}")
+  fi
+}
 
-docker-compose exec $SERVICE $COMPILE
-docker-compose exec $SERVICE $UPLOAD
-docker-compose exec $SERVICE bash -c "$LISTEN"
+parse_board_list()
+{
+  echo "Parsing board list"
+  local first_line fqbn name device
+  while read -r line; do
+    if [ -z "$first_line" ]; then
+      echo "Skipping header"
+      first_line=$line
+      continue
+    fi
+
+    local skip="$(echo $line | grep Unknown)"
+
+    if [ -n "$skip" ]; then
+      continue
+    fi
+
+    if [ $OS == "Darwin" ]; then
+      device="$(echo $line | awk '{print $1}')"
+      fqbn="$(echo $line | awk '{print $NF}')"
+    else
+      fqbn="$(echo $line | awk '{print $1}')"
+      device="$(echo $line | awk '{print $2}')"
+    fi
+
+    if [ -n "$fqbn" ] && [ -n "$device" ]; then
+      local info="$fqbn $device"
+      echo "Found board: $info"
+      BOARDS+=("$info")
+    fi
+  done < <(echo "${BOARD_INFO}")
+}
+
+get_board_info()
+{
+  echo -e "\nDetecting boards..."
+  BOARD_INFO=$(arduino-cli board list)
+}
+
+cli_is_installed()
+{
+  if ! arduino-cli version; then
+    return 1
+  else
+    return 0
+  fi
+}
+
+golang_is_installed()
+{
+  if ! go version; then
+    return 1
+  else
+    return 0
+  fi
+  if [ -z "$GOPATH" ]; then
+    echo -e "\nYou must set the GOPATH environment variable before proceeding."
+    echo "See: "
+  fi
+}
+
+request_device_access()
+{
+  if [ $OS == "Linux" ]; then
+    echo "To upload to your arduino board, this script requires access to the"
+    echo "usb device /dev/ttyACM0."
+    sudo chmod a+rw /dev/ttyACM0
+  fi
+}
+
+update_core()
+{
+  if [ -z "$(arduino-cli core list | grep arduino:avr)" ]; then
+    arduino-cli core update-index && arduino-cli core install arduino:avr
+  fi
+}
+
+bootstrap()
+{
+  if cli_is_installed; then
+    return 0
+  fi
+
+  if ! golang_is_installed; then
+    echo -e "\nYou must install golang first"
+    echo -e "See: https://golang.org/doc/install\n"
+    exit 1
+  fi
+
+  if [ -z "$GOPATH" ]; then
+    echo -e "\nYou must get GOPATH environment variable"
+    echo -d "See: https://github.com/golang/go/wiki/SettingGOPATH\n"
+    exit 1
+  fi
+
+  if ! go get -u github.com/arduino/arduino-cli; then
+    echo -e "\nFailed to install arduino-cli."
+    echo -e "You may need to update to the latest go version\n"
+    exit 1
+  fi
+}
+
+bootstrap
+update_core
+get_board_info
+parse_board_list
+set_target_board
+
+if [ -z "$BOARD_FQBN" ] || [ -z "$DEVICE" ]; then
+  echo -e "\nInvalid board selection\n"
+  exit 1
+fi
+
+echo -e "\n===========================\n"
+echo "Uploading $SKETCH to $BOARD_FQBN on device: $DEVICE"
+echo -e "\n===========================\n"
+
+arduino-cli compile --fqbn $BOARD_FQBN $SKETCH
+arduino-cli upload -p $DEVICE --fqbn $BOARD_FQBN $SKETCH
+
+echo "Upload complete."
+
+if [ $OS == "Darwin" ]; then
+  stty -f $DEVICE $BAUD raw -clocal -echo; cat $DEVICE
+else
+  stty -F $DEVICE $BAUD raw -clocal -echo; cat $DEVICE
+fi

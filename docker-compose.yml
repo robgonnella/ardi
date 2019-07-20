@@ -1,9 +1,0 @@
-version: "3.7"
-services:
-  arduino:
-    build: .
-    image: arduino-uploader:latest
-    volumes:
-      - ./sketches:/arduino/sketches
-    devices:
-      - /dev/ttyACM0:/dev/ttyACM0

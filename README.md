@@ -118,18 +118,12 @@ This script should work for the following boards:
 </table>
 
 if your board isn't in the above list you'll need to find which
-arduino core supports that board and change line 13 in the Dockerfile
-to install that core instead.
+arduino core supports that board and run `arduino-cli core install <core>`
 
 ### Prereqs
 
-Install docker
-
->follow instructions here: https://docs.docker.com/v17.12/install/
-
-Install docker-compose
-
->follow instructions here: https://docs.docker.com/compose/install/
+Install golang: https://golang.org/doc/install
+Set GOPATH environment variable: https://github.com/golang/go/wiki/SettingGOPATH
 
 Hook up your arduino board via USB
 
@@ -139,49 +133,6 @@ Hook up your arduino board via USB
 - add a ".ino" file with your code in this directory
 - ./upload <name_of_sketch_directory>
 e.g. ./upload blink
-
-### Without Docker AND without IDE
-
-If you really don't want to use docker but you don't want to use their
-IDE either, you can set up your local environment with arduino-cli and run all
-the commands yourself.
-
-- install golang
->https://golang.org/doc/install
-
-- install arduino-cli tool - run this from outside of a go "mod" directory
-```
-go get -u github.com/arduino/arduino-cli
-```
-
-These next command update our cli tool with the necessary packages to
-compile and upload to our board
-```
-arduino-cli core update-index
-arduino-cli core install arduino:avr
-# If all has gone well, the following should display the name
-# of your board. If it shows "unknown" we likely didn't install
-# the correct core package
-arduino-cli board list
-```
-
-To compile and upload your sketch:
-```
-export BOARD="$(arduino-cli board list | awk 'FNR == 2 {print $1}')"
-arduino-cli compile --fqbn $BOARD sketches/<sketch_dir>
-arduino-cli upload -p /dev/ttyACM0 --fqbn $BOARD sketches/<sketch_dir>
-```
-
-To watch the program logs in terminal:
-```
-stty -F /dev/ttyACM0 9600 raw -clocal -echo
-cat /dev/ttyACM0
-```
-
-You may need to set permissions on /dev/ttyACM0
-```
-sudo chmod a+rw /dev/ttyACM0
-```
 
 ### Adding Libraries
 
