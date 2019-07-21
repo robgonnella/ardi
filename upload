@@ -171,6 +171,10 @@ fi
 echo -e "\n===========================\n"
 echo "Uploading $SKETCH to $BOARD_FQBN on device: $DEVICE"
 echo -e "\n===========================\n"
+echo -e "\n===== BAUD is set to $BAUD ====="
+echo "To run with a different value use:"
+echo "BAUD=<value> ./upload <sketch>"
+echo -e"==================================\n"
 
 arduino-cli compile --fqbn $BOARD_FQBN $SKETCH
 arduino-cli upload -p $DEVICE --fqbn $BOARD_FQBN $SKETCH
@@ -178,7 +182,7 @@ arduino-cli upload -p $DEVICE --fqbn $BOARD_FQBN $SKETCH
 echo "Upload complete."
 
 if [ $OS == "Darwin" ]; then
-  stty -f $DEVICE $BAUD raw -clocal -echo; cat $DEVICE
+  $(sleep 1 && stty -f $DEVICE $BAUD) & cat $DEVICE
 else
-  stty -F $DEVICE $BAUD raw -clocal -echo; cat $DEVICE
+  $(sleep 1 && stty -F $DEVICE $BAUD) & cat $DEVICE
 fi
