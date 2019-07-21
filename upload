@@ -141,7 +141,7 @@ bootstrap()
   fi
 
   if [ -z "$GOPATH" ]; then
-    echo -e "\nYou must get GOPATH environment variable"
+    echo -e "\nYou must set the GOPATH environment variable"
     echo -d "See: https://github.com/golang/go/wiki/SettingGOPATH\n"
     exit 1
   fi
