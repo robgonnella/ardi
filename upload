@@ -109,10 +109,6 @@ golang_is_installed()
   else
     return 0
   fi
-  if [ -z "$GOPATH" ]; then
-    echo -e "\nYou must set the GOPATH environment variable before proceeding."
-    echo "See: "
-  fi
 }
 
 request_device_access()
