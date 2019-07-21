@@ -159,6 +159,7 @@ bootstrap()
 
 bootstrap
 update_core
+request_device_access
 get_board_info
 parse_board_list
 set_target_board
@@ -174,7 +175,7 @@ echo -e "\n===========================\n"
 echo -e "\n===== BAUD is set to $BAUD ====="
 echo "To run with a different value use:"
 echo "BAUD=<value> ./upload <sketch>"
-echo -e"==================================\n"
+echo -e "==================================\n"
 
 arduino-cli compile --fqbn $BOARD_FQBN $SKETCH
 arduino-cli upload -p $DEVICE --fqbn $BOARD_FQBN $SKETCH
@@ -184,5 +185,5 @@ echo "Upload complete."
 if [ $OS == "Darwin" ]; then
   $(sleep 1 && stty -f $DEVICE $BAUD) & cat $DEVICE
 else
-  $(sleep 1 && stty -F $DEVICE $BAUD) & cat $DEVICE
+  stty -F $DEVICE $BAUD; cat $DEVICE
 fi
