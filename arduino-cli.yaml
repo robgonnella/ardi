@@ -1,4 +1,0 @@
-proxy_type: auto
-sketchbook_path: ./sketches
-arduino_data: ./data
-board_manager: {}
