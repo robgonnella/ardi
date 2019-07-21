@@ -10,6 +10,7 @@ SKETCH="sketches/$SKETCH_NAME"
 BOARD_INFO=
 BOARD_FQBN=
 DEVICE=
+CLI_CMD="${GOPATH}/bin/arduino-cli"
 declare -a BOARDS
 
 if [ -z "$SKETCH_NAME" ]; then
@@ -90,12 +91,12 @@ parse_board_list()
 get_board_info()
 {
   echo -e "\nDetecting boards..."
-  BOARD_INFO=$(arduino-cli board list)
+  BOARD_INFO=$(${CLI_CMD} board list)
 }
 
 cli_is_installed()
 {
-  if ! arduino-cli version; then
+  if ! ${CLI_CMD} version; then
     return 1
   else
     return 0
@@ -122,8 +123,8 @@ request_device_access()
 
 update_core()
 {
-  if [ -z "$(arduino-cli core list | grep arduino:avr)" ]; then
-    arduino-cli core update-index && arduino-cli core install arduino:avr
+  if [ -z "$(${CLI_CMD} core list | grep arduino:avr)" ]; then
+    ${CLI_CMD} core update-index && ${CLI_CMD} core install arduino:avr
   fi
 }
 
@@ -172,8 +173,8 @@ echo "To run with a different value use:"
 echo "BAUD=<value> ./upload <sketch>"
 echo -e "==================================\n"
 
-arduino-cli compile --fqbn $BOARD_FQBN $SKETCH
-arduino-cli upload -p $DEVICE --fqbn $BOARD_FQBN $SKETCH
+${CLI_CMD} compile --fqbn $BOARD_FQBN $SKETCH
+${CLI_CMD} upload -p $DEVICE --fqbn $BOARD_FQBN $SKETCH
 
 echo "Upload complete."
 
