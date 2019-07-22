@@ -124,7 +124,9 @@ Set GOPATH environment variable: https://github.com/golang/go/wiki/SettingGOPATH
 
 run:
 
-```
+```bash
+# need to explicitly download cli until go modules become the default in go1.13
+go get github.com/arduino/arduino-cli
 go get github.com/robgonnella/ardie
 ```
 
