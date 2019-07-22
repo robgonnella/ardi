@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"strings"
 
+	_ "github.com/arduino/arduino-cli/cli"
 	log "github.com/sirupsen/logrus"
 )
 
