@@ -82,7 +82,7 @@ func main() {
 
 	if len(list) == 0 {
 		log.WithError(errors.New("No boards detected")).Fatal("Cannot upload sketch")
-	} else if len(list) == 1	 {
+	} else if len(list) == 1 {
 		board := strings.Split(list[0], " ")
 		device = board[0]
 		fqbn = board[len(board)-1]
@@ -91,7 +91,7 @@ func main() {
 			if i == 0 {
 				fmt.Printf("\n   %s", line)
 			} else {
-				fmt.Printf("%d: %s", i-1 , line)
+				fmt.Printf("%d: %s", i-1, line)
 			}
 		}
 		var index int
