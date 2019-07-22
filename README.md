@@ -117,13 +117,16 @@ This script should work for the following boards:
   </tbody>
 </table>
 
-if your board isn't in the above list you'll need to find which
-arduino core supports that board and run `arduino-cli core install <core>`
-
 ### Prereqs
 
 Install golang: https://golang.org/doc/install
 Set GOPATH environment variable: https://github.com/golang/go/wiki/SettingGOPATH
+
+run:
+
+```
+go get github.com/robgonnella/ardie
+```
 
 Hook up your arduino board via USB
 
@@ -131,8 +134,9 @@ Hook up your arduino board via USB
 
 - create a directory in "sketches" directory
 - add a ".ino" file with your code in this directory
-- ./upload <name_of_sketch_directory>
-e.g. ./upload blink
+- ardie <name_of_sketch_directory> <baud_rate>
+- baud rate defaults to 9600
+e.g. ardie blink
 
 ### Adding Libraries
 
