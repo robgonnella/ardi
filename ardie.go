@@ -13,6 +13,7 @@ import (
 )
 
 var cli = arduino.ArduinoCli
+var logger = log.New()
 
 func Filter(vs []string, f func(string) bool) []string {
 	vsf := make([]string, 0)
@@ -33,7 +34,7 @@ func main() {
 	baud := "9600"
 
 	if len(os.Args) == 1 {
-		log.WithError(errors.New("Missing sketch arguemnet")).Fatal("Must provide a sketch name as an argument to upload")
+		logger.WithError(errors.New("Missing sketch arguemnet")).Fatal("Must provide a sketch name as an argument to upload")
 	}
 
 	sketch = os.Args[1]
@@ -46,25 +47,27 @@ func main() {
 
 	cli.SetArgs([]string{"core", "update-index"})
 	if err = cli.Execute(); err != nil {
-		log.WithError(err).Fatal("Failed to update index")
+		logger.WithError(err).Fatal("Failed to update index")
 	}
 
 	cli.SetArgs([]string{"core", "install", "arduino:avr"})
 	if err = cli.Execute(); err != nil {
-		log.WithError(err).Fatal("Failed to install arduino:avr core")
+		logger.WithError(err).Fatal("Failed to install arduino:avr core")
 	}
 
-	buf := new(bytes.Buffer)
 	out := os.Stdout
+	buf := new(bytes.Buffer)
 	r, w, _ := os.Pipe()
 	os.Stdout = w
 	cli.SetArgs([]string{"board", "list"})
 	if err = cli.Execute(); err != nil {
-		log.WithError(err).Fatal("Failed to get board list")
+		os.Stdout = out
+		logger.WithError(err).Fatal("Failed to get board list")
 	}
 	os.Stdout = out
 	w.Close()
 	buf.ReadFrom(r)
+	r.Close()
 
 	boards = buf.String()
 
@@ -79,7 +82,8 @@ func main() {
 	})
 
 	if len(list) == 0 {
-		log.WithError(errors.New("No boards detected")).Fatal("Cannot upload sketch")
+		err = errors.New("No boards detected")
+		logger.WithError(err).Fatal("Cannot upload sketch")
 	} else if len(list) == 1 {
 		board := strings.Split(list[0], " ")
 		device = board[0]
@@ -97,7 +101,7 @@ func main() {
 		fmt.Scanf("%d", &index)
 
 		if err != nil {
-			log.WithError(err).Fatal("Failed to get user input")
+			logger.WithError(err).Fatal("Failed to get user input")
 		}
 
 		board := strings.Split(list[index], " ")
@@ -107,12 +111,12 @@ func main() {
 
 	cli.SetArgs([]string{"compile", "--fqbn", fqbn, sketch})
 	if err = cli.Execute(); err != nil {
-		log.WithError(err).Fatal("Failed to compile")
+		logger.WithError(err).Fatal("Failed to compile")
 	}
 
 	cli.SetArgs([]string{"upload", "-p", device, "--fqbn", fqbn, sketch})
 	if err = cli.Execute(); err != nil {
-		log.WithError(err).Fatal("Failed to upload")
+		logger.WithError(err).Fatal("Failed to upload")
 	}
 
 	exec.Command("stty", "-F", device, baud).Run()
