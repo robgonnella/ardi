@@ -93,7 +93,7 @@ func printFilteredBoardListWithIndices(rawBoardList string) {
 }
 
 func getFilteredBoardList(rawBoardList string) []string {
-	list := strings.Split(string(rawBoardList), "\n")
+	list := strings.Split(rawBoardList, "\n")
 	return Filter(list, func(s string) bool {
 		return !strings.Contains(s, "Unknown") && !strings.Contains(s, "Board Name") && s != ""
 	})
