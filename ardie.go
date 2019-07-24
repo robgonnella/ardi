@@ -5,11 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"os/exec"
+	"strconv"
 	"strings"
 
 	arduino "github.com/arduino/arduino-cli/cli"
 	log "github.com/sirupsen/logrus"
+	"github.com/tarm/serial"
 )
 
 var cli = arduino.ArduinoCli
@@ -141,13 +142,31 @@ func compileAndUpload(targetBoard *targetBoardInfo, sketch string) error {
 }
 
 func watchLogs(device, baud string) {
-	exec.Command("stty", "-F", device, baud).Run()
+	logFields := log.Fields{"baud": baud, "device": device}
 
-	watchLogsCmd := exec.Command("cat", device)
-	watchLogsCmd.Stdout = os.Stdout
-	watchLogsCmd.Stderr = os.Stderr
+	rate, err := strconv.Atoi(baud)
+	if err != nil {
+		logger.WithFields(logFields).Fatal("Invalid baud rate")
+		return
+	}
 
-	watchLogsCmd.Run()
+	config := &serial.Config{Name: device, Baud: rate}
+	stream, err := serial.OpenPort(config)
+	if err != nil {
+		logger.WithError(err).WithFields(logFields).Fatal("Failed to read from device")
+		return
+	}
+
+	for {
+		var buf = make([]byte, 128)
+		n, err := stream.Read(buf)
+		if err != nil {
+			logger.WithError(err).WithFields(logFields).Fatal("Failed to read from serial port")
+		}
+		data := string(buf[:n])
+		fmt.Printf("%s", data)
+	}
+
 }
 
 func main() {
