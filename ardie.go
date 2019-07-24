@@ -170,13 +170,12 @@ func main() {
 	}
 
 	if rawBoardList, err = getRawBoardList(); err != nil {
-		fmt.Printf("Failed to get board list: %s", err.Error())
 		logger.WithError(err).Fatal("Failed to get board list")
 	}
 
-	list := getFilteredBoardList(rawBoardList)
+	filteredList := getFilteredBoardList(rawBoardList)
 
-	if targetBoard, err = getTargetBoardInfo(list, rawBoardList); err != nil {
+	if targetBoard, err = getTargetBoardInfo(filteredList, rawBoardList); err != nil {
 		logger.WithError(err).Fatal("Failed to get target board")
 	}
 
