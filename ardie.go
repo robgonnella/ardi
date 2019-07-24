@@ -99,24 +99,30 @@ func getFilteredBoardList(rawBoardList string) []string {
 	})
 }
 
-func getTargetBoardInfo(fileredList []string, rawList string) (*targetBoardInfo, error) {
+func getTargetBoardInfo(filteredList []string, rawList string) (*targetBoardInfo, error) {
+	var boardIndex int
+	var board []string
 	target := &targetBoardInfo{}
-	if len(fileredList) == 0 {
+	listLength := len(filteredList)
+
+	if listLength == 0 {
 		return nil, errors.New("No boards detected")
-	} else if len(fileredList) == 1 {
-		board := strings.Split(fileredList[0], " ")
-		target.Device = board[0]
-		target.FQBN = board[len(board)-1]
+	} else if listLength == 1 {
+		boardIndex = 0
 	} else {
 		printFilteredBoardListWithIndices(rawList)
-		var index int
 		fmt.Print("\nEnter number of board to upload to: ")
-		fmt.Scanf("%d", &index)
-
-		board := strings.Split(fileredList[index], " ")
-		target.Device = board[0]
-		target.FQBN = board[len(board)-1]
+		if _, err := fmt.Scanf("%d", &boardIndex); err != nil {
+			return nil, err
+		}
 	}
+
+	if boardIndex < 0 || boardIndex > listLength-1 {
+		return nil, errors.New("Invalid board selection")
+	}
+	board = strings.Split(filteredList[boardIndex], " ")
+	target.Device = board[0]
+	target.FQBN = board[len(board)-1]
 	return target, nil
 }
 
