@@ -2,8 +2,7 @@
 
 The following set of instructions deals with compiling and uploading programs
 to your usb conencted arduino board without needing to use their web or
-desktop IDEs. Add your sketch to the sketches directory and
-run `./upload <sketch_name>`
+desktop IDEs.
 
 This script should work for the following boards:
 <table>
@@ -125,18 +124,20 @@ Set GOPATH environment variable: https://github.com/golang/go/wiki/SettingGOPATH
 run:
 
 ```bash
-go get github.com/robgonnella/ardie
+go get github.com/robgonnella/ardi
 ```
 
 Hook up your arduino board via USB
 
 ### Creating and uploading Sketches
 
-- create a directory in "sketches" directory
-- add a ".ino" file with your code in this directory
-- ardie <name_of_sketch_directory> <baud_rate>
-- baud rate defaults to 9600
-e.g. ardie blink
+- create a sketches directory in your project folder
+- add the name of your sketch as a another directory in 
+  the sketches directory
+- add an ".ino" file with the same name in this directory
+  e.g. <project>/sketeches/blink/blink.ino
+- run `ardie <name_of_sketch_directory> <baud_rate>`
+  (baud rate defaults to 9600 - e.g. ardie blink)
 
 ### Adding Libraries
 
