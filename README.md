@@ -119,7 +119,6 @@ This script should work for the following boards:
 ### Prereqs
 
 Install golang: https://golang.org/doc/install
-Set GOPATH environment variable: https://github.com/golang/go/wiki/SettingGOPATH
 
 run:
 
