@@ -170,11 +170,10 @@ func watchLogs(device, baud string) {
 
 }
 
-func process(watch bool) {
+func process(watch bool, baud string) {
 	var rawBoardList string
 	var targetBoard *targetBoardInfo
 	var err error
-	baud := "9600"
 	sketch := getSketch()
 
 	if sketch == "" {
@@ -210,16 +209,18 @@ func process(watch bool) {
 
 func main() {
 	var watch bool
+	var baud string
 	rootCmd := &cobra.Command{
 		Use:   "ardi [sketch]",
 		Short: "Ardi uploads sketches and prints logs for a variety of arduino boards.",
 		Long: "A light wrapper around arduino-cli that offers a quick way to upload\n" +
 			"sketches and watch logs from command line for a variety of arduino boards.",
 		Run: func(cmd *cobra.Command, args []string) {
-			process(watch)
+			process(watch, baud)
 		},
 	}
 
-	rootCmd.Flags().BoolVarP(&watch, "watch", "w", false, "watch serial port logs after uploading sketch")
+	rootCmd.Flags().BoolVarP(&watch, "watch", "w", true, "watch serial port logs after uploading sketch")
+	rootCmd.Flags().StringVarP(&baud, "baud", "b", "9600", "specify sketch baud rate")
 	rootCmd.Execute()
 }

@@ -1,4 +1,4 @@
-module github.com/robgonnella/ardie
+module github.com/robgonnella/ardi
 
 go 1.12
 
