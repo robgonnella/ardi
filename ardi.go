@@ -180,10 +180,6 @@ func process(watch bool, baud string) {
 		logger.WithError(errors.New("Missing sketch arguemnet")).Fatal("Must provide a sketch name as an argument to upload")
 	}
 
-	if len(os.Args) == 3 {
-		baud = os.Args[2]
-	}
-
 	if err = updateCore(); err != nil {
 		logger.WithError(err).Fatal("Failed to update core")
 	}
