@@ -10,6 +10,7 @@ import (
 
 	arduino "github.com/arduino/arduino-cli/cli"
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
 	"github.com/tarm/serial"
 )
 
@@ -169,7 +170,7 @@ func watchLogs(device, baud string) {
 
 }
 
-func main() {
+func process(watch bool) {
 	var rawBoardList string
 	var targetBoard *targetBoardInfo
 	var err error
@@ -202,5 +203,23 @@ func main() {
 		logger.WithError(err).Fatal("Failed to compile or upload to board")
 	}
 
-	watchLogs(targetBoard.Device, baud)
+	if watch {
+		watchLogs(targetBoard.Device, baud)
+	}
+}
+
+func main() {
+	var watch bool
+	rootCmd := &cobra.Command{
+		Use:   "ardi [sketch]",
+		Short: "Ardi uploads sketches and prints logs for a variety of arduino boards.",
+		Long: "A light wrapper around arduino-cli that offers a quick way to upload\n" +
+			"sketches and watch logs from command line for a variety of arduino boards.",
+		Run: func(cmd *cobra.Command, args []string) {
+			process(watch)
+		},
+	}
+
+	rootCmd.Flags().BoolVarP(&watch, "watch", "w", false, "watch serial port logs after uploading sketch")
+	rootCmd.Execute()
 }
