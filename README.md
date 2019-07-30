@@ -1,10 +1,12 @@
 # Arduino Hacking
 
-The following set of instructions deals with compiling and uploading programs
-to your usb conencted arduino board without needing to use their web or
+Ardi is a tool for compiling, uploading code, and watching 
+logs for your usb conencted arduino board from command-
+line. This allows you to develop in an environment you feel
+comfortable in, without needing to use arduino's web or 
 desktop IDEs.
 
-This script should work for the following boards:
+This tools should work for the following boards:
 <table>
   <th>
     <tr>
@@ -135,8 +137,17 @@ Hook up your arduino board via USB
   the sketches directory
 - add an ".ino" file with the same name in this directory
   e.g. <project>/sketeches/blink/blink.ino
-- run `ardie <name_of_sketch_directory> <baud_rate>`
-  (baud rate defaults to 9600 - e.g. ardie blink)
+- run `ardi <name_of_sketch_directory>`
+  (baud rate defaults to 9600 - e.g. ardi blink)
+  
+To use a different baud rate run:
+`ardi <sketch_name> --baud <BAUD_RATE>`
+
+By default ardi will connect to the serial port and print
+logs. To ignore logs and only compile and upload run:
+`ardi <sketch_name> --watch false`
+
+For a list of ardi options run: `ardi --help`
 
 ### Adding Libraries
 
