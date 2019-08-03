@@ -164,8 +164,7 @@ func watchLogs(device, baud string) {
 		if err != nil {
 			logger.WithError(err).WithFields(logFields).Fatal("Failed to read from serial port")
 		}
-		data := string(buf[:n])
-		fmt.Printf("%s", data)
+		fmt.Printf("%s", buf[:n])
 	}
 
 }
