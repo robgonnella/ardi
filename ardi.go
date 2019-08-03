@@ -1,10 +1,12 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"errors"
 	"fmt"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -39,6 +41,38 @@ func getSketch() string {
 	sketch := os.Args[1]
 	sketch = strings.Replace(sketch, "sketches/", "", 1)
 	return fmt.Sprintf("sketches/%s", sketch)
+}
+
+func parseBaudRate(sketchPath string) int {
+	var baud int
+	rgx := regexp.MustCompile(`Serial\.begin\((\d+)\);`)
+	sketchParts := strings.Split(sketchPath, "/")
+	sketchName := sketchParts[len(sketchParts)-1]
+	sketchFile := fmt.Sprintf("%s/%s.ino", sketchPath, sketchName)
+	file, err := os.Open(sketchFile)
+	if err != nil {
+		logger.WithError(err).
+			WithField("sketch", sketchPath).
+			Fatal("Failed to read sketch")
+	}
+
+	scanner := bufio.NewScanner(file)
+
+	for scanner.Scan() {
+		text := scanner.Text()
+		if match := rgx.MatchString(text); match {
+			stringBaud := strings.TrimSpace(rgx.ReplaceAllString(text, "$1"))
+			if baud, err = strconv.Atoi(stringBaud); err != nil {
+				// set baud to 0 and let script continue with either default
+				// value or value specified from command line.
+				logger.WithError(err).Info("Failed to parse baud rate from sketch")
+				baud = 0
+			}
+			break
+		}
+	}
+
+	return baud
 }
 
 func updateCore() error {
@@ -142,16 +176,10 @@ func compileAndUpload(targetBoard *targetBoardInfo, sketch string) error {
 	return nil
 }
 
-func watchLogs(device, baud string) {
+func watchLogs(device string, baud int) {
 	logFields := log.Fields{"baud": baud, "device": device}
 
-	rate, err := strconv.Atoi(baud)
-	if err != nil {
-		logger.WithFields(logFields).Fatal("Invalid baud rate")
-		return
-	}
-
-	config := &serial.Config{Name: device, Baud: rate}
+	config := &serial.Config{Name: device, Baud: baud}
 	stream, err := serial.OpenPort(config)
 	if err != nil {
 		logger.WithError(err).WithFields(logFields).Fatal("Failed to read from device")
@@ -169,7 +197,7 @@ func watchLogs(device, baud string) {
 
 }
 
-func process(watch bool, baud string) {
+func process(watch bool, baud int) {
 	var rawBoardList string
 	var targetBoard *targetBoardInfo
 	var err error
@@ -177,6 +205,18 @@ func process(watch bool, baud string) {
 
 	if sketch == "" {
 		logger.WithError(errors.New("Missing sketch arguemnet")).Fatal("Must provide a sketch name as an argument to upload")
+	}
+
+	if watch {
+		parsedBaud := parseBaudRate(sketch)
+
+		if parsedBaud != 0 && parsedBaud != baud {
+			fmt.Println("")
+			logger.Infoln("Detected a different baud rate from sketch file.")
+			logger.WithField("detected baud", parsedBaud).Infoln("Using detected baud rate")
+			fmt.Println("")
+			baud = parsedBaud
+		}
 	}
 
 	if err = updateCore(); err != nil {
@@ -204,7 +244,7 @@ func process(watch bool, baud string) {
 
 func main() {
 	var watch bool
-	var baud string
+	var baud int
 	rootCmd := &cobra.Command{
 		Use:   "ardi [sketch]",
 		Short: "Ardi uploads sketches and prints logs for a variety of arduino boards.",
@@ -216,6 +256,6 @@ func main() {
 	}
 
 	rootCmd.Flags().BoolVarP(&watch, "watch", "w", true, "watch serial port logs after uploading sketch")
-	rootCmd.Flags().StringVarP(&baud, "baud", "b", "9600", "specify sketch baud rate")
+	rootCmd.Flags().IntVarP(&baud, "baud", "b", 9600, "specify sketch baud rate")
 	rootCmd.Execute()
 }
