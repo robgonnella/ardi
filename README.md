@@ -132,21 +132,33 @@ Hook up your arduino board via USB
 
 ### Creating and uploading Sketches
 
+There are two options for compiling and uploading sketches.
+Both options require your sketch `.ino` file to be in a
+directory that matches the `.ino` file name.</br>
+e.g. `blink/blink.ino`
+
+**Running from root of project directory:**
+
 - create a sketches directory in your project folder
-- add the name of your sketch as a another directory in
-  the sketches directory
-- add an ".ino" file with the same name in this directory
-  e.g. `<project>/sketeches/blink/blink.ino`
-- run `ardi <name_of_sketch_directory>`
+- add your sketch directory to the sketches directory</br>
+  e.g. `<project>/sketches/blink/blink.ino`
+- From the root of your project run
+  `ardi <name_of_sketch_directory>`</br>
   e.g. `ardi blink`
+
+**Running using an absolute or relative path to sketch:**
+
+- point ardi at any absolute or relative path to a
+  sketch directory.</br>
+  e.g. `ardi ~/<project_root>/<project_sub_dir>/blink/`
 
 By default ardi will connect to the serial port and print
 logs. Ardi will read the sketch file and attempt to
 auto-detect the baud rate. To manually specify the baud
-rate run:
+rate run:</br>
 `ardi <sketch_name> --baud <BAUD_RATE>`
 
-To ignore logs and only compile and upload run:
+To ignore logs and only compile and upload run:</br>
 `ardi <sketch_name> --watch false`
 
 For a list of all ardi options run: `ardi --help`

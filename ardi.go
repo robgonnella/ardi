@@ -38,9 +38,18 @@ func getSketch() string {
 	if len(os.Args) == 1 {
 		return ""
 	}
+
 	sketch := os.Args[1]
-	sketch = strings.Replace(sketch, "sketches/", "", 1)
-	return fmt.Sprintf("sketches/%s", sketch)
+
+	if !strings.Contains(sketch, "/") {
+		return fmt.Sprintf("sketches/%s", sketch)
+	}
+
+	if strings.HasSuffix(sketch, "/") {
+		sketch = strings.TrimSuffix(sketch, "/")
+	}
+
+	return sketch
 }
 
 func parseBaudRate(sketchPath string) int {
