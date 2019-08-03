@@ -1,3 +1,13 @@
+/*
+ardi is a command-line tool for compiling, uploading code, and
+watching logs for your usb connected arduino board. This allows you to
+develop in an environment you feel comfortable in, without needing to
+use arduino's web or desktop IDEs.
+
+Usage: ardi [sketch][flags]
+
+ardi -h --help
+*/
 package main
 
 import (
@@ -24,7 +34,7 @@ type targetBoardInfo struct {
 	Device string
 }
 
-func Filter(vs []string, f func(string) bool) []string {
+func filter(vs []string, f func(string) bool) []string {
 	vsf := make([]string, 0)
 	for _, v := range vs {
 		if f(v) {
@@ -128,7 +138,7 @@ func getRawBoardList() (string, error) {
 
 func printFilteredBoardListWithIndices(rawBoardList string) {
 	printableList := strings.SplitAfterN(rawBoardList, "\n", -1)
-	printableList = Filter(printableList, func(s string) bool {
+	printableList = filter(printableList, func(s string) bool {
 		return !strings.Contains(s, "Unknown") && s != ""
 	})
 	for i, line := range printableList {
@@ -142,7 +152,7 @@ func printFilteredBoardListWithIndices(rawBoardList string) {
 
 func getFilteredBoardList(rawBoardList string) []string {
 	list := strings.Split(rawBoardList, "\n")
-	return Filter(list, func(s string) bool {
+	return filter(list, func(s string) bool {
 		return !strings.Contains(s, "Unknown") && !strings.Contains(s, "Board Name") && s != ""
 	})
 }
