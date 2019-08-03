@@ -142,7 +142,7 @@ Hook up your arduino board via USB
 
 By default ardi will connect to the serial port and print
 logs. Ardi will read the sketch file and attempt to
-auto-detect the baud rate. To manually specify the buad
+auto-detect the baud rate. To manually specify the baud
 rate run:
 `ardi <sketch_name> --baud <BAUD_RATE>`
 

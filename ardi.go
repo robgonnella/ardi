@@ -51,9 +51,12 @@ func parseBaudRate(sketchPath string) int {
 	sketchFile := fmt.Sprintf("%s/%s.ino", sketchPath, sketchName)
 	file, err := os.Open(sketchFile)
 	if err != nil {
+		// Log the error and return 0 for baud to let script continue
+		// with either default value or value specified from command-line.
 		logger.WithError(err).
 			WithField("sketch", sketchPath).
-			Fatal("Failed to read sketch")
+			Info("Failed to read sketch")
+		return baud
 	}
 
 	scanner := bufio.NewScanner(file)
@@ -64,7 +67,7 @@ func parseBaudRate(sketchPath string) int {
 			stringBaud := strings.TrimSpace(rgx.ReplaceAllString(text, "$1"))
 			if baud, err = strconv.Atoi(stringBaud); err != nil {
 				// set baud to 0 and let script continue with either default
-				// value or value specified from command line.
+				// value or value specified from command-line.
 				logger.WithError(err).Info("Failed to parse baud rate from sketch")
 				baud = 0
 			}
