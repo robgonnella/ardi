@@ -241,20 +241,28 @@ func process(watch bool, baud int) {
 		}
 	}
 
+	logFields := log.Fields{"watch": watch, "baud": baud, "sketch": sketch}
+	logWithFields := logger.WithFields(logFields)
+
+	logWithFields.Info("Updating arduino core")
 	if err = updateCore(); err != nil {
 		logger.WithError(err).Fatal("Failed to update core")
 	}
 
+	logWithFields.Info("Getting board list")
 	if rawBoardList, err = getRawBoardList(); err != nil {
 		logger.WithError(err).Fatal("Failed to get board list")
 	}
 
+	logWithFields.Info("Filtering board list")
 	filteredList := getFilteredBoardList(rawBoardList)
 
+	logWithFields.Info("Parsing target board")
 	if targetBoard, err = getTargetBoardInfo(filteredList, rawBoardList); err != nil {
 		logger.WithError(err).Fatal("Failed to get target board")
 	}
 
+	logWithFields.Info("Compiling and uploading")
 	if err := compileAndUpload(targetBoard, sketch); err != nil {
 		logger.WithError(err).Fatal("Failed to compile or upload to board")
 	}
