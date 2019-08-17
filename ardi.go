@@ -262,6 +262,7 @@ func process(watch bool, baud int) {
 		logger.WithError(err).Fatal("Failed to get target board")
 	}
 
+	logWithFields.WithField("target-board", *targetBoard).Info("Found target")
 	logWithFields.Info("Compiling and uploading")
 	if err := compileAndUpload(targetBoard, sketch); err != nil {
 		logger.WithError(err).Fatal("Failed to compile or upload to board")
