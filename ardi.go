@@ -156,7 +156,7 @@ func getFilteredBoardList(rawBoardList string) []string {
 		logger.WithField("board", s).Info("Inspecting board")
 		return !strings.Contains(s, "Unknown") &&
 			!strings.Contains(s, "Board Name") &&
-			!strings.Contains(s, "found. No") &&
+			!strings.Contains(s, "No boards found") &&
 			s != ""
 	})
 }
