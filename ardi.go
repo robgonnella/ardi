@@ -153,7 +153,11 @@ func printFilteredBoardListWithIndices(rawBoardList string) {
 func getFilteredBoardList(rawBoardList string) []string {
 	list := strings.Split(rawBoardList, "\n")
 	return filter(list, func(s string) bool {
-		return !strings.Contains(s, "Unknown") && !strings.Contains(s, "Board Name") && s != ""
+		logger.WithField("board", s).Info("Inspecting board")
+		return !strings.Contains(s, "Unknown") &&
+			!strings.Contains(s, "Board Name") &&
+			!strings.Contains(s, "found. No") &&
+			s != ""
 	})
 }
 
