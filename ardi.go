@@ -16,7 +16,9 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/exec"
 	"regexp"
+	"runtime"
 	"strconv"
 	"strings"
 
@@ -264,6 +266,14 @@ func process(watch bool, baud int) {
 	logWithFields.Info("Parsing target board")
 	if targetBoard, err = getTargetBoardInfo(filteredList, rawBoardList); err != nil {
 		logger.WithError(err).Fatal("Failed to get target board")
+	}
+
+	if runtime.GOOS == "linux" {
+		logWithFields.Info("Requesting access to device on linux")
+		cmd := exec.Command("sudo", "chmod", "a+rw", targetBoard.Device)
+		if err := cmd.Run(); err != nil {
+			logger.WithError(err).WithField("device", targetBoard.Device).Fatal("Failed to gain access to device")
+		}
 	}
 
 	logWithFields.WithField("target-board", *targetBoard).Info("Found target")
