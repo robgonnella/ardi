@@ -9,4 +9,5 @@ require (
 	github.com/spf13/cobra v0.0.5
 	github.com/tarm/serial v0.0.0-20180830185346-98f6abe2eb07
 	golang.org/x/sys v0.0.0-20190712062909-fae7ac547cb7 // indirect
+	google.golang.org/grpc v1.21.1
 )
