@@ -1,136 +1,41 @@
 # Arduino Hacking
 
 Ardi is a tool for compiling, uploading code, and watching
-logs for your usb connected arduino board from command-
-line. This allows you to develop in an environment you feel
-comfortable in, without needing to use arduino's web or
-desktop IDEs.
+logs for your usb connected arduino board from command-line.
+This allows you to develop in an environment you feel comfortable
+in, without needing to use arduino's web or desktop IDEs.
 
-This tools should work for the following boards:
-<table>
-  <th>
-    <tr>
-      <td>Board Name</td>
-      <td>FQBN</td>
-    </tr>
-  </th>
-  <tbody>
-    <tr>
-      <td>Adafruit Circuit Playground</td>
-      <td>arduino:avr:circuitplay32u4cat</td>
-    <tr>
-    <tr>
-      <td>Arduino BT</td>
-      <td>arduino:avr:bt</td>
-    <tr>
-    <tr>
-      <td>Arduino Duemilanove or Diecimila</td>
-      <td>arduino:avr:diecimila</td>
-    <tr>
-    <tr>
-      <td>Arduino Esplora</td>
-      <td>arduino:avr:esplora</td>
-    <tr>
-    <tr>
-      <td>Arduino Ethernet</td>
-      <td>arduino:avr:ethernet</td>
-    <tr>
-    <tr>
-      <td>Arduino Fio</td>
-      <td>arduino:avr:fio</td>
-    <tr>
-    <tr>
-      <td>Arduino Gemma</td>
-      <td>arduino:avr:gemma</td>
-    <tr>
-    <tr>
-      <td>Arduino Industrial 101</td>
-      <td>arduino:avr:chiwawa</td>
-    <tr>
-    <tr>
-      <td>Arduino Leonardo</td>
-      <td>arduino:avr:leonardo</td>
-    <tr>
-    <tr>
-      <td>Arduino Mega ADK</td>
-      <td>arduino:avr:megaADK</td>
-    <tr>
-    <tr>
-      <td>Arduino Mini</td>
-      <td>arduino:avr:mini</td>
-    <tr>
-    <tr>
-      <td>Arduino NG or older</td>
-      <td>arduino:avr:atmegang</td>
-    <tr>
-    <tr>
-      <td>Arduino Nano</td>
-      <td>arduino:avr:nano</td>
-    <tr>
-    <tr>
-      <td>Arduino Pro or Pro Mini</td>
-      <td>arduino:avr:pro</td>
-    <tr>
-    <tr>
-      <td>Arduino Robot Control</td>
-      <td>arduino:avr:robotControl</td>
-    <tr>
-    <tr>
-      <td>Arduino Robot Motor</td>
-      <td>arduino:avr:robotMotor</td>
-    <tr>
-    <tr>
-      <td>Arduino Uno WiFi</td>
-      <td>arduino:avr:unowifi</td>
-    <tr>
-    <tr>
-      <td>Arduino Yún</td>
-      <td>arduino:avr:yun</td>
-    <tr>
-    <tr>
-      <td>Arduino Yún Mini</td>
-      <td>arduino:avr:yunmini</td>
-    <tr>
-    <tr>
-      <td>Arduino/Genuino Mega or Mega 2560</td>
-      <td>arduino:avr:mega</td>
-    <tr>
-    <tr>
-      <td>Arduino/Genuino Micro</td>
-      <td>arduino:avr:micro</td>
-    <tr>
-    <tr>
-      <td>Arduino/Genuino Uno</td>
-      <td>arduino:avr:uno</td>
-    <tr>
-    <tr>
-      <td>LilyPad Arduino</td>
-      <td>arduino:avr:lilypad</td>
-    <tr>
-    <tr>
-      <td>LilyPad Arduino USB</td>
-      <td>arduino:avr:LilyPadUSB</td>
-    <tr>
-    <tr>
-      <td>Linino One</td>
-      <td>arduino:avr:one</td>
-    <tr>
-  </tbody>
-</table>
+This tools should work for all boards and platforms supported by arduino-cli:
 
-### Prereqs
+## Prereqs
+___
 
 Install golang: https://golang.org/doc/install
 
 run:
 
 ```bash
-go get github.com/robgonnella/ardi
+go get -u github.com/robgonnella/ardi
 ```
 
-Hook up your arduino board via USB
+## Installing platforms for board detection
+___
 
-### Creating and uploading Sketches
+```bash
+# from any directory
+ardi init
+```
+
+## Remove all installed platforms and data
+___
+
+```bash
+# from any directory
+ardi clean
+```
+
+## Creating and uploading Sketches
+___
 
 There are two options for compiling and uploading sketches.
 Both options require your sketch `.ino` file to be in a
@@ -165,5 +70,5 @@ For a list of all ardi options run: `ardi --help`
 
 ### Adding Libraries
 
-Create a "libraries" directory in sketches. Add your libs to this directory
-and arduino-cli will automatically include them.
+Create a "libraries" directory at the same level as your sketch directory.
+Add your libs to this directory and ardi will automatically include them.

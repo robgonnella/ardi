@@ -4,9 +4,18 @@ watching logs for your usb connected arduino board. This allows you to
 develop in an environment you feel comfortable in, without needing to
 use arduino's web or desktop IDEs.
 
-Usage: ardi [sketch][flags]
+Usage:
+  ardi [sketch] [flags]
+  ardi [command]
 
-ardi -h --help
+Available Commands:
+  clean       Delete all ardi data
+  help        Help about any command
+  init        Download and install platforms
+
+Flags:
+  -b, --baud int   specify sketch baud rate (default 9600)
+  -h, --help       help for ardi
 */
 package main
 
@@ -37,11 +46,25 @@ var logger = log.New()
 // To avoid polluting an existing arduino-cli installation, the example
 // client uses a temp folder to keep cores, libraries and the likes.
 var homeDir, _ = os.UserHomeDir()
-var dataDir = fmt.Sprintf("%s/.ardi/arduino-rpc-client", homeDir)
+var ardiDir = fmt.Sprintf("%s/.ardi", homeDir)
+var dataDir = fmt.Sprintf("%s/arduino-rpc-client", ardiDir)
 
 type targetBoardInfo struct {
 	FQBN   string
 	Device string
+}
+
+type PlatformUpgradeMessage struct {
+	platformPackage string
+	architecture    string
+	success         bool
+}
+
+type PlatformInstallMessage struct {
+	platformPackage string
+	architecture    string
+	version         string
+	success         bool
 }
 
 func filter(vs []string, f func(string) bool) []string {
@@ -76,7 +99,7 @@ func watchLogs(device string, baud int) {
 }
 
 func upload(client rpc.ArduinoCoreClient, instance *rpc.Instance, target targetBoardInfo, sketch string) {
-	logger.Infoln("uploading...")
+	logger.Info("uploading...")
 
 	uplRespStream, err := client.Upload(context.Background(),
 		&rpc.UploadReq{
@@ -94,7 +117,7 @@ func upload(client rpc.ArduinoCoreClient, instance *rpc.Instance, target targetB
 	for {
 		uplResp, err := uplRespStream.Recv()
 		if err == io.EOF {
-			logger.Infoln("Upload done")
+			logger.Info("Upload done")
 			break
 		}
 
@@ -114,7 +137,7 @@ func upload(client rpc.ArduinoCoreClient, instance *rpc.Instance, target targetB
 }
 
 func compile(client rpc.ArduinoCoreClient, instance *rpc.Instance, target targetBoardInfo, sketch string) {
-	logger.Infoln("compiling...")
+	logger.Info("compiling...")
 
 	compRespStream, err := client.Compile(context.Background(),
 		&rpc.CompileReq{
@@ -134,7 +157,7 @@ func compile(client rpc.ArduinoCoreClient, instance *rpc.Instance, target target
 
 		// The server is done.
 		if err == io.EOF {
-			logger.Infoln("Compilation done")
+			logger.Info("Compilation done")
 			break
 		}
 
@@ -188,7 +211,7 @@ func getTargetBoardInfo(list []targetBoardInfo) targetBoardInfo {
 }
 
 func getBoardList(client rpc.ArduinoCoreClient, instance *rpc.Instance) []targetBoardInfo {
-	logger.Infoln("Getting board list...")
+	logger.Info("Getting board list...")
 
 	var boardList []targetBoardInfo
 
@@ -215,18 +238,41 @@ func getBoardList(client rpc.ArduinoCoreClient, instance *rpc.Instance) []target
 	return boardList
 }
 
-func platformUpgrade(client rpc.ArduinoCoreClient, instance *rpc.Instance) {
-	logger.Infoln("platform upgrade...")
+func platformList(client rpc.ArduinoCoreClient, instance *rpc.Instance) {
+	listResp, err := client.PlatformList(context.Background(),
+		&rpc.PlatformListReq{Instance: instance})
+
+	if err != nil {
+		logger.Fatalf("List error: %s", err)
+	}
+
+	logger.Info("------INSTALLED PLATFORMS------")
+	for _, plat := range listResp.GetInstalledPlatform() {
+		// We only print ID and version of the installed platforms but you can look
+		// at the definition for the rpc.Platform struct for more fields.
+		logger.Infof("Installed platform: %s - %s", plat.GetID(), plat.GetInstalled())
+	}
+	logger.Info("-------------------------------")
+}
+
+func platformUpgrade(client rpc.ArduinoCoreClient, instance *rpc.Instance, platPackage, arch string, done chan PlatformUpgradeMessage) {
+	logger.Infof("Upgrading platform: %s:%s\n", platPackage, arch)
 
 	upgradeRespStream, err := client.PlatformUpgrade(context.Background(),
 		&rpc.PlatformUpgradeReq{
 			Instance:        instance,
-			PlatformPackage: "arduino",
-			Architecture:    "avr",
+			PlatformPackage: platPackage,
+			Architecture:    arch,
 		})
 
 	if err != nil {
-		logger.Fatalf("Error upgrading platform: %s", err)
+		logger.WithError(err).Warn("Error upgrading platform")
+	}
+
+	message := PlatformUpgradeMessage{
+		platformPackage: platPackage,
+		architecture:    arch,
+		success:         false,
 	}
 
 	// Loop and consume the server stream until all the operations are done.
@@ -236,13 +282,18 @@ func platformUpgrade(client rpc.ArduinoCoreClient, instance *rpc.Instance) {
 		// The server is done.
 		if err == io.EOF {
 			logger.Infof("Upgrade done")
+			message.success = true
+			done <- message
 			break
 		}
 
 		// There was an error.
 		if err != nil {
-			logger.WithError(err).Warn("Cannot upgrade platform")
-			return
+			if !strings.Contains(err.Error(), "platform already at latest version") {
+				logger.WithError(err).Warn("Cannot upgrade platform")
+			}
+			done <- message
+			break
 		}
 
 		// When a download is ongoing, log the progress
@@ -257,36 +308,48 @@ func platformUpgrade(client rpc.ArduinoCoreClient, instance *rpc.Instance) {
 	}
 }
 
-func platformList(client rpc.ArduinoCoreClient, instance *rpc.Instance) {
-	logger.Infoln("platform list...")
-
-	listResp, err := client.PlatformList(context.Background(),
-		&rpc.PlatformListReq{Instance: instance})
-
-	if err != nil {
-		logger.Fatalf("List error: %s", err)
+func upgradePlatforms(client rpc.ArduinoCoreClient, instance *rpc.Instance, platforms []*rpc.Platform) {
+	count := len(platforms)
+	completed := 0
+	done := make(chan PlatformUpgradeMessage, count)
+	for _, plat := range platforms {
+		id := plat.GetID()
+		idParts := strings.Split(id, ":")
+		platPackage := idParts[0]
+		arch := idParts[len(idParts)-1]
+		go platformUpgrade(client, instance, platPackage, arch, done)
 	}
-
-	for _, plat := range listResp.GetInstalledPlatform() {
-		// We only print ID and version of the installed platforms but you can look
-		// at the definition for the rpc.Platform struct for more fields.
-		logger.Infof("Installed platform: %s - %s", plat.GetID(), plat.GetInstalled())
+	for message := range done {
+		if message.success {
+			logger.Infof("Successfully upgraded %s:s", message.platformPackage, message.architecture)
+		}
+		completed++
+		if completed == count {
+			close(done)
+		}
 	}
 }
 
-func platformInstall(client rpc.ArduinoCoreClient, instance *rpc.Instance) {
-	logger.Infoln("platform install...")
+func platformInstall(client rpc.ArduinoCoreClient, instance *rpc.Instance, platPackage, arch, version string, done chan PlatformInstallMessage) {
+	logger.Infof("Installing platform: %s:%s\n", arch, version)
 
 	installRespStream, err := client.PlatformInstall(context.Background(),
 		&rpc.PlatformInstallReq{
 			Instance:        instance,
-			PlatformPackage: "arduino",
-			Architecture:    "avr",
-			Version:         "1.6.23",
+			PlatformPackage: platPackage,
+			Architecture:    arch,
+			Version:         version,
 		})
 
 	if err != nil {
-		logger.Fatalf("Error installing platform: %s", err)
+		logger.WithError(err).Warn("Failed to install platform")
+	}
+
+	message := PlatformInstallMessage{
+		platformPackage: platPackage,
+		architecture:    arch,
+		version:         version,
+		success:         false,
 	}
 
 	// Loop and consume the server stream until all the operations are done.
@@ -295,13 +358,17 @@ func platformInstall(client rpc.ArduinoCoreClient, instance *rpc.Instance) {
 
 		// The server is done.
 		if err == io.EOF {
-			logger.Infoln("Install done")
+			logger.Info("Install done")
+			message.success = true
+			done <- message
 			break
 		}
 
 		// There was an error.
 		if err != nil {
-			logger.Fatalf("Install error: %s", err)
+			logger.WithError(err).Warn("Failed to install platform")
+			done <- message
+			break
 		}
 
 		// When a download is ongoing, log the progress
@@ -316,8 +383,7 @@ func platformInstall(client rpc.ArduinoCoreClient, instance *rpc.Instance) {
 	}
 }
 
-func platformSearch(client rpc.ArduinoCoreClient, instance *rpc.Instance) {
-	logger.Infoln("platform search...")
+func loadPlatforms(client rpc.ArduinoCoreClient, instance *rpc.Instance) {
 	searchResp, err := client.PlatformSearch(context.Background(), &rpc.PlatformSearchReq{
 		Instance: instance,
 	})
@@ -327,15 +393,35 @@ func platformSearch(client rpc.ArduinoCoreClient, instance *rpc.Instance) {
 	}
 
 	platforms := searchResp.GetSearchOutput()
+	count := len(platforms)
+	completed := 0
+	done := make(chan PlatformInstallMessage, count)
 	for _, plat := range platforms {
 		// We only print ID and version of the platforms found but you can look
 		// at the definition for the rpc.Platform struct for more fields.
-		logger.Infof("Search result: %+v - %+v", plat.GetID(), plat.GetLatest())
+		id := plat.GetID()
+		idParts := strings.Split(id, ":")
+		platPackage := idParts[0]
+		arch := idParts[len(idParts)-1]
+		latest := plat.GetLatest()
+		logger.Infof("Search result: %s: %s - %s", platPackage, id, latest)
+		go platformInstall(client, instance, platPackage, arch, latest, done)
 	}
+	for message := range done {
+		if message.success {
+			logger.Infof("Successfully installed %s:%s - %s", message.platformPackage, message.architecture, message.version)
+
+		}
+		completed++
+		if completed == count {
+			close(done)
+		}
+	}
+	upgradePlatforms(client, instance, platforms)
 }
 
 func updateIndex(client rpc.ArduinoCoreClient, instance *rpc.Instance) {
-	logger.Infoln("updating index...")
+	logger.Info("updating index...")
 	uiRespStream, err := client.UpdateIndex(context.Background(), &rpc.UpdateIndexReq{
 		Instance: instance,
 	})
@@ -349,7 +435,7 @@ func updateIndex(client rpc.ArduinoCoreClient, instance *rpc.Instance) {
 
 		// the server is done
 		if err == io.EOF {
-			logger.Infoln("Update index done")
+			logger.Info("Update index done")
 			break
 		}
 
@@ -412,8 +498,10 @@ func getRpcInstance(client rpc.ArduinoCoreClient, dataDir string) *rpc.Instance 
 }
 
 func getServerConnection() *grpc.ClientConn {
+	backgroundCtx := context.Background()
+	ctx, _ := context.WithTimeout(backgroundCtx, time.Second)
 	// Establish a connection with the gRPC server, started with the command: arduino-cli daemon
-	conn, err := grpc.Dial("localhost:50051", grpc.WithInsecure(), grpc.WithBlock(), grpc.WithTimeout(100*time.Millisecond))
+	conn, err := grpc.DialContext(ctx, "localhost:50051", grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {
 		logger.Fatal("error connecting to arduino-cli rpc server, you can start it by running `arduino-cli daemon`")
 	}
@@ -421,16 +509,16 @@ func getServerConnection() *grpc.ClientConn {
 }
 
 func startDaemon() {
-	logger.Infoln("Starting daemon")
+	logger.Info("Starting daemon")
 	cli.SetArgs([]string{"daemon"})
 	if err := cli.Execute(); err != nil {
 		logger.WithError(err).Fatal("Failed to start rpc server")
 	}
-	logger.Infoln("Daemon started")
+	logger.Info("Daemon started")
 }
 
 func createDataDirIfNeeded() {
-	logger.Infoln("Creating data directory if needed")
+	logger.Info("Creating data directory if needed")
 	_ = os.MkdirAll(dataDir, 0777)
 }
 
@@ -497,13 +585,27 @@ func processSketch(baud int) (string, int) {
 
 	if parsedBaud != 0 && parsedBaud != baud {
 		fmt.Println("")
-		logger.Infoln("Detected a different baud rate from sketch file.")
-		logger.WithField("detected baud", parsedBaud).Infoln("Using detected baud rate")
+		logger.Info("Detected a different baud rate from sketch file.")
+		logger.WithField("detected baud", parsedBaud).Info("Using detected baud rate")
 		fmt.Println("")
 		baud = parsedBaud
 	}
 
 	return sketch, baud
+}
+
+func initialize() (*grpc.ClientConn, rpc.ArduinoCoreClient, *rpc.Instance) {
+	createDataDirIfNeeded()
+	go startDaemon()
+
+	conn := getServerConnection()
+	client := rpc.NewArduinoCoreClient(conn)
+	rpcInstance := getRpcInstance(client, dataDir)
+
+	updateIndex(client, rpcInstance)
+	loadPlatforms(client, rpcInstance)
+	platformList(client, rpcInstance)
+	return conn, client, rpcInstance
 }
 
 func process(baud int) {
@@ -512,21 +614,8 @@ func process(baud int) {
 	logFields := log.Fields{"baud": baud, "sketch": sketch}
 	logWithFields := logger.WithFields(logFields)
 
-	createDataDirIfNeeded()
-
-	go startDaemon()
-
-	conn := getServerConnection()
+	conn, client, rpcInstance := initialize()
 	defer conn.Close()
-
-	client := rpc.NewArduinoCoreClient(conn)
-	rpcInstance := getRpcInstance(client, dataDir)
-
-	updateIndex(client, rpcInstance)
-	platformSearch(client, rpcInstance)
-	platformInstall(client, rpcInstance)
-	platformList(client, rpcInstance)
-	platformUpgrade(client, rpcInstance)
 
 	list := getBoardList(client, rpcInstance)
 
@@ -553,6 +642,31 @@ func main() {
 		},
 	}
 
+	initCommand := &cobra.Command{
+		Use:   "init",
+		Short: "Download and install platforms",
+		Long: "Downloads and installs all available platforms to support\n" +
+			"a maximum number of boards.",
+		Run: func(cmd *cobra.Command, args []string) {
+			conn, _, _ := initialize()
+			defer conn.Close()
+		},
+	}
+
+	cleanCommand := &cobra.Command{
+		Use:   "clean",
+		Short: "Delete all ardi data",
+		Long:  "Removes all installed platforms from ~/.ardi",
+		Run: func(cmd *cobra.Command, args []string) {
+			if err := os.RemoveAll(ardiDir); err != nil {
+				logger.WithError(err).Fatalf("Failed to clean ardi directory. You can manually clean all data by removing %s", ardiDir)
+			}
+			logger.Infof("Successfully removed all data from %s", ardiDir)
+		},
+	}
+
 	rootCmd.Flags().IntVarP(&baud, "baud", "b", 9600, "specify sketch baud rate")
+	rootCmd.AddCommand(initCommand)
+	rootCmd.AddCommand(cleanCommand)
 	rootCmd.Execute()
 }
