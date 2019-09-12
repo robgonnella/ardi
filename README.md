@@ -15,7 +15,7 @@ Install golang: https://golang.org/doc/install
 run:
 
 ```bash
-go get -u github.com/robgonnella/ardi
+go get -v github.com/robgonnella/ardi
 ```
 
 ## Installing platforms for board detection
