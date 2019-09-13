@@ -5,17 +5,18 @@ develop in an environment you feel comfortable in, without needing to
 use arduino's web or desktop IDEs.
 
 Usage:
-  ardi [sketch] [flags]
   ardi [command]
 
 Available Commands:
   clean       Delete all ardi data
+  go          Compile and upload code to an arduino board
   help        Help about any command
   init        Download and install platforms
 
 Flags:
-  -b, --baud int   specify sketch baud rate (default 9600)
-  -h, --help       help for ardi
+  -h, --help   help for ardi
+
+Use "ardi [command] --help" for more information about a command.
 */
 package main
 
@@ -633,10 +634,18 @@ func process(baud int) {
 func main() {
 	var baud int
 	rootCmd := &cobra.Command{
-		Use:   "ardi [sketch]",
+		Use:   "ardi",
 		Short: "Ardi uploads sketches and prints logs for a variety of arduino boards.",
 		Long: "A light wrapper around arduino-cli that offers a quick way to upload\n" +
 			"sketches and watch logs from command line for a variety of arduino boards.",
+	}
+
+	goCommand := &cobra.Command{
+		Use:   "go",
+		Short: "Compile and upload code to an arduino board",
+		Long: "Compile and upload code to an arduino board. Simply pass the\n" +
+			"directory containing the .ino file as the first argument. You can\n" +
+			"also specify the baud rate with --baud <RATE> (default is 9600).",
 		Run: func(cmd *cobra.Command, args []string) {
 			process(baud)
 		},
@@ -665,7 +674,8 @@ func main() {
 		},
 	}
 
-	rootCmd.Flags().IntVarP(&baud, "baud", "b", 9600, "specify sketch baud rate")
+	goCommand.Flags().IntVarP(&baud, "baud", "b", 9600, "specify sketch baud rate")
+	rootCmd.AddCommand(goCommand)
 	rootCmd.AddCommand(initCommand)
 	rootCmd.AddCommand(cleanCommand)
 	rootCmd.Execute()

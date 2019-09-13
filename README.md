@@ -49,7 +49,7 @@ e.g. `blink/blink.ino`
   e.g. `<project>/sketches/blink/blink.ino`
 - From the root of your project run
   `ardi <name_of_sketch_directory>`</br>
-  e.g. `ardi blink`
+  e.g. `ardi go blink`
 
 **Running using an absolute or relative path to sketch:**
 
@@ -61,12 +61,9 @@ By default ardi will connect to the serial port and print
 logs. Ardi will read the sketch file and attempt to
 auto-detect the baud rate. To manually specify the baud
 rate run:</br>
-`ardi <sketch_name> --baud <BAUD_RATE>`
+`ardi go <sketch_name> --baud <BAUD_RATE>`
 
-To ignore logs and only compile and upload run:</br>
-`ardi <sketch_name> --watch false`
-
-For a list of all ardi options run: `ardi --help`
+For a list of all ardi options run: `ardi --help` or `ardi [command] --help`.
 
 ### Adding Libraries
 
