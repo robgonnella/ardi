@@ -641,7 +641,7 @@ func main() {
 	}
 
 	goCommand := &cobra.Command{
-		Use:   "go",
+		Use:   "go [sketch]",
 		Short: "Compile and upload code to an arduino board",
 		Long: "Compile and upload code to an arduino board. Simply pass the\n" +
 			"directory containing the .ino file as the first argument. You can\n" +
