@@ -134,8 +134,10 @@ func getGoCommand() *cobra.Command {
 		Use:   "go [sketch]",
 		Short: "Compile and upload code to an arduino board",
 		Long: "Compile and upload code to an arduino board. Simply pass the\n" +
-			"directory containing the .ino file as the first argument. You can\n" +
-			"also specify the baud rate with --baud <RATE> (default is 9600).",
+			"directory containing the .ino file as the first argument. To watch\n" +
+			"your sketch file for changes and auto re-compile & re-upload, use\n" +
+			"the --watch flag. You can also specify the baud rate with --baud\n" +
+			"(default is 9600).",
 		Run: func(cmd *cobra.Command, args []string) {
 			process(baud, watchSketch, verbose)
 		},
