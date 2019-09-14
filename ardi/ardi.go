@@ -1,94 +1,93 @@
-/*
-ardi is a command-line tool for compiling, uploading code, and
-watching logs for your usb connected arduino board. This allows you to
-develop in an environment you feel comfortable in, without needing to
-use arduino's web or desktop IDEs.
-
-Usage:
-  ardi [command]
-
-Available Commands:
-  clean       Delete all ardi data
-  go          Compile and upload code to an arduino board
-  help        Help about any command
-  init        Download and install platforms
-
-Flags:
-  -h, --help   help for ardi
-
-Use "ardi [command] --help" for more information about a command.
-*/
-package main
+package ardi
 
 import (
-	"bufio"
 	"context"
 	"errors"
 	"fmt"
 	"io"
 	"os"
-	"regexp"
-	"strconv"
 	"strings"
 	"text/tabwriter"
 	"time"
 
 	arduino "github.com/arduino/arduino-cli/cli"
 	rpc "github.com/arduino/arduino-cli/rpc/commands"
+	"github.com/fsnotify/fsnotify"
 	log "github.com/sirupsen/logrus"
-	"github.com/spf13/cobra"
 	"github.com/tarm/serial"
 	"google.golang.org/grpc"
 )
 
 var cli = arduino.ArduinoCli
 var logger = log.New()
-
-// To avoid polluting an existing arduino-cli installation, the example
-// client uses a temp folder to keep cores, libraries and the likes.
 var homeDir, _ = os.UserHomeDir()
-var ardiDir = fmt.Sprintf("%s/.ardi", homeDir)
-var dataDir = fmt.Sprintf("%s/arduino-rpc-client", ardiDir)
 
-type targetBoardInfo struct {
-	FQBN   string
-	Device string
+// ArdiDir location of .ardi directory in users home directory
+var ArdiDir = fmt.Sprintf("%s/.ardi", homeDir)
+
+// DataDir location of data directory inside ~/.ardi
+// To avoid polluting an existing arduino-cli installation, ardi
+// uses its own data directory to keep cores, libraries and the likes.
+var DataDir = fmt.Sprintf("%s/arduino-rpc-client", ArdiDir)
+
+// TargetInfo represents all necessary info for compiling, and uploading
+type TargetInfo struct {
+	FQBN         string
+	Device       string
+	SketchDir    string
+	SketchFile   string
+	Baud         int
+	Stream       *serial.Port
+	Compiling    bool
+	CompileError bool
+	Uploading    bool
+	Logging      bool
 }
 
-type PlatformUpgradeMessage struct {
+type platformUpgradeMessage struct {
 	platformPackage string
 	architecture    string
 	success         bool
 }
 
-type PlatformInstallMessage struct {
+type platformInstallMessage struct {
 	platformPackage string
 	architecture    string
 	version         string
 	success         bool
 }
 
-func filter(vs []string, f func(string) bool) []string {
-	vsf := make([]string, 0)
-	for _, v := range vs {
-		if f(v) {
-			vsf = append(vsf, v)
-		}
-	}
-	return vsf
+// SetLogLevel sets log level for ardi
+func SetLogLevel(level log.Level) {
+	logger.SetLevel(level)
 }
 
-func watchLogs(device string, baud int) {
-	logFields := log.Fields{"baud": baud, "device": device}
+// WatchLogs connects to a serial port at a specified baud rate and prints
+// any logs received.
+func WatchLogs(target *TargetInfo) {
+	logFields := log.Fields{"baud": target.Baud, "device": target.Device}
 
-	config := &serial.Config{Name: device, Baud: baud}
+	stopLogs(target)
+	waitForPreviousCompile(target)
+	waitForPreviousUpload(target)
+
+	logger.Info("Watching logs...")
+	target.Logging = true
+
+	config := &serial.Config{Name: target.Device, Baud: target.Baud}
 	stream, err := serial.OpenPort(config)
 	if err != nil {
 		logger.WithError(err).WithFields(logFields).Fatal("Failed to read from device")
 		return
 	}
 
+	target.Stream = stream
+
 	for {
+		if target.Stream == nil {
+			target.Logging = false
+			break
+		}
 		var buf = make([]byte, 128)
 		n, err := stream.Read(buf)
 		if err != nil {
@@ -99,16 +98,24 @@ func watchLogs(device string, baud int) {
 
 }
 
-func upload(client rpc.ArduinoCoreClient, instance *rpc.Instance, target targetBoardInfo, sketch string) {
-	logger.Info("uploading...")
+// Upload compiled sketches to the specified board
+func Upload(client rpc.ArduinoCoreClient, instance *rpc.Instance, target *TargetInfo) {
+
+	stopLogs(target)
+	waitForPreviousCompile(target)
+	waitForPreviousUpload(target)
+
+	logger.Info("Uploading...")
+
+	target.Uploading = true
 
 	uplRespStream, err := client.Upload(context.Background(),
 		&rpc.UploadReq{
 			Instance:   instance,
 			Fqbn:       target.FQBN,
-			SketchPath: sketch,
+			SketchPath: target.SketchDir,
 			Port:       target.Device,
-			Verbose:    true,
+			Verbose:    isVerbose(),
 		})
 
 	if err != nil {
@@ -118,6 +125,7 @@ func upload(client rpc.ArduinoCoreClient, instance *rpc.Instance, target targetB
 	for {
 		uplResp, err := uplRespStream.Recv()
 		if err == io.EOF {
+			target.Uploading = false
 			logger.Info("Upload done")
 			break
 		}
@@ -129,22 +137,31 @@ func upload(client rpc.ArduinoCoreClient, instance *rpc.Instance, target targetB
 
 		// When an operation is ongoing you can get its output
 		if resp := uplResp.GetOutStream(); resp != nil {
-			logger.Infof("STDOUT: %s", resp)
+			logger.Debugf("STDOUT: %s", resp)
 		}
 		if resperr := uplResp.GetErrStream(); resperr != nil {
-			logger.Infof("STDERR: %s", resperr)
+			logger.Debugf("STDERR: %s", resperr)
 		}
 	}
 }
 
-func compile(client rpc.ArduinoCoreClient, instance *rpc.Instance, target targetBoardInfo, sketch string) {
-	logger.Info("compiling...")
+// Compile the specified sketch - always logs verbosely
+func Compile(client rpc.ArduinoCoreClient, instance *rpc.Instance, target *TargetInfo) {
+
+	stopLogs(target)
+	waitForPreviousCompile(target)
+	waitForPreviousUpload(target)
+
+	logger.Info("Compiling...")
+
+	target.Compiling = true
+	target.CompileError = false
 
 	compRespStream, err := client.Compile(context.Background(),
 		&rpc.CompileReq{
 			Instance:   instance,
 			Fqbn:       target.FQBN,
-			SketchPath: sketch,
+			SketchPath: target.SketchDir,
 			Verbose:    true,
 		})
 
@@ -158,37 +175,34 @@ func compile(client rpc.ArduinoCoreClient, instance *rpc.Instance, target target
 
 		// The server is done.
 		if err == io.EOF {
+			target.Compiling = false
 			logger.Info("Compilation done")
 			break
 		}
 
 		// There was an error.
 		if err != nil {
-			logger.WithError(err).Fatal("Failed to compile")
+			target.CompileError = true
+			target.Compiling = false
+			logger.WithError(err).Error("Failed to compile")
+			break
 		}
 
 		// When an operation is ongoing you can get its output
 		if resp := compResp.GetOutStream(); resp != nil {
-			logger.Infof("STDOUT: %s", resp)
+			logger.Debugf("STDOUT: %s", resp)
 		}
 		if resperr := compResp.GetErrStream(); resperr != nil {
-			logger.Infof("STDERR: %s", resperr)
+			logger.Errorf("STDERR: %s", resperr)
 		}
 	}
 }
 
-func printBoardListWithIndices(list []targetBoardInfo) {
-	w := tabwriter.NewWriter(os.Stdout, 0, 5, 0, '\t', 0)
-	defer w.Flush()
-	fmt.Fprintln(w, "No.\tBoard\tDevice")
-	for i, board := range list {
-		fmt.Fprintf(w, "%d\t%s\t%s\n", i, board.FQBN, board.Device)
-	}
-}
-
-func getTargetBoardInfo(list []targetBoardInfo) targetBoardInfo {
+// GetTargetInfo returns a connected board if found. If more than
+// one board is connected it will ask the use to choose.
+func GetTargetInfo(list []TargetInfo) TargetInfo {
 	var boardIndex int
-	target := targetBoardInfo{}
+	target := TargetInfo{}
 	listLength := len(list)
 
 	if listLength == 0 {
@@ -211,10 +225,11 @@ func getTargetBoardInfo(list []targetBoardInfo) targetBoardInfo {
 	return target
 }
 
-func getBoardList(client rpc.ArduinoCoreClient, instance *rpc.Instance) []targetBoardInfo {
-	logger.Info("Getting board list...")
+// GetTargetList returns a list of connected boards and their corresponding info
+func GetTargetList(client rpc.ArduinoCoreClient, instance *rpc.Instance, sketchDir, sketchFile string, baud int) []TargetInfo {
+	logger.Debug("Getting target list...")
 
-	var boardList []targetBoardInfo
+	var boardList []TargetInfo
 
 	boardListResp, err := client.BoardList(
 		context.Background(),
@@ -227,16 +242,84 @@ func getBoardList(client rpc.ArduinoCoreClient, instance *rpc.Instance) []target
 
 	for _, port := range boardListResp.GetPorts() {
 		for _, board := range port.GetBoards() {
-			logger.Infof("port: %s, board: %+v\n", port.GetAddress(), board)
-			target := targetBoardInfo{
-				FQBN:   board.GetFQBN(),
-				Device: port.GetAddress(),
+			target := TargetInfo{
+				FQBN:       board.GetFQBN(),
+				Device:     port.GetAddress(),
+				Baud:       baud,
+				SketchDir:  sketchDir,
+				SketchFile: sketchFile,
 			}
 			boardList = append(boardList, target)
 		}
 	}
 
 	return boardList
+}
+
+// WatchSketch responds to changes in a given sketch file by automatically
+// recompiling and re-uploading.
+func WatchSketch(client rpc.ArduinoCoreClient, instance *rpc.Instance, target *TargetInfo) {
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		logger.WithError(err).Fatal("Failed to watch directory for changes")
+	}
+	defer watcher.Close()
+
+	err = watcher.Add(target.SketchFile)
+	if err != nil {
+		logger.WithError(err).Fatal("Failed to watch directory for changes")
+	}
+
+	go WatchLogs(target)
+
+	for {
+		select {
+		case event, ok := <-watcher.Events:
+			if !ok {
+				break
+			}
+			logger.Debugf("event: %+v", event)
+			if event.Op&fsnotify.Write == fsnotify.Write {
+				logger.Debugf("modified file: %s", event.Name)
+				Compile(client, instance, target)
+				if !target.CompileError {
+					Upload(client, instance, target)
+					go WatchLogs(target)
+				}
+			}
+		case err, ok := <-watcher.Errors:
+			if !ok {
+				return
+			}
+			logger.WithError(err).Warn("Watch error")
+		}
+	}
+
+}
+
+// Initialize downloads and installs all available platforms for maximum board support
+func Initialize() (*grpc.ClientConn, rpc.ArduinoCoreClient, *rpc.Instance) {
+	createDataDirIfNeeded()
+	go startDaemon()
+
+	conn := getServerConnection()
+	client := rpc.NewArduinoCoreClient(conn)
+	rpcInstance := getRPCInstance(client, DataDir)
+
+	updateIndex(client, rpcInstance)
+	loadPlatforms(client, rpcInstance)
+	platformList(client, rpcInstance)
+	return conn, client, rpcInstance
+}
+
+// private
+func printBoardListWithIndices(list []TargetInfo) {
+	w := tabwriter.NewWriter(os.Stdout, 0, 5, 0, '\t', 0)
+	defer w.Flush()
+	fmt.Fprintln(w, "No.\tBoard\tDevice")
+	for i, board := range list {
+		fmt.Fprintf(w, "%d\t%s\t%s\n", i, board.FQBN, board.Device)
+	}
 }
 
 func platformList(client rpc.ArduinoCoreClient, instance *rpc.Instance) {
@@ -247,17 +330,17 @@ func platformList(client rpc.ArduinoCoreClient, instance *rpc.Instance) {
 		logger.Fatalf("List error: %s", err)
 	}
 
-	logger.Info("------INSTALLED PLATFORMS------")
+	logger.Debug("------INSTALLED PLATFORMS------")
 	for _, plat := range listResp.GetInstalledPlatform() {
 		// We only print ID and version of the installed platforms but you can look
 		// at the definition for the rpc.Platform struct for more fields.
-		logger.Infof("Installed platform: %s - %s", plat.GetID(), plat.GetInstalled())
+		logger.Debugf("Installed platform: %s - %s", plat.GetID(), plat.GetInstalled())
 	}
-	logger.Info("-------------------------------")
+	logger.Debug("-------------------------------")
 }
 
-func platformUpgrade(client rpc.ArduinoCoreClient, instance *rpc.Instance, platPackage, arch string, done chan PlatformUpgradeMessage) {
-	logger.Infof("Upgrading platform: %s:%s\n", platPackage, arch)
+func platformUpgrade(client rpc.ArduinoCoreClient, instance *rpc.Instance, platPackage, arch string, done chan platformUpgradeMessage) {
+	logger.Debugf("Upgrading platform: %s:%s\n", platPackage, arch)
 
 	upgradeRespStream, err := client.PlatformUpgrade(context.Background(),
 		&rpc.PlatformUpgradeReq{
@@ -270,7 +353,7 @@ func platformUpgrade(client rpc.ArduinoCoreClient, instance *rpc.Instance, platP
 		logger.WithError(err).Warn("Error upgrading platform")
 	}
 
-	message := PlatformUpgradeMessage{
+	message := platformUpgradeMessage{
 		platformPackage: platPackage,
 		architecture:    arch,
 		success:         false,
@@ -282,7 +365,7 @@ func platformUpgrade(client rpc.ArduinoCoreClient, instance *rpc.Instance, platP
 
 		// The server is done.
 		if err == io.EOF {
-			logger.Infof("Upgrade done")
+			logger.Debug("Upgrade done")
 			message.success = true
 			done <- message
 			break
@@ -299,12 +382,12 @@ func platformUpgrade(client rpc.ArduinoCoreClient, instance *rpc.Instance, platP
 
 		// When a download is ongoing, log the progress
 		if upgradeResp.GetProgress() != nil {
-			logger.Infof("DOWNLOAD: %s", upgradeResp.GetProgress())
+			logger.Debugf("DOWNLOAD: %s", upgradeResp.GetProgress())
 		}
 
 		// When an overall task is ongoing, log the progress
 		if upgradeResp.GetTaskProgress() != nil {
-			logger.Infof("TASK: %s", upgradeResp.GetTaskProgress())
+			logger.Debugf("TASK: %s", upgradeResp.GetTaskProgress())
 		}
 	}
 }
@@ -312,7 +395,7 @@ func platformUpgrade(client rpc.ArduinoCoreClient, instance *rpc.Instance, platP
 func upgradePlatforms(client rpc.ArduinoCoreClient, instance *rpc.Instance, platforms []*rpc.Platform) {
 	count := len(platforms)
 	completed := 0
-	done := make(chan PlatformUpgradeMessage, count)
+	done := make(chan platformUpgradeMessage, count)
 	for _, plat := range platforms {
 		id := plat.GetID()
 		idParts := strings.Split(id, ":")
@@ -322,7 +405,7 @@ func upgradePlatforms(client rpc.ArduinoCoreClient, instance *rpc.Instance, plat
 	}
 	for message := range done {
 		if message.success {
-			logger.Infof("Successfully upgraded %s:s", message.platformPackage, message.architecture)
+			logger.Debugf("Successfully upgraded %s:%s", message.platformPackage, message.architecture)
 		}
 		completed++
 		if completed == count {
@@ -331,8 +414,8 @@ func upgradePlatforms(client rpc.ArduinoCoreClient, instance *rpc.Instance, plat
 	}
 }
 
-func platformInstall(client rpc.ArduinoCoreClient, instance *rpc.Instance, platPackage, arch, version string, done chan PlatformInstallMessage) {
-	logger.Infof("Installing platform: %s:%s\n", arch, version)
+func platformInstall(client rpc.ArduinoCoreClient, instance *rpc.Instance, platPackage, arch, version string, done chan platformInstallMessage) {
+	logger.Debugf("Installing platform: %s:%s\n", arch, version)
 
 	installRespStream, err := client.PlatformInstall(context.Background(),
 		&rpc.PlatformInstallReq{
@@ -346,7 +429,7 @@ func platformInstall(client rpc.ArduinoCoreClient, instance *rpc.Instance, platP
 		logger.WithError(err).Warn("Failed to install platform")
 	}
 
-	message := PlatformInstallMessage{
+	message := platformInstallMessage{
 		platformPackage: platPackage,
 		architecture:    arch,
 		version:         version,
@@ -359,7 +442,7 @@ func platformInstall(client rpc.ArduinoCoreClient, instance *rpc.Instance, platP
 
 		// The server is done.
 		if err == io.EOF {
-			logger.Info("Install done")
+			logger.Debug("Install done")
 			message.success = true
 			done <- message
 			break
@@ -374,12 +457,12 @@ func platformInstall(client rpc.ArduinoCoreClient, instance *rpc.Instance, platP
 
 		// When a download is ongoing, log the progress
 		if installResp.GetProgress() != nil {
-			logger.Infof("DOWNLOAD: %s", installResp.GetProgress())
+			logger.Debugf("DOWNLOAD: %s", installResp.GetProgress())
 		}
 
 		// When an overall task is ongoing, log the progress
 		if installResp.GetTaskProgress() != nil {
-			logger.Infof("TASK: %s", installResp.GetTaskProgress())
+			logger.Debugf("TASK: %s", installResp.GetTaskProgress())
 		}
 	}
 }
@@ -396,7 +479,7 @@ func loadPlatforms(client rpc.ArduinoCoreClient, instance *rpc.Instance) {
 	platforms := searchResp.GetSearchOutput()
 	count := len(platforms)
 	completed := 0
-	done := make(chan PlatformInstallMessage, count)
+	done := make(chan platformInstallMessage, count)
 	for _, plat := range platforms {
 		// We only print ID and version of the platforms found but you can look
 		// at the definition for the rpc.Platform struct for more fields.
@@ -405,12 +488,12 @@ func loadPlatforms(client rpc.ArduinoCoreClient, instance *rpc.Instance) {
 		platPackage := idParts[0]
 		arch := idParts[len(idParts)-1]
 		latest := plat.GetLatest()
-		logger.Infof("Search result: %s: %s - %s", platPackage, id, latest)
+		logger.Debugf("Search result: %s: %s - %s", platPackage, id, latest)
 		go platformInstall(client, instance, platPackage, arch, latest, done)
 	}
 	for message := range done {
 		if message.success {
-			logger.Infof("Successfully installed %s:%s - %s", message.platformPackage, message.architecture, message.version)
+			logger.Debugf("Successfully installed %s:%s - %s", message.platformPackage, message.architecture, message.version)
 
 		}
 		completed++
@@ -422,7 +505,7 @@ func loadPlatforms(client rpc.ArduinoCoreClient, instance *rpc.Instance) {
 }
 
 func updateIndex(client rpc.ArduinoCoreClient, instance *rpc.Instance) {
-	logger.Info("updating index...")
+	logger.Debug("Updating index...")
 	uiRespStream, err := client.UpdateIndex(context.Background(), &rpc.UpdateIndexReq{
 		Instance: instance,
 	})
@@ -436,7 +519,7 @@ func updateIndex(client rpc.ArduinoCoreClient, instance *rpc.Instance) {
 
 		// the server is done
 		if err == io.EOF {
-			logger.Info("Update index done")
+			logger.Debug("Update index done")
 			break
 		}
 
@@ -447,12 +530,12 @@ func updateIndex(client rpc.ArduinoCoreClient, instance *rpc.Instance) {
 
 		// operations in progress
 		if uiResp.GetDownloadProgress() != nil {
-			logger.Infof("DOWNLOAD: %s", uiResp.GetDownloadProgress())
+			logger.Debugf("DOWNLOAD: %s", uiResp.GetDownloadProgress())
 		}
 	}
 }
 
-func getRpcInstance(client rpc.ArduinoCoreClient, dataDir string) *rpc.Instance {
+func getRPCInstance(client rpc.ArduinoCoreClient, dataDir string) *rpc.Instance {
 	// The configuration for this example client only contains the path to
 	// the data folder.
 	initRespStream, err := client.Init(context.Background(), &rpc.InitReq{
@@ -481,17 +564,17 @@ func getRpcInstance(client rpc.ArduinoCoreClient, dataDir string) *rpc.Instance 
 		// The server sent us a valid instance, let's print its ID.
 		if initResp.GetInstance() != nil {
 			instance = initResp.GetInstance()
-			logger.Infof("Got a new instance with ID: %v", instance.GetId())
+			logger.Debugf("Got a new instance with ID: %v", instance.GetId())
 		}
 
 		// When a download is ongoing, log the progress
 		if initResp.GetDownloadProgress() != nil {
-			logger.Infof("DOWNLOAD: %s", initResp.GetDownloadProgress())
+			logger.Debugf("DOWNLOAD: %s", initResp.GetDownloadProgress())
 		}
 
 		// When an overall task is ongoing, log the progress
 		if initResp.GetTaskProgress() != nil {
-			logger.Infof("TASK: %s", initResp.GetTaskProgress())
+			logger.Debugf("TASK: %s", initResp.GetTaskProgress())
 		}
 	}
 
@@ -510,173 +593,61 @@ func getServerConnection() *grpc.ClientConn {
 }
 
 func startDaemon() {
-	logger.Info("Starting daemon")
+	logger.Debug("Starting daemon")
 	cli.SetArgs([]string{"daemon"})
 	if err := cli.Execute(); err != nil {
 		logger.WithError(err).Fatal("Failed to start rpc server")
 	}
-	logger.Info("Daemon started")
+	logger.Debug("Daemon started")
 }
 
 func createDataDirIfNeeded() {
-	logger.Info("Creating data directory if needed")
-	_ = os.MkdirAll(dataDir, 0777)
+	logger.Debug("Creating data directory if needed")
+	_ = os.MkdirAll(DataDir, 0777)
 }
 
-func parseBaudRate(sketchPath string) int {
-	var baud int
-	rgx := regexp.MustCompile(`Serial\.begin\((\d+)\);`)
-	sketchParts := strings.Split(sketchPath, "/")
-	sketchName := sketchParts[len(sketchParts)-1]
-	sketchFile := fmt.Sprintf("%s/%s.ino", sketchPath, sketchName)
-	file, err := os.Open(sketchFile)
-	if err != nil {
-		// Log the error and return 0 for baud to let script continue
-		// with either default value or value specified from command-line.
-		logger.WithError(err).
-			WithField("sketch", sketchPath).
-			Info("Failed to read sketch")
-		return baud
-	}
-
-	scanner := bufio.NewScanner(file)
-
-	for scanner.Scan() {
-		text := scanner.Text()
-		if match := rgx.MatchString(text); match {
-			stringBaud := strings.TrimSpace(rgx.ReplaceAllString(text, "$1"))
-			if baud, err = strconv.Atoi(stringBaud); err != nil {
-				// set baud to 0 and let script continue with either default
-				// value or value specified from command-line.
-				logger.WithError(err).Info("Failed to parse baud rate from sketch")
-				baud = 0
+func stopLogs(target *TargetInfo) {
+	if target.Stream != nil {
+		logWithField := logger.WithField("device", target.Device)
+		logWithField.Info("Closing serial port connection")
+		if err := target.Stream.Close(); err != nil {
+			logWithField.WithError(err).Fatal("Failed to close serial port connection")
+		}
+		if err := target.Stream.Flush(); err != nil {
+			logWithField.WithError(err).Fatal("Failed to flush serial port connection")
+		}
+		target.Stream = nil
+		// block until all logs have stopped
+		for {
+			if !target.Logging {
+				break
 			}
-			break
 		}
 	}
-
-	return baud
 }
 
-func getSketch() string {
-	if len(os.Args) == 1 {
-		return ""
+func waitForPreviousUpload(target *TargetInfo) {
+	// block until target is no longer uploading
+	for {
+		if !target.Uploading {
+			break
+		}
+		logger.Info("Waiting for previous upload to finish...")
+		time.Sleep(time.Second)
 	}
-
-	sketch := os.Args[1]
-
-	if !strings.Contains(sketch, "/") {
-		return fmt.Sprintf("sketches/%s", sketch)
-	}
-
-	if strings.HasSuffix(sketch, "/") {
-		sketch = strings.TrimSuffix(sketch, "/")
-	}
-
-	return sketch
 }
 
-func processSketch(baud int) (string, int) {
-	sketch := getSketch()
-
-	if sketch == "" {
-		logger.WithError(errors.New("Missing sketch arguemnet")).Fatal("Must provide a sketch name as an argument to upload")
+func waitForPreviousCompile(target *TargetInfo) {
+	// block until target is no longer compiling
+	for {
+		if !target.Compiling {
+			break
+		}
+		logger.Info("Waiting for previous compile to finish...")
+		time.Sleep(time.Second)
 	}
-	parsedBaud := parseBaudRate(sketch)
-
-	if parsedBaud != 0 && parsedBaud != baud {
-		fmt.Println("")
-		logger.Info("Detected a different baud rate from sketch file.")
-		logger.WithField("detected baud", parsedBaud).Info("Using detected baud rate")
-		fmt.Println("")
-		baud = parsedBaud
-	}
-
-	return sketch, baud
 }
 
-func initialize() (*grpc.ClientConn, rpc.ArduinoCoreClient, *rpc.Instance) {
-	createDataDirIfNeeded()
-	go startDaemon()
-
-	conn := getServerConnection()
-	client := rpc.NewArduinoCoreClient(conn)
-	rpcInstance := getRpcInstance(client, dataDir)
-
-	updateIndex(client, rpcInstance)
-	loadPlatforms(client, rpcInstance)
-	platformList(client, rpcInstance)
-	return conn, client, rpcInstance
-}
-
-func process(baud int) {
-	sketch, baud := processSketch(baud)
-
-	logFields := log.Fields{"baud": baud, "sketch": sketch}
-	logWithFields := logger.WithFields(logFields)
-
-	conn, client, rpcInstance := initialize()
-	defer conn.Close()
-
-	list := getBoardList(client, rpcInstance)
-
-	logWithFields.Info("Parsing target board")
-	targetBoard := getTargetBoardInfo(list)
-
-	logWithFields.WithField("target-board", targetBoard).Info("Found target")
-
-	compile(client, rpcInstance, targetBoard, sketch)
-	upload(client, rpcInstance, targetBoard, sketch)
-
-	watchLogs(targetBoard.Device, baud)
-}
-
-func main() {
-	var baud int
-	rootCmd := &cobra.Command{
-		Use:   "ardi",
-		Short: "Ardi uploads sketches and prints logs for a variety of arduino boards.",
-		Long: "A light wrapper around arduino-cli that offers a quick way to upload\n" +
-			"sketches and watch logs from command line for a variety of arduino boards.",
-	}
-
-	goCommand := &cobra.Command{
-		Use:   "go [sketch]",
-		Short: "Compile and upload code to an arduino board",
-		Long: "Compile and upload code to an arduino board. Simply pass the\n" +
-			"directory containing the .ino file as the first argument. You can\n" +
-			"also specify the baud rate with --baud <RATE> (default is 9600).",
-		Run: func(cmd *cobra.Command, args []string) {
-			process(baud)
-		},
-	}
-
-	initCommand := &cobra.Command{
-		Use:   "init",
-		Short: "Download and install platforms",
-		Long: "Downloads and installs all available platforms to support\n" +
-			"a maximum number of boards.",
-		Run: func(cmd *cobra.Command, args []string) {
-			conn, _, _ := initialize()
-			defer conn.Close()
-		},
-	}
-
-	cleanCommand := &cobra.Command{
-		Use:   "clean",
-		Short: "Delete all ardi data",
-		Long:  "Removes all installed platforms from ~/.ardi",
-		Run: func(cmd *cobra.Command, args []string) {
-			if err := os.RemoveAll(ardiDir); err != nil {
-				logger.WithError(err).Fatalf("Failed to clean ardi directory. You can manually clean all data by removing %s", ardiDir)
-			}
-			logger.Infof("Successfully removed all data from %s", ardiDir)
-		},
-	}
-
-	goCommand.Flags().IntVarP(&baud, "baud", "b", 9600, "specify sketch baud rate")
-	rootCmd.AddCommand(goCommand)
-	rootCmd.AddCommand(initCommand)
-	rootCmd.AddCommand(cleanCommand)
-	rootCmd.Execute()
+func isVerbose() bool {
+	return logger.Level == log.DebugLevel
 }

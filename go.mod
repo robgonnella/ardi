@@ -4,6 +4,7 @@ go 1.12
 
 require (
 	github.com/arduino/arduino-cli v0.0.0-20190722075247-15fcf19915f4
+	github.com/fsnotify/fsnotify v1.4.7
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
 	github.com/sirupsen/logrus v1.4.2
 	github.com/spf13/cobra v0.0.5
