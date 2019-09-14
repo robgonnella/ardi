@@ -145,7 +145,7 @@ func Upload(client rpc.ArduinoCoreClient, instance *rpc.Instance, target *Target
 	}
 }
 
-// Compile the specified sketch - always logs verbosely
+// Compile the specified sketch
 func Compile(client rpc.ArduinoCoreClient, instance *rpc.Instance, target *TargetInfo) {
 
 	stopLogs(target)
@@ -199,7 +199,7 @@ func Compile(client rpc.ArduinoCoreClient, instance *rpc.Instance, target *Targe
 }
 
 // GetTargetInfo returns a connected board if found. If more than
-// one board is connected it will ask the use to choose.
+// one board is connected it will ask the user to choose.
 func GetTargetInfo(list []TargetInfo) TargetInfo {
 	var boardIndex int
 	target := TargetInfo{}
@@ -332,8 +332,6 @@ func platformList(client rpc.ArduinoCoreClient, instance *rpc.Instance) {
 
 	logger.Debug("------INSTALLED PLATFORMS------")
 	for _, plat := range listResp.GetInstalledPlatform() {
-		// We only print ID and version of the installed platforms but you can look
-		// at the definition for the rpc.Platform struct for more fields.
 		logger.Debugf("Installed platform: %s - %s", plat.GetID(), plat.GetInstalled())
 	}
 	logger.Debug("-------------------------------")
@@ -481,8 +479,6 @@ func loadPlatforms(client rpc.ArduinoCoreClient, instance *rpc.Instance) {
 	completed := 0
 	done := make(chan platformInstallMessage, count)
 	for _, plat := range platforms {
-		// We only print ID and version of the platforms found but you can look
-		// at the definition for the rpc.Platform struct for more fields.
 		id := plat.GetID()
 		idParts := strings.Split(id, ":")
 		platPackage := idParts[0]

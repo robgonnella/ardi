@@ -1,3 +1,5 @@
+[![GoDoc](https://godoc.org/github.com/robgonnella/ardi?status.svg)](https://godoc.org/github.com/robgonnella/ardi)
+
 # Ardi
 
 Ardi is a command-line tool for compiling, uploading, and watching logs for
@@ -15,8 +17,8 @@ Once initialized run `ardi go <sketch_dir> --watch --verbose` and ardi will try
 to auto detect your board, compile your sketch, upload, watch for changes in
 your sketch file, and re-compile and re-upload.
 
-Ardi stores all its data in a `.ardi` directory in the users home directory
-to avoid any conflicts with existing `arduino-cli` installations.
+Ardi stores all its data in `~/.ardi/` to avoid any conflicts with existing
+`arduino-cli` installations.
 
 Use "ardi [command] --help" for more information about a command.
 ___
