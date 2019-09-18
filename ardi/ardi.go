@@ -305,10 +305,26 @@ func Initialize() (*grpc.ClientConn, rpc.ArduinoCoreClient, *rpc.Instance) {
 	conn := getServerConnection()
 	client := rpc.NewArduinoCoreClient(conn)
 	rpcInstance := getRPCInstance(client, DataDir)
-
+	quit := make(chan bool)
+	// Show simple "processing" indicator if not logging verbosely
+	if !isVerbose() {
+		ticker := time.NewTicker(2 * time.Second)
+		go func() {
+			for {
+				select {
+				case <-ticker.C:
+					fmt.Print(".")
+				case <-quit:
+					fmt.Print(".\n")
+					ticker.Stop()
+				}
+			}
+		}()
+	}
 	updateIndex(client, rpcInstance)
 	loadPlatforms(client, rpcInstance)
 	platformList(client, rpcInstance)
+	quit <- true
 	return conn, client, rpcInstance
 }
 
