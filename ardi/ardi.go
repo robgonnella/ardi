@@ -315,7 +315,6 @@ func Initialize() (*grpc.ClientConn, rpc.ArduinoCoreClient, *rpc.Instance) {
 				case <-ticker.C:
 					fmt.Print(".")
 				case <-quit:
-					fmt.Print(".\n")
 					ticker.Stop()
 				}
 			}
@@ -325,6 +324,7 @@ func Initialize() (*grpc.ClientConn, rpc.ArduinoCoreClient, *rpc.Instance) {
 	loadPlatforms(client, rpcInstance)
 	platformList(client, rpcInstance)
 	quit <- true
+	fmt.Print("\n")
 	return conn, client, rpcInstance
 }
 
