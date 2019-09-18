@@ -23,15 +23,22 @@ Ardi stores all its data in `~/.ardi/` to avoid any conflicts with existing
 Use "ardi [command] --help" for more information about a command.
 ___
 
-## Prereqs
+## Installation
 
-Install golang: https://golang.org/doc/install
+  Install golang: https://golang.org/doc/install
 
-run:
+  run:
 
-```bash
-go get -v github.com/robgonnella/ardi
-```
+    go get -v github.com/robgonnella/ardi
+
+  Note:<br/>
+  This tool is based directly on a specific commit of [arduino-cli]. The exact
+  commit can be found in the [go.mod](./go.mod) file of ardi. When installing
+  via "go get" be sure to omit the "-u" flag to prevent updating dependencies
+  as arduino-cli may have changed and could behave unpredictably with ardi.
+
+    go get -v github.com/robgonnella/ardi - ok
+    go get -u github.com/robgonnella/ardi - bad
 ___
 ## Installing platforms for board detection
 
@@ -87,10 +94,11 @@ command.
 ardi go blink --watch
 #or
 ardi go <path_to_sketch_dir> --watch
-
 ```
 ___
 ### Adding Libraries
 
 Create a "libraries" directory at the same level as your sketch directory.
 Add your libs to this directory and ardi will automatically include them.
+
+[arduino-cli]: https://github.com/arduino/arduino-cli
