@@ -323,8 +323,10 @@ func Initialize() (*grpc.ClientConn, rpc.ArduinoCoreClient, *rpc.Instance) {
 	updateIndex(client, rpcInstance)
 	loadPlatforms(client, rpcInstance)
 	platformList(client, rpcInstance)
-	quit <- true
-	fmt.Print("\n")
+	if !isVerbose() {
+		quit <- true
+		fmt.Print("\n")
+	}
 	return conn, client, rpcInstance
 }
 
