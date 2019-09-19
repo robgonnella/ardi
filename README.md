@@ -84,7 +84,7 @@ rate run:</br>
 
 For a list of all ardi options run: `ardi --help` or `ardi [command] --help`.
 ___
-## Using arid's "watch" feature
+## Using ardi's "watch" feature
 
 Ardi allows you to optionally watch a specified sketch file for changes and
 auto re-compile and re-upload. Just add the `--watch` flag to the `ardi go`
