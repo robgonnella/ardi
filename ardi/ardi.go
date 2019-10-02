@@ -409,25 +409,35 @@ func platformUpgrade(client rpc.ArduinoCoreClient, instance *rpc.Instance, platP
 }
 
 func upgradePlatforms(client rpc.ArduinoCoreClient, instance *rpc.Instance, platforms []*rpc.Platform) {
-	count := len(platforms)
-	completed := 0
-	done := make(chan platformUpgradeMessage, count)
+	done := make(chan platformUpgradeMessage)
+	waitForAllJobs := make(chan bool)
+	goRoutineSlot := make(chan struct{}, 2)
+	for i := 0; i < 2; i++ {
+		goRoutineSlot <- struct{}{}
+	}
+	go func() {
+		for i := 0; i < len(platforms); i++ {
+			message := <-done
+			if message.success {
+				logger.Debugf("Successfully upgraded %s:%s", message.platformPackage, message.architecture)
+			}
+			// job has finished, release the go routine slot so another job can start
+			goRoutineSlot <- struct{}{}
+		}
+		// signal all jobs complete
+		waitForAllJobs <- true
+	}()
 	for _, plat := range platforms {
+		// Wait for an available go routine slot before beginning the job
+		<-goRoutineSlot
 		id := plat.GetID()
 		idParts := strings.Split(id, ":")
 		platPackage := idParts[0]
 		arch := idParts[len(idParts)-1]
 		go platformUpgrade(client, instance, platPackage, arch, done)
 	}
-	for message := range done {
-		if message.success {
-			logger.Debugf("Successfully upgraded %s:%s", message.platformPackage, message.architecture)
-		}
-		completed++
-		if completed == count {
-			close(done)
-		}
-	}
+
+	<-waitForAllJobs
 }
 
 func platformInstall(client rpc.ArduinoCoreClient, instance *rpc.Instance, platPackage, arch, version string, done chan platformInstallMessage) {
@@ -493,10 +503,28 @@ func loadPlatforms(client rpc.ArduinoCoreClient, instance *rpc.Instance) {
 	}
 
 	platforms := searchResp.GetSearchOutput()
-	count := len(platforms)
-	completed := 0
-	done := make(chan platformInstallMessage, count)
+	done := make(chan platformInstallMessage)
+	waitForAllJobs := make(chan bool)
+	goRoutineSlot := make(chan struct{}, 2)
+	for i := 0; i < 2; i++ {
+		goRoutineSlot <- struct{}{}
+	}
+	go func() {
+		for i := 0; i < len(platforms); i++ {
+			message := <-done
+			if message.success {
+				logger.Debugf("Successfully installed %s:%s - %s", message.platformPackage, message.architecture, message.version)
+
+			}
+			// job has finished, release the go routine slot so another job can start
+			goRoutineSlot <- struct{}{}
+		}
+		// signal all jobs complete
+		waitForAllJobs <- true
+	}()
 	for _, plat := range platforms {
+		// Wait for an available go routine slot before beginning the job
+		<-goRoutineSlot
 		id := plat.GetID()
 		idParts := strings.Split(id, ":")
 		platPackage := idParts[0]
@@ -505,16 +533,7 @@ func loadPlatforms(client rpc.ArduinoCoreClient, instance *rpc.Instance) {
 		logger.Debugf("Search result: %s: %s - %s", platPackage, id, latest)
 		go platformInstall(client, instance, platPackage, arch, latest, done)
 	}
-	for message := range done {
-		if message.success {
-			logger.Debugf("Successfully installed %s:%s - %s", message.platformPackage, message.architecture, message.version)
-
-		}
-		completed++
-		if completed == count {
-			close(done)
-		}
-	}
+	<-waitForAllJobs
 	upgradePlatforms(client, instance, platforms)
 }
 

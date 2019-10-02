@@ -21,40 +21,39 @@ Ardi stores all its data in `~/.ardi/` to avoid any conflicts with existing
 `arduino-cli` installations.
 
 Use "ardi [command] --help" for more information about a command.
-___
 
-## Installation
+# Installation
 
   Install golang: https://golang.org/doc/install
 
   run:
 
-    go get -v github.com/robgonnella/ardi
+    GO111MODULE=on go get github.com/robgonnella/ardi
 
   Note:<br/>
   This tool is based directly on a specific commit of [arduino-cli]. The exact
   commit can be found in the [go.mod](./go.mod) file of ardi. When installing
   via "go get" be sure to omit the "-u" flag to prevent updating dependencies
   as arduino-cli may have changed and could behave unpredictably with ardi.
+  Also because ardi is written using go modules, you must include
+  `GO111MODULE=on` when installing to ensure the proper versions of dependencies
+  are used.
 
-    go get -v github.com/robgonnella/ardi - ok
-    go get -u github.com/robgonnella/ardi - bad
-___
-## Installing platforms for board detection
+# Installing platforms for board detection
 
 ```bash
 # from any directory
 ardi init --verbose
 ```
-___
-## Remove all installed platforms and data
+
+# Remove all installed platforms and data
 
 ```bash
 # from any directory
 ardi clean
 ```
-___
-## Creating and uploading Sketches
+
+# Creating and uploading Sketches
 
 There are two options for compiling and uploading sketches.
 Both options require your sketch `.ino` file to be in a
@@ -83,8 +82,8 @@ rate run:</br>
 `ardi go <sketch_name> --baud <BAUD_RATE>`
 
 For a list of all ardi options run: `ardi --help` or `ardi [command] --help`.
-___
-## Using ardi's "watch" feature
+
+# Using ardi's "watch" feature
 
 Ardi allows you to optionally watch a specified sketch file for changes and
 auto re-compile and re-upload. Just add the `--watch` flag to the `ardi go`
@@ -95,8 +94,8 @@ ardi go blink --watch
 #or
 ardi go <path_to_sketch_dir> --watch
 ```
-___
-### Adding Libraries
+
+# Adding Libraries
 
 Create a "libraries" directory at the same level as your sketch directory.
 Add your libs to this directory and ardi will automatically include them.
