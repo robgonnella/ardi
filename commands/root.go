@@ -22,10 +22,18 @@ func Initialize() *cobra.Command {
 	initCmd := getInitCommand()
 	cleanCmd := getCleanCommand()
 	goCmd := getGoCommand()
+	compileCmd := getCompileCommand()
+	libCmd := getLibCommand()
+	platCmd := getPlatformCommand()
+	boardCmd := getBoardCommand()
 
 	rootCmd.AddCommand(initCmd)
 	rootCmd.AddCommand(cleanCmd)
 	rootCmd.AddCommand(goCmd)
+	rootCmd.AddCommand(compileCmd)
+	rootCmd.AddCommand(libCmd)
+	rootCmd.AddCommand(platCmd)
+	rootCmd.AddCommand(boardCmd)
 
 	return rootCmd
 }

@@ -8,27 +8,39 @@ you time and improving efficiency.
 
 Ardi should work for all boards and platforms supported by arduino-cli.
 Run "ardi init" to download all supported platforms and indexes to ensure
-maximum board support.
+maximum board support. To initialize only for a specific platform, run
+"ardi init <platformID>". To see a list of supported platforms and associated
+IDs, run "ardi platform list". To see a list of all supported boards and their
+associated platforms and fqbns run "ardi board list".
 
 Once initialized run "ardi go <sketch_dir> --watch --verbose" and ardi will try
 to auto detect your board, compile your sketch, upload, watch for changes in
-your sketch file, and re-compile and re-upload.
+your sketch file, and re-compile and re-upload. You can also run,
+"ardi compile <sketch_directory> --fqbn <board_fqbn>" to only compile and
+skip uploading.
 
-Ardi stores all its data in "~/.ardi/" to avoid any conflicts with existing
-"arduino-cli" installations.
+Ardi also includes a basic library manager. Run "ardi lib init" in your project
+directory to initialize it as an ardi project directory. Once initialized,
+you can use "ardi lib add <lib_name>" to add libraries,
+"ardi lib remove <lib_name>", "ardi lib install" to install missing libraries
+defined in ardi.json, and "ardi lib search <searchFilter>" to search existing
+libraries.
+
+Ardi stores all its platform data in "~/.ardi/" to avoid any conflicts with
+existing "arduino-cli" installations.
 
 Usage:
   ardi [command]
 
-Description:
-  A light wrapper around arduino-cli that offers a quick way to upload
-  sketches and watch logs from command line for a variety of arduino boards.
-
 Available Commands:
-  clean       Delete all ardi data
-  go          Compile and upload code to an arduino board
+  board       Board related commands
+  clean       Delete all ardi global data
+  compile     Compile specified sketch
+  go          Compile and upload code to a connected arduino board
   help        Help about any command
-  init        Download and install platforms
+  init        Download, install, and update platforms (alias: ardi update)
+  lib         Library manager for ardi
+  platform    Platform related commands
 
 Flags:
   -h, --help   help for ardi
