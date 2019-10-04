@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path"
 	"strings"
 	"text/tabwriter"
 	"time"
@@ -23,12 +24,29 @@ var logger = log.New()
 var homeDir, _ = os.UserHomeDir()
 
 // ArdiDir location of .ardi directory in users home directory
-var ArdiDir = fmt.Sprintf("%s/.ardi", homeDir)
+var ArdiDir = path.Join(homeDir, ".ardi")
 
 // DataDir location of data directory inside ~/.ardi
 // To avoid polluting an existing arduino-cli installation, ardi
 // uses its own data directory to keep cores, libraries and the likes.
-var DataDir = fmt.Sprintf("%s/arduino-rpc-client", ArdiDir)
+var DataDir = path.Join(ArdiDir, "arduino-rpc-client")
+
+// LibConfig used to tell arduino-cli where to find libraries
+var LibConfig = "ardi.yaml"
+
+// DepConfig used to tell ardi which libraries to use for a specific project
+var DepConfig = "ardi.json"
+
+// GlobalLibConfig returns path to global library directory config file
+var GlobalLibConfig = path.Join(DataDir, LibConfig)
+
+// LibraryDirConfig represents yaml config for telling arduino-cli where to find libraries
+type LibraryDirConfig struct {
+	ProxyType      string                 `yaml:"proxy_type"`
+	SketchbookPath string                 `yaml:"sketchbook_path"`
+	ArduinoData    string                 `yaml:"arduino_data"`
+	BoardManager   map[string]interface{} `yaml:"board_manager,flow"`
+}
 
 // TargetInfo represents all necessary info for compiling, and uploading
 type TargetInfo struct {
@@ -57,9 +75,53 @@ type platformInstallMessage struct {
 	success         bool
 }
 
+type boardInfo struct {
+	FQBN string
+	Name string
+}
+
 // SetLogLevel sets log level for ardi
 func SetLogLevel(level log.Level) {
 	logger.SetLevel(level)
+}
+
+// GetDesiredBoard prints list of supported boards and asks user to choose
+func GetDesiredBoard(client rpc.ArduinoCoreClient, instance *rpc.Instance) string {
+	logger.Debug("Getting list of supported boards...")
+	listResp, err := client.PlatformList(
+		context.Background(),
+		&rpc.PlatformListReq{Instance: instance},
+	)
+
+	if err != nil {
+		logger.Fatalf("List error: %s", err)
+	}
+
+	var boards []boardInfo
+
+	for _, p := range listResp.GetInstalledPlatform() {
+		for _, b := range p.GetBoards() {
+			b := boardInfo{
+				FQBN: b.GetFqbn(),
+				Name: b.GetName(),
+			}
+			boards = append(boards, b)
+		}
+	}
+
+	var boardIdx int
+	printSupportedBoardsWithIndices(boards)
+
+	fmt.Print("\nEnter number of board for which to compile: ")
+	if _, err := fmt.Scanf("%d", &boardIdx); err != nil {
+		logger.WithError(err).Fatal("Failed to parse target board")
+	}
+
+	if boardIdx < 0 || boardIdx > len(boards)-1 {
+		logger.WithError(errors.New("Invalid board selection")).Fatal("Failed to get desired board")
+	}
+
+	return boards[boardIdx].FQBN
 }
 
 // WatchLogs connects to a serial port at a specified baud rate and prints
@@ -210,7 +272,7 @@ func GetTargetInfo(list []TargetInfo) TargetInfo {
 	} else if listLength == 1 {
 		boardIndex = 0
 	} else {
-		printBoardListWithIndices(list)
+		printConnectedBoardsWithIndices(list)
 		fmt.Print("\nEnter number of board to upload to: ")
 		if _, err := fmt.Scanf("%d", &boardIndex); err != nil {
 			logger.WithError(err).Fatal("Failed to parse target board")
@@ -297,17 +359,208 @@ func WatchSketch(client rpc.ArduinoCoreClient, instance *rpc.Instance, target *T
 
 }
 
-// Initialize downloads and installs all available platforms for maximum board support
-func Initialize() (*grpc.ClientConn, rpc.ArduinoCoreClient, *rpc.Instance) {
-	createDataDirIfNeeded()
-	go startDaemon()
+// LibSearch searches all available libraries with optional search filter
+func LibSearch(client rpc.ArduinoCoreClient, instance *rpc.Instance, searchArg string) {
+	searchResp, err := client.LibrarySearch(
+		context.Background(),
+		&rpc.LibrarySearchReq{
+			Instance: instance,
+			Query:    searchArg,
+		},
+	)
+	if err != nil {
+		logger.WithError(err).Fatal("Error searching library")
+	}
 
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, 8, ' ', 0)
+	defer w.Flush()
+
+	fmt.Fprintln(w, "Library\tLatest\tReleases")
+	for _, lib := range searchResp.GetLibraries() {
+		releases := []string{}
+		for _, rel := range lib.GetReleases() {
+			releases = append(releases, rel.GetVersion())
+		}
+		fmt.Fprintf(w, "%s\t%s\t%s\n", lib.GetName(), lib.GetLatest().GetVersion(), strings.Join(releases, ", "))
+	}
+}
+
+// LibInstall installs library either globally or for project
+func LibInstall(client rpc.ArduinoCoreClient, instance *rpc.Instance, name, version string) string {
+	logger.Infof("Installing library: %s %s", name, version)
+	installRespStream, err := client.LibraryInstall(context.Background(),
+		&rpc.LibraryInstallReq{
+			Instance: instance,
+			Name:     name,
+			Version:  version,
+		})
+
+	if err != nil {
+		logger.WithError(err).Fatal("Error installing library")
+	}
+
+	foundVersion := ""
+
+	for {
+		installResp, err := installRespStream.Recv()
+		if err == io.EOF {
+			logger.Info("Lib install done")
+			break
+		}
+
+		if err != nil {
+			logger.WithError(err).Fatal("Library install error")
+		}
+
+		if installResp.GetProgress() != nil {
+			logger.Infof("DOWNLOAD: %s\n", installResp.GetProgress())
+		}
+		if installResp.GetTaskProgress() != nil {
+			msg := installResp.GetTaskProgress()
+			lib := msg.GetName()
+			logger.Infof("TASK: %s\n", msg)
+			if foundVersion == "" {
+				foundVersion = strings.Split(lib, "@")[1]
+			}
+		}
+	}
+	return foundVersion
+}
+
+// LibUnInstall installs library either globally or for project
+func LibUnInstall(client rpc.ArduinoCoreClient, instance *rpc.Instance, name string) {
+	logger.Infof("Uninstalling library: %s", name)
+	uninstallRespStream, err := client.LibraryUninstall(
+		context.Background(),
+		&rpc.LibraryUninstallReq{
+			Instance: instance,
+			// Assume spaces in name were intended to be underscore. This indicates
+			// a potential bug in the arduino-cli package manager as names
+			// potentially do not have a one-to-one mapping with regards to install
+			// and remove commands. It seems as though arduino should be forcing
+			// devs to name their library according to the github url.
+			// @todo there has to be a better way - find it!
+			Name: strings.ReplaceAll(name, " ", "_"),
+		})
+
+	if err != nil {
+		logger.WithError(err).Fatal("Error uninstalling library")
+	}
+
+	for {
+		uninstallRespStream, err := uninstallRespStream.Recv()
+		if err == io.EOF {
+			logger.Info("Lib uninstall done")
+			break
+		}
+
+		if err != nil {
+			logger.WithError(err).Fatal("Library install error")
+		}
+
+		if uninstallRespStream.GetTaskProgress() != nil {
+			logger.Infof("TASK: %s\n", uninstallRespStream.GetTaskProgress())
+		}
+	}
+}
+
+// IsInitialized returns whether or not ardi had been initialized (has a data directory)
+func IsInitialized() bool {
+	_, err := os.Stat(DataDir)
+	return !os.IsNotExist(err)
+}
+
+// IsProjectDirectory returns whether or not current directory is configured with
+func IsProjectDirectory() bool {
+	_, err := os.Stat(LibConfig)
+	return !os.IsNotExist(err)
+}
+
+// StartDaemonAndGetConnection starts daemon as goroutine and return connection, client, and rpc-instance
+func StartDaemonAndGetConnection(pathToConfig string) (*grpc.ClientConn, rpc.ArduinoCoreClient, *rpc.Instance) {
+	go startDaemon(pathToConfig)
 	conn := getServerConnection()
 	client := rpc.NewArduinoCoreClient(conn)
-	rpcInstance := getRPCInstance(client, DataDir)
-	quit := make(chan bool)
+	instance := getRPCInstance(client, pathToConfig)
+	return conn, client, instance
+}
+
+// ListPlatforms list all available platforms or filter with a search arg
+func ListPlatforms(platform string) {
+	if !IsInitialized() {
+		createDataDir()
+	}
+	conn, client, instance := StartDaemonAndGetConnection(GlobalLibConfig)
+	defer conn.Close()
+
+	updateIndexes(client, instance)
+	searchResp, err := client.PlatformSearch(
+		context.Background(),
+		&rpc.PlatformSearchReq{
+			Instance:   instance,
+			SearchArgs: platform,
+		},
+	)
+
+	if err != nil {
+		logger.Fatalf("Search error: %s", err)
+	}
+
+	platforms := searchResp.GetSearchOutput()
+	logger.Info("------AVAILABLE PLATFORMS------")
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, 8, ' ', 0)
+	defer w.Flush()
+	fmt.Fprintln(w, "Platform\tID")
+	for _, plat := range platforms {
+		fmt.Fprintf(w, "%s\t%s\n", plat.GetName(), plat.GetID())
+	}
+}
+
+// ListBoards lists all available boards with optional search filter
+func ListBoards(board string) {
+	if !IsInitialized() {
+		createDataDir()
+	}
+	conn, client, instance := StartDaemonAndGetConnection(GlobalLibConfig)
+	defer conn.Close()
+
+	updateIndexes(client, instance)
+	searchResp, err := client.PlatformSearch(
+		context.Background(),
+		&rpc.PlatformSearchReq{
+			Instance:   instance,
+			SearchArgs: board,
+		},
+	)
+
+	if err != nil {
+		logger.Fatalf("Search error: %s", err)
+	}
+
+	platforms := searchResp.GetSearchOutput()
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, 8, ' ', 0)
+	defer w.Flush()
+	fmt.Fprintln(w, "Board\tPlatform\tFQBN")
+	for _, plat := range platforms {
+		for _, board := range plat.GetBoards() {
+			fmt.Fprintf(w, "%s\t%s\t%s\n", board.GetName(), plat.GetID(), board.GetFqbn())
+		}
+	}
+}
+
+// Initialize downloads and installs all available platforms for maximum board support
+func Initialize(platform, version string) {
+	if !IsInitialized() {
+		createDataDir()
+	}
+
+	conn, client, rpcInstance := StartDaemonAndGetConnection(GlobalLibConfig)
+	defer conn.Close()
+
+	quit := make(chan bool, 1)
 	// Show simple "processing" indicator if not logging verbosely
 	if !isVerbose() {
+		logger.Info("Installing platforms...")
 		ticker := time.NewTicker(2 * time.Second)
 		go func() {
 			for {
@@ -320,367 +573,20 @@ func Initialize() (*grpc.ClientConn, rpc.ArduinoCoreClient, *rpc.Instance) {
 			}
 		}()
 	}
-	updateIndex(client, rpcInstance)
-	loadPlatforms(client, rpcInstance)
-	platformList(client, rpcInstance)
+	updateIndexes(client, rpcInstance)
+	if platform == "" {
+		loadAllPlatforms(client, rpcInstance)
+	} else {
+		platParts := strings.Split(platform, ":")
+		platPackage := platParts[0]
+		arch := platParts[len(platParts)-1]
+		version := ""
+		done := make(chan platformInstallMessage, 1)
+		platformInstall(client, rpcInstance, platPackage, arch, version, done)
+	}
 	if !isVerbose() {
 		quit <- true
-		fmt.Print("\n")
+		fmt.Println("")
 	}
-	return conn, client, rpcInstance
-}
-
-// private
-func printBoardListWithIndices(list []TargetInfo) {
-	w := tabwriter.NewWriter(os.Stdout, 0, 5, 0, '\t', 0)
-	defer w.Flush()
-	fmt.Fprintln(w, "No.\tBoard\tDevice")
-	for i, board := range list {
-		fmt.Fprintf(w, "%d\t%s\t%s\n", i, board.FQBN, board.Device)
-	}
-}
-
-func platformList(client rpc.ArduinoCoreClient, instance *rpc.Instance) {
-	listResp, err := client.PlatformList(context.Background(),
-		&rpc.PlatformListReq{Instance: instance})
-
-	if err != nil {
-		logger.Fatalf("List error: %s", err)
-	}
-
-	logger.Debug("------INSTALLED PLATFORMS------")
-	for _, plat := range listResp.GetInstalledPlatform() {
-		logger.Debugf("Installed platform: %s - %s", plat.GetID(), plat.GetInstalled())
-	}
-	logger.Debug("-------------------------------")
-}
-
-func platformUpgrade(client rpc.ArduinoCoreClient, instance *rpc.Instance, platPackage, arch string, done chan platformUpgradeMessage) {
-	logger.Debugf("Upgrading platform: %s:%s\n", platPackage, arch)
-
-	upgradeRespStream, err := client.PlatformUpgrade(context.Background(),
-		&rpc.PlatformUpgradeReq{
-			Instance:        instance,
-			PlatformPackage: platPackage,
-			Architecture:    arch,
-		})
-
-	if err != nil {
-		logger.WithError(err).Warn("Error upgrading platform")
-	}
-
-	message := platformUpgradeMessage{
-		platformPackage: platPackage,
-		architecture:    arch,
-		success:         false,
-	}
-
-	// Loop and consume the server stream until all the operations are done.
-	for {
-		upgradeResp, err := upgradeRespStream.Recv()
-
-		// The server is done.
-		if err == io.EOF {
-			logger.Debug("Upgrade done")
-			message.success = true
-			done <- message
-			break
-		}
-
-		// There was an error.
-		if err != nil {
-			if !strings.Contains(err.Error(), "platform already at latest version") {
-				logger.WithError(err).Warn("Cannot upgrade platform")
-			}
-			done <- message
-			break
-		}
-
-		// When a download is ongoing, log the progress
-		if upgradeResp.GetProgress() != nil {
-			logger.Debugf("DOWNLOAD: %s", upgradeResp.GetProgress())
-		}
-
-		// When an overall task is ongoing, log the progress
-		if upgradeResp.GetTaskProgress() != nil {
-			logger.Debugf("TASK: %s", upgradeResp.GetTaskProgress())
-		}
-	}
-}
-
-func upgradePlatforms(client rpc.ArduinoCoreClient, instance *rpc.Instance, platforms []*rpc.Platform) {
-	done := make(chan platformUpgradeMessage)
-	waitForAllJobs := make(chan bool)
-	goRoutineSlot := make(chan struct{}, 2)
-	for i := 0; i < 2; i++ {
-		goRoutineSlot <- struct{}{}
-	}
-	go func() {
-		for i := 0; i < len(platforms); i++ {
-			message := <-done
-			if message.success {
-				logger.Debugf("Successfully upgraded %s:%s", message.platformPackage, message.architecture)
-			}
-			// job has finished, release the go routine slot so another job can start
-			goRoutineSlot <- struct{}{}
-		}
-		// signal all jobs complete
-		waitForAllJobs <- true
-	}()
-	for _, plat := range platforms {
-		// Wait for an available go routine slot before beginning the job
-		<-goRoutineSlot
-		id := plat.GetID()
-		idParts := strings.Split(id, ":")
-		platPackage := idParts[0]
-		arch := idParts[len(idParts)-1]
-		go platformUpgrade(client, instance, platPackage, arch, done)
-	}
-
-	<-waitForAllJobs
-}
-
-func platformInstall(client rpc.ArduinoCoreClient, instance *rpc.Instance, platPackage, arch, version string, done chan platformInstallMessage) {
-	logger.Debugf("Installing platform: %s:%s\n", arch, version)
-
-	installRespStream, err := client.PlatformInstall(context.Background(),
-		&rpc.PlatformInstallReq{
-			Instance:        instance,
-			PlatformPackage: platPackage,
-			Architecture:    arch,
-			Version:         version,
-		})
-
-	if err != nil {
-		logger.WithError(err).Warn("Failed to install platform")
-	}
-
-	message := platformInstallMessage{
-		platformPackage: platPackage,
-		architecture:    arch,
-		version:         version,
-		success:         false,
-	}
-
-	// Loop and consume the server stream until all the operations are done.
-	for {
-		installResp, err := installRespStream.Recv()
-
-		// The server is done.
-		if err == io.EOF {
-			logger.Debug("Install done")
-			message.success = true
-			done <- message
-			break
-		}
-
-		// There was an error.
-		if err != nil {
-			logger.WithError(err).Warn("Failed to install platform")
-			done <- message
-			break
-		}
-
-		// When a download is ongoing, log the progress
-		if installResp.GetProgress() != nil {
-			logger.Debugf("DOWNLOAD: %s", installResp.GetProgress())
-		}
-
-		// When an overall task is ongoing, log the progress
-		if installResp.GetTaskProgress() != nil {
-			logger.Debugf("TASK: %s", installResp.GetTaskProgress())
-		}
-	}
-}
-
-func loadPlatforms(client rpc.ArduinoCoreClient, instance *rpc.Instance) {
-	searchResp, err := client.PlatformSearch(context.Background(), &rpc.PlatformSearchReq{
-		Instance: instance,
-	})
-
-	if err != nil {
-		logger.Fatalf("Search error: %s", err)
-	}
-
-	platforms := searchResp.GetSearchOutput()
-	done := make(chan platformInstallMessage)
-	waitForAllJobs := make(chan bool)
-	goRoutineSlot := make(chan struct{}, 2)
-	for i := 0; i < 2; i++ {
-		goRoutineSlot <- struct{}{}
-	}
-	go func() {
-		for i := 0; i < len(platforms); i++ {
-			message := <-done
-			if message.success {
-				logger.Debugf("Successfully installed %s:%s - %s", message.platformPackage, message.architecture, message.version)
-
-			}
-			// job has finished, release the go routine slot so another job can start
-			goRoutineSlot <- struct{}{}
-		}
-		// signal all jobs complete
-		waitForAllJobs <- true
-	}()
-	for _, plat := range platforms {
-		// Wait for an available go routine slot before beginning the job
-		<-goRoutineSlot
-		id := plat.GetID()
-		idParts := strings.Split(id, ":")
-		platPackage := idParts[0]
-		arch := idParts[len(idParts)-1]
-		latest := plat.GetLatest()
-		logger.Debugf("Search result: %s: %s - %s", platPackage, id, latest)
-		go platformInstall(client, instance, platPackage, arch, latest, done)
-	}
-	<-waitForAllJobs
-	upgradePlatforms(client, instance, platforms)
-}
-
-func updateIndex(client rpc.ArduinoCoreClient, instance *rpc.Instance) {
-	logger.Debug("Updating index...")
-	uiRespStream, err := client.UpdateIndex(context.Background(), &rpc.UpdateIndexReq{
-		Instance: instance,
-	})
-	if err != nil {
-		logger.Fatalf("Error updating index: %s", err)
-	}
-
-	// Loop and consume the server stream until all the operations are done.
-	for {
-		uiResp, err := uiRespStream.Recv()
-
-		// the server is done
-		if err == io.EOF {
-			logger.Debug("Update index done")
-			break
-		}
-
-		// there was an error
-		if err != nil {
-			logger.Fatalf("Update error: %s", err)
-		}
-
-		// operations in progress
-		if uiResp.GetDownloadProgress() != nil {
-			logger.Debugf("DOWNLOAD: %s", uiResp.GetDownloadProgress())
-		}
-	}
-}
-
-func getRPCInstance(client rpc.ArduinoCoreClient, dataDir string) *rpc.Instance {
-	// The configuration for this example client only contains the path to
-	// the data folder.
-	initRespStream, err := client.Init(context.Background(), &rpc.InitReq{
-		Configuration: &rpc.Configuration{
-			DataDir: dataDir,
-		},
-	})
-	if err != nil {
-		logger.Fatalf("Error creating server instance: %s", err)
-	}
-
-	var instance *rpc.Instance
-	// Loop and consume the server stream until all the setup procedures are done.
-	for {
-		initResp, err := initRespStream.Recv()
-		// The server is done.
-		if err == io.EOF {
-			break
-		}
-
-		// There was an error.
-		if err != nil {
-			logger.Fatalf("Init error: %s", err)
-		}
-
-		// The server sent us a valid instance, let's print its ID.
-		if initResp.GetInstance() != nil {
-			instance = initResp.GetInstance()
-			logger.Debugf("Got a new instance with ID: %v", instance.GetId())
-		}
-
-		// When a download is ongoing, log the progress
-		if initResp.GetDownloadProgress() != nil {
-			logger.Debugf("DOWNLOAD: %s", initResp.GetDownloadProgress())
-		}
-
-		// When an overall task is ongoing, log the progress
-		if initResp.GetTaskProgress() != nil {
-			logger.Debugf("TASK: %s", initResp.GetTaskProgress())
-		}
-	}
-
-	return instance
-}
-
-func getServerConnection() *grpc.ClientConn {
-	backgroundCtx := context.Background()
-	ctx, _ := context.WithTimeout(backgroundCtx, time.Second)
-	// Establish a connection with the gRPC server, started with the command: arduino-cli daemon
-	conn, err := grpc.DialContext(ctx, "localhost:50051", grpc.WithInsecure(), grpc.WithBlock())
-	if err != nil {
-		logger.Fatal("error connecting to arduino-cli rpc server, you can start it by running `arduino-cli daemon`")
-	}
-	return conn
-}
-
-func startDaemon() {
-	logger.Debug("Starting daemon")
-	cli.SetArgs([]string{"daemon"})
-	if err := cli.Execute(); err != nil {
-		logger.WithError(err).Fatal("Failed to start rpc server")
-	}
-	logger.Debug("Daemon started")
-}
-
-func createDataDirIfNeeded() {
-	logger.Debug("Creating data directory if needed")
-	_ = os.MkdirAll(DataDir, 0777)
-}
-
-func stopLogs(target *TargetInfo) {
-	if target.Stream != nil {
-		logWithField := logger.WithField("device", target.Device)
-		logWithField.Info("Closing serial port connection")
-		if err := target.Stream.Close(); err != nil {
-			logWithField.WithError(err).Fatal("Failed to close serial port connection")
-		}
-		if err := target.Stream.Flush(); err != nil {
-			logWithField.WithError(err).Fatal("Failed to flush serial port connection")
-		}
-		target.Stream = nil
-		// block until all logs have stopped
-		for {
-			if !target.Logging {
-				break
-			}
-		}
-	}
-}
-
-func waitForPreviousUpload(target *TargetInfo) {
-	// block until target is no longer uploading
-	for {
-		if !target.Uploading {
-			break
-		}
-		logger.Info("Waiting for previous upload to finish...")
-		time.Sleep(time.Second)
-	}
-}
-
-func waitForPreviousCompile(target *TargetInfo) {
-	// block until target is no longer compiling
-	for {
-		if !target.Compiling {
-			break
-		}
-		logger.Info("Waiting for previous compile to finish...")
-		time.Sleep(time.Second)
-	}
-}
-
-func isVerbose() bool {
-	return logger.Level == log.DebugLevel
+	platformList(client, rpcInstance)
 }
