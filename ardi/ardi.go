@@ -62,19 +62,6 @@ type TargetInfo struct {
 	Logging      bool
 }
 
-type platformUpgradeMessage struct {
-	platformPackage string
-	architecture    string
-	success         bool
-}
-
-type platformInstallMessage struct {
-	platformPackage string
-	architecture    string
-	version         string
-	success         bool
-}
-
 type boardInfo struct {
 	FQBN string
 	Name string
@@ -581,8 +568,7 @@ func Initialize(platform, version string) {
 		platPackage := platParts[0]
 		arch := platParts[len(platParts)-1]
 		version := ""
-		done := make(chan platformInstallMessage, 1)
-		platformInstall(client, rpcInstance, platPackage, arch, version, done)
+		platformInstall(client, rpcInstance, platPackage, arch, version)
 	}
 	if !isVerbose() {
 		quit <- true

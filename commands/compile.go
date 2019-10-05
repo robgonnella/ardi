@@ -3,11 +3,13 @@ package commands
 import (
 	"github.com/robgonnella/ardi/ardi"
 	"github.com/robgonnella/ardi/arguments"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
 func getCompileCommand() *cobra.Command {
 	var fqbn string
+	var verbose bool
 	var compileCmd = &cobra.Command{
 		Use:   "compile [sketch]",
 		Short: "Compile specified sketch",
@@ -15,6 +17,11 @@ func getCompileCommand() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			if !ardi.IsInitialized() {
 				logger.Fatal("Ardi has not been initialized. Please run \"ardi init\" first")
+			}
+			if verbose {
+				ardi.SetLogLevel(log.DebugLevel)
+			} else {
+				ardi.SetLogLevel(log.InfoLevel)
 			}
 
 			configFile := ardi.GlobalLibConfig
@@ -48,6 +55,8 @@ func getCompileCommand() *cobra.Command {
 			ardi.Compile(client, instance, target)
 		},
 	}
-	compileCmd.Flags().StringVarP(&fqbn, "fqbn", "f", "", "specify fully qualified board name")
+	compileCmd.Flags().StringVarP(&fqbn, "fqbn", "f", "", "Specify fully qualified board name")
+	compileCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Print all compilation logs")
+
 	return compileCmd
 }
