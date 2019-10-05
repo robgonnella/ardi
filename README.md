@@ -10,11 +10,13 @@ Ardi's `--watch` flag allows you to auto re-compile and upload on save, saving
 you time and improving efficiency.
 
 Ardi should work for all boards and platforms supported by arduino-cli.
-Run `ardi init` to download all supported platforms and indexes to ensure
+Run `ardi init` to download all supported platforms and index files to ensure
 maximum board support. To initialize only for a specific platform, run
-`ardi init <platformID>`. To see a list of supported platforms and associated
-IDs, run `ardi platform list`. To see a list of all supported boards and their
-associated platforms and fqbns run `ardi board list`.
+`ardi init <platformID>` or `ardi init <platformID@version>`. To see a list of
+supported platforms and associated IDs, run `ardi platform list`. To see a list
+of all supported boards and their associated platforms and fqbns run
+`ardi board list`.
+(Note board fqbn will only be filled in once platform is initialized)
 
 Once initialized run `ardi go <sketch_dir> --watch --verbose` and ardi will try
 to auto detect your board, compile your sketch, upload, watch for changes in
@@ -58,9 +60,18 @@ Use "ardi [command] --help" for more information about a command.
 ardi init --verbose
 # or to initialize only for a specified platform
 ardi init --verbose <platform_id>
+# or to initialize for a specific version of a platform
+ardi init --verbose <platform_id@version>
 # to list the available platforms
 ardi platform list <optional_search_param>
 ```
+
+Note: Unfortunately, at this time ardi cannot provide a list of available
+versions for each platform. However, you can find some of the arduino
+platforms (aka cores) listed
+[here](https://github.com/arduino?utf8=%E2%9C%93&q=core&type=&language=). Click
+on your desired platform / core, then click on the "releases" tab to see
+a list of versions for that platform / core.
 
 # Remove all installed platforms and data
 

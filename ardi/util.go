@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"sort"
 	"text/tabwriter"
 	"time"
 
@@ -25,6 +26,9 @@ func createDataDir() {
 }
 
 func printConnectedBoardsWithIndices(list []TargetInfo) {
+	sort.Slice(list, func(i, j int) bool {
+		return list[i].BoardName < list[j].BoardName
+	})
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 8, ' ', 0)
 	defer w.Flush()
 	fmt.Fprintln(w, "No.\tBoard\tDevice")
@@ -34,6 +38,9 @@ func printConnectedBoardsWithIndices(list []TargetInfo) {
 }
 
 func printSupportedBoardsWithIndices(boards []boardInfo) {
+	sort.Slice(boards, func(i, j int) bool {
+		return boards[i].Name < boards[j].Name
+	})
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 8, ' ', 0)
 	defer w.Flush()
 	fmt.Fprintln(w, "No.\tName\tFQBN")

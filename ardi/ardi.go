@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"path"
+	"sort"
 	"strings"
 	"text/tabwriter"
 	"time"
@@ -50,6 +51,7 @@ type LibraryDirConfig struct {
 
 // TargetInfo represents all necessary info for compiling, and uploading
 type TargetInfo struct {
+	BoardName    string
 	FQBN         string
 	Device       string
 	SketchDir    string
@@ -292,6 +294,7 @@ func GetTargetList(client rpc.ArduinoCoreClient, instance *rpc.Instance, sketchD
 	for _, port := range boardListResp.GetPorts() {
 		for _, board := range port.GetBoards() {
 			target := TargetInfo{
+				BoardName:  board.GetName(),
 				FQBN:       board.GetFQBN(),
 				Device:     port.GetAddress(),
 				Baud:       baud,
@@ -359,11 +362,16 @@ func LibSearch(client rpc.ArduinoCoreClient, instance *rpc.Instance, searchArg s
 		logger.WithError(err).Fatal("Error searching library")
 	}
 
+	libraries := searchResp.GetLibraries()
+	sort.Slice(libraries, func(i, j int) bool {
+		return libraries[i].GetName() < libraries[j].GetName()
+	})
+
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 8, ' ', 0)
 	defer w.Flush()
 
 	fmt.Fprintln(w, "Library\tLatest\tReleases")
-	for _, lib := range searchResp.GetLibraries() {
+	for _, lib := range libraries {
 		releases := []string{}
 		for _, rel := range lib.GetReleases() {
 			releases = append(releases, rel.GetVersion())
@@ -494,6 +502,10 @@ func ListPlatforms(platform string) {
 	}
 
 	platforms := searchResp.GetSearchOutput()
+	sort.Slice(platforms, func(i, j int) bool {
+		return platforms[i].GetName() < platforms[j].GetName()
+	})
+
 	logger.Info("------AVAILABLE PLATFORMS------")
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 8, ' ', 0)
 	defer w.Flush()
@@ -567,7 +579,6 @@ func Initialize(platform, version string) {
 		platParts := strings.Split(platform, ":")
 		platPackage := platParts[0]
 		arch := platParts[len(platParts)-1]
-		version := ""
 		platformInstall(client, rpcInstance, platPackage, arch, version)
 	}
 	if !isVerbose() {
