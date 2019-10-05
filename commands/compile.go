@@ -13,7 +13,6 @@ func getCompileCommand() *cobra.Command {
 	var compileCmd = &cobra.Command{
 		Use:   "compile [sketch]",
 		Short: "Compile specified sketch",
-		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			if !ardi.IsInitialized() {
 				logger.Fatal("Ardi has not been initialized. Please run \"ardi init\" first")
@@ -32,7 +31,13 @@ func getCompileCommand() *cobra.Command {
 			conn, client, instance := ardi.StartDaemonAndGetConnection(configFile)
 			defer conn.Close()
 
-			sketchDir, sketchFile := arguments.GetSketchParts(args[0])
+			sketchDir := "."
+			sketchFile := ""
+			if len(args) > 0 {
+				sketchDir = args[0]
+			}
+
+			sketchDir, sketchFile = arguments.GetSketchParts(sketchDir)
 			list := ardi.GetTargetList(client, instance, sketchDir, sketchFile, 9600)
 			var target *ardi.TargetInfo
 

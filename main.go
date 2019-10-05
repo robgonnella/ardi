@@ -7,11 +7,13 @@ Ardi's "--watch" flag allows you to auto re-compile and upload on save, saving
 you time and improving efficiency.
 
 Ardi should work for all boards and platforms supported by arduino-cli.
-Run "ardi init" to download all supported platforms and indexes to ensure
+Run "ardi init" to download all supported platforms and index files to ensure
 maximum board support. To initialize only for a specific platform, run
-"ardi init <platformID>". To see a list of supported platforms and associated
-IDs, run "ardi platform list". To see a list of all supported boards and their
-associated platforms and fqbns run "ardi board list".
+"ardi init <platformID>" or "ardi init <platformID@version>". To see a list of
+supported platforms and associated IDs, run "ardi platform list". To see a list
+of all supported boards and their associated platforms and fqbns run
+"ardi board list".
+(Note board fqbn will only be filled in once platform is initialized)
 
 Once initialized run "ardi go <sketch_dir> --watch --verbose" and ardi will try
 to auto detect your board, compile your sketch, upload, watch for changes in

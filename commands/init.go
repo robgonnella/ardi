@@ -1,6 +1,8 @@
 package commands
 
 import (
+	"strings"
+
 	"github.com/robgonnella/ardi/ardi"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -23,10 +25,13 @@ func getInitCommand() *cobra.Command {
 			platform := ""
 			version := ""
 			if len(args) > 0 {
-				platform = args[0]
-			}
-			if len(args) > 1 {
-				version = args[1]
+				platParts := strings.Split(args[0], "@")
+				if len(platParts) > 0 {
+					platform = platParts[0]
+				}
+				if len(platParts) > 1 {
+					version = platParts[1]
+				}
 			}
 			logger.Info("Initializing. This may take some time...")
 			ardi.Initialize(platform, version)
