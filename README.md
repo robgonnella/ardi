@@ -87,35 +87,17 @@ ardi board list
 ardi board list mega
 ```
 
-# Creating and uploading Sketches
+# Uploading Sketches
 
-There are two options for compiling and uploading sketches.
-Both options require your sketch `.ino` file to be in a
-directory that matches the `.ino` file name.</br>
-e.g. `blink/blink.ino`
+Point ardi at any absolute or relative path to a sketch directory.
 
-**Using a project level "sketches" directory:**
+    ardi go ~/<project_root>/<project_sub_dir>/blink/ --verbose
 
-- create a sketches directory in your project folder
-- add your sketch directory to the sketches directory</br>
-  e.g. `<project>/sketches/blink/blink.ino`
-- From the root of your project run
-  `ardi go <name_of_sketch_directory> --verbose`</br>
-  e.g. `ardi go blink --verbose`
+By default ardi will connect to the serial port and print logs. Ardi will read
+the sketch file and attempt to auto-detect the baud rate. To manually specify
+the baud rate run:
 
-**Using an absolute or relative path to sketch directory:**
-
-- point ardi at any absolute or relative path to a
-  sketch directory.</br>
-  e.g. `ardi go ~/<project_root>/<project_sub_dir>/blink/ --verbose`
-
-By default ardi will connect to the serial port and print
-logs. Ardi will read the sketch file and attempt to
-auto-detect the baud rate. To manually specify the baud
-rate run:</br>
-`ardi go <sketch_name> --baud <BAUD_RATE>`
-
-For a list of all ardi options run: `ardi --help` or `ardi [command] --help`.
+    ardi go <path_to_sketch_dir> --baud <baud_rate>
 
 # Using ardi's "watch" feature
 
@@ -123,11 +105,7 @@ Ardi allows you to optionally watch a specified sketch file for changes and
 auto re-compile and re-upload. Just add the `--watch` flag to the `ardi go`
 command.
 
-```bash
-ardi go blink --watch
-#or
-ardi go <path_to_sketch_dir> --watch
-```
+    ardi go <path_to_sketch_dir> --watch
 
 # Compiling only (no upload)
 
@@ -138,7 +116,7 @@ board, run the compile command with no --fqbn argument and ardi will present
 you with a list of board names and their associated fqbns for each installed
 platform.
 
-    ardi compile <sketch_directory> --fqbn <board_fqbn>
+    ardi compile <sketch_directory> --fqbn <board_fqbn> --verbose
 
 # Adding Libraries
 

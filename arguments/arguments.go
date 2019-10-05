@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -46,19 +48,43 @@ func parseBaudRate(sketch string) int {
 	return baud
 }
 
+func findInoFile(sketchDir string) string {
+	sketchFile := ""
+
+	d, err := os.Open(sketchDir)
+	if err != nil {
+		logger.WithError(err).Fatal("Failed to open sketch directory")
+	}
+	defer d.Close()
+
+	files, err := d.Readdir(-1)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	for _, file := range files {
+		if file.Mode().IsRegular() {
+			if filepath.Ext(file.Name()) == ".ino" {
+				sketchFile = path.Join(sketchDir, file.Name())
+			}
+		}
+	}
+	if sketchFile == "" {
+		logger.Fatalf("Failed to find .ino file in %s", sketchDir)
+	}
+
+	if sketchFile, err = filepath.Abs(sketchFile); err != nil {
+		logger.WithError(err).Fatal("Could not resolve sketch file path")
+	}
+
+	return sketchFile
+}
+
 // GetSketchParts sketch directory path and sketch file path.
 func GetSketchParts(sketchDir string) (string, string) {
-	if !strings.Contains(sketchDir, "/") {
-		sketchDir = fmt.Sprintf("sketches/%s", sketchDir)
-	}
-
-	if strings.HasSuffix(sketchDir, "/") {
-		sketchDir = strings.TrimSuffix(sketchDir, "/")
-	}
-
-	sketchParts := strings.Split(sketchDir, "/")
-	sketchName := sketchParts[len(sketchParts)-1]
-	sketchFile := fmt.Sprintf("%s/%s.ino", sketchDir, sketchName)
+	sketchFile := findInoFile(sketchDir)
+	sketchDir = path.Dir(sketchFile)
 	return sketchDir, sketchFile
 }
 
