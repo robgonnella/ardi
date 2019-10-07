@@ -12,7 +12,7 @@ you time and improving efficiency.
 Ardi should work for all boards and platforms supported by arduino-cli.
 Run `ardi init` to download all supported platforms and index files to ensure
 maximum board support. To initialize only for a specific platform, run
-`ardi init <platformID>` or `ardi init <platformID@version>`. To see a list of
+`ardi init <platform_id>` or `ardi init <platform_id@version>`. To see a list of
 supported platforms and associated IDs, run `ardi platform list`. To see a list
 of all supported boards and their associated platforms and fqbns run
 `ardi board list`.
@@ -53,7 +53,13 @@ Use "ardi [command] --help" for more information about a command.
   `GO111MODULE=on` when installing to ensure the proper versions of dependencies
   are used.
 
-# Installing platforms for board detection
+# Usage
+
+## Installing Platforms
+
+Ardi requires certain binaries to be downloaded before it can properly compile
+sketches, detect connected boards, or list FQBNs (fully qualified board names)
+for supported boards.
 
 ```bash
 # from any directory
@@ -73,14 +79,14 @@ platforms (aka cores) listed
 on your desired platform / core, then click on the "releases" tab to see
 a list of versions for that platform / core.
 
-# Remove all installed platforms and data
+## Remove Installed Platforms and Data
 
 ```bash
 # from any directory
 ardi clean
 ```
 
-# List all available platforms
+## List Available Platforms
 
 ```bash
 # list all (alias: search)
@@ -89,7 +95,13 @@ ardi platform list
 ardi platform list mega
 ```
 
-# List all available boards and associated platforms and FQBNs
+## List Board Info
+
+Ardi will only be able to list FQBNs for boards that have their associated
+platforms installed (initialized) already. Use the board list command
+bellow to find the desired platform for any board, then run
+`ardi init <platform_id>`, then run the board list command again to find your
+boards FQBN (fully qualified board name).
 
 ```bash
 # list all
@@ -98,7 +110,7 @@ ardi board list
 ardi board list mega
 ```
 
-# Uploading Sketches
+## Uploading Sketches
 
 Point ardi at any absolute or relative path to a sketch directory.
 
@@ -110,7 +122,7 @@ the baud rate run:
 
     ardi go <path_to_sketch_dir> --baud <baud_rate>
 
-# Using ardi's "watch" feature
+## Using Ardi's "Watch" Feature
 
 Ardi allows you to optionally watch a specified sketch file for changes and
 auto re-compile and re-upload. Just add the `--watch` flag to the `ardi go`
@@ -118,7 +130,7 @@ command.
 
     ardi go <path_to_sketch_dir> --watch
 
-# Compiling only (no upload)
+## Compiling Only (no upload)
 
 Ardi allow you to choose to just compile your sketch and not upload anywhere.
 To do this ardi still needs to know what board to compile for though. Supply
@@ -129,7 +141,7 @@ platform.
 
     ardi compile <sketch_directory> --fqbn <board_fqbn> --verbose
 
-# Adding Libraries
+## Adding Libraries
 
 Ardi has a minimal library manager. Run `ardi lib init` in your project
 directory and ardi will create the necessary config files to create repeatable

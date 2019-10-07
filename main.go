@@ -9,7 +9,7 @@ you time and improving efficiency.
 Ardi should work for all boards and platforms supported by arduino-cli.
 Run "ardi init" to download all supported platforms and index files to ensure
 maximum board support. To initialize only for a specific platform, run
-"ardi init <platformID>" or "ardi init <platformID@version>". To see a list of
+"ardi init <platform_id>" or "ardi init <platform_id@version>". To see a list of
 supported platforms and associated IDs, run "ardi platform list". To see a list
 of all supported boards and their associated platforms and fqbns run
 "ardi board list".
