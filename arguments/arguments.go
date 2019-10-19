@@ -59,8 +59,7 @@ func findInoFile(sketchDir string) string {
 
 	files, err := d.Readdir(-1)
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		logger.WithError(err).Fatal("Cannot process .ino file")
 	}
 
 	for _, file := range files {

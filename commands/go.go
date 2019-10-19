@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func process(sketchDir string, baud int, watchSketch, verbose bool) {
+func process(sketchDir string, baud int, buildProps []string, watchSketch, verbose bool) {
 	if verbose {
 		logger.SetLevel(log.DebugLevel)
 		ardi.SetLogLevel(log.DebugLevel)
@@ -35,6 +35,7 @@ func process(sketchDir string, baud int, watchSketch, verbose bool) {
 
 	logWithFields.Debug("Parsing target")
 	target := ardi.GetTargetInfo(list)
+	target.BuildProps = buildProps
 
 	logWithFields.WithField("target", target).Debug("Found target")
 
@@ -57,6 +58,7 @@ func getGoCommand() *cobra.Command {
 	var baud int
 	var watchSketch bool
 	var verbose bool
+	var buildProps []string
 
 	var goCmd = &cobra.Command{
 		Use:   "go [sketch]",
@@ -69,12 +71,13 @@ func getGoCommand() *cobra.Command {
 		Args: cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			sketchDir := args[0]
-			process(sketchDir, baud, watchSketch, verbose)
+			process(sketchDir, baud, buildProps, watchSketch, verbose)
 		},
 	}
 	goCmd.Flags().IntVarP(&baud, "baud", "b", 9600, "specify sketch baud rate")
 	goCmd.Flags().BoolVarP(&watchSketch, "watch", "w", false, "watch for changes, recompile and reupload")
 	goCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "print all logs")
+	goCmd.Flags().StringArrayVarP(&buildProps, "build-prop", "p", []string{}, "Specify build property to compiler")
 
 	return goCmd
 }
