@@ -122,6 +122,37 @@ the baud rate run:
 
     ardi go <path_to_sketch_dir> --baud <baud_rate>
 
+Accepts the a custom build property flag - see
+[Build Properties](##Build-Properties)
+
+## Compiling Only (no upload)
+
+Ardi allows you to compile your sketch without uploading. To do this ardi still
+needs to know what board to compile for though. Supply the compile command the
+fqbn for your board. If you don't know the fqbn of your board, run the compile
+command with no --fqbn argument and ardi will present you with a list of board
+names and their associated fqbns for each installed platform.
+
+    ardi compile <sketch_directory> --fqbn <board_fqbn> --verbose
+
+Accepts the a custom build property flag - see
+[Build Properties](##Build-Properties)
+
+The compile command also allows you print all build properties by using the
+`--show-props` or `-s` flag. When this flag is specified ardi will ONLY
+print the build properties, it will not actually compile your sketch.
+
+## Build Properties
+
+You can specify custom build properties to the `compile` and `go` commands by
+using the `--build-prop` or `-p` flag followed by the build property and value.
+To specify multiple build properties just precede each property with the
+`--build-prop` or `-p` flag.
+
+    ardi compile <sketch_dir> -v -f <fqbn> \
+    -p build.extra_flags="-DSOME_OPTION" \
+    -p compiler.cpp.extra_flags="-std=c++11"
+
 ## Using Ardi's "Watch" Feature
 
 Ardi allows you to optionally watch a specified sketch file for changes and
@@ -129,17 +160,6 @@ auto re-compile and re-upload. Just add the `--watch` flag to the `ardi go`
 command.
 
     ardi go <path_to_sketch_dir> --watch
-
-## Compiling Only (no upload)
-
-Ardi allow you to choose to just compile your sketch and not upload anywhere.
-To do this ardi still needs to know what board to compile for though. Supply
-the compile command the fqbn for your board. If you don't know the fqbn of your
-board, run the compile command with no --fqbn argument and ardi will present
-you with a list of board names and their associated fqbns for each installed
-platform.
-
-    ardi compile <sketch_directory> --fqbn <board_fqbn> --verbose
 
 ## Adding Libraries
 

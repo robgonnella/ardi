@@ -10,6 +10,8 @@ import (
 func getCompileCommand() *cobra.Command {
 	var fqbn string
 	var verbose bool
+	var buildProps []string
+	var showProps bool
 	var compileCmd = &cobra.Command{
 		Use:   "compile [sketch]",
 		Short: "Compile specified sketch",
@@ -55,6 +57,8 @@ func getCompileCommand() *cobra.Command {
 					SketchDir:  sketchDir,
 					SketchFile: sketchFile,
 					FQBN:       fqbn,
+					BuildProps: buildProps,
+					ShowProps:  showProps,
 				}
 			}
 			ardi.Compile(client, instance, target)
@@ -62,6 +66,8 @@ func getCompileCommand() *cobra.Command {
 	}
 	compileCmd.Flags().StringVarP(&fqbn, "fqbn", "f", "", "Specify fully qualified board name")
 	compileCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Print all compilation logs")
+	compileCmd.Flags().StringArrayVarP(&buildProps, "build-prop", "p", []string{}, "Specify build property to compiler")
+	compileCmd.Flags().BoolVarP(&showProps, "show-props", "s", false, "Show all build properties (does not compile)")
 
 	return compileCmd
 }

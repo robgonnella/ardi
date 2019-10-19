@@ -58,6 +58,8 @@ type TargetInfo struct {
 	SketchFile   string
 	Baud         int
 	Stream       *serial.Port
+	BuildProps   []string
+	ShowProps    bool
 	Compiling    bool
 	CompileError bool
 	Uploading    bool
@@ -203,17 +205,23 @@ func Compile(client rpc.ArduinoCoreClient, instance *rpc.Instance, target *Targe
 	waitForPreviousCompile(target)
 	waitForPreviousUpload(target)
 
-	logger.Info("Compiling...")
+	if target.ShowProps {
+		logger.Info("Printing build properties")
+	} else {
+		logger.Info("Compiling...")
+	}
 
 	target.Compiling = true
 	target.CompileError = false
 
 	compRespStream, err := client.Compile(context.Background(),
 		&rpc.CompileReq{
-			Instance:   instance,
-			Fqbn:       target.FQBN,
-			SketchPath: target.SketchDir,
-			Verbose:    true,
+			Instance:        instance,
+			Fqbn:            target.FQBN,
+			SketchPath:      target.SketchDir,
+			BuildProperties: target.BuildProps,
+			ShowProperties:  target.ShowProps,
+			Verbose:         true,
 		})
 
 	if err != nil {
@@ -227,7 +235,9 @@ func Compile(client rpc.ArduinoCoreClient, instance *rpc.Instance, target *Targe
 		// The server is done.
 		if err == io.EOF {
 			target.Compiling = false
-			logger.Info("Compilation done")
+			if !target.ShowProps {
+				logger.Info("Compilation done")
+			}
 			break
 		}
 
