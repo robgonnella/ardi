@@ -123,7 +123,7 @@ the baud rate run:
     ardi go <path_to_sketch_dir> --baud <baud_rate>
 
 Accepts the a custom build property flag - see
-[Build Properties](##Build-Properties)
+[Build Properties](#Build-Properties)
 
 ## Compiling Only (no upload)
 
@@ -136,7 +136,7 @@ names and their associated fqbns for each installed platform.
     ardi compile <sketch_directory> --fqbn <board_fqbn> --verbose
 
 Accepts the a custom build property flag - see
-[Build Properties](##Build-Properties)
+[Build Properties](#Build-Properties)
 
 The compile command also allows you print all build properties by using the
 `--show-props` or `-s` flag. When this flag is specified ardi will ONLY
