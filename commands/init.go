@@ -3,7 +3,7 @@ package commands
 import (
 	"strings"
 
-	"github.com/robgonnella/ardi/ardi"
+	"github.com/robgonnella/ardi/v3/ardi"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )

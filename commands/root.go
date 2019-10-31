@@ -17,23 +17,17 @@ func getRootCommand() *cobra.Command {
 }
 
 // Initialize adds all ardi commands to root and returns root command
-func Initialize() *cobra.Command {
+func Initialize(version string) *cobra.Command {
 	rootCmd := getRootCommand()
-	initCmd := getInitCommand()
-	cleanCmd := getCleanCommand()
-	goCmd := getGoCommand()
-	compileCmd := getCompileCommand()
-	libCmd := getLibCommand()
-	platCmd := getPlatformCommand()
-	boardCmd := getBoardCommand()
 
-	rootCmd.AddCommand(initCmd)
-	rootCmd.AddCommand(cleanCmd)
-	rootCmd.AddCommand(goCmd)
-	rootCmd.AddCommand(compileCmd)
-	rootCmd.AddCommand(libCmd)
-	rootCmd.AddCommand(platCmd)
-	rootCmd.AddCommand(boardCmd)
+	rootCmd.AddCommand(getInitCommand())
+	rootCmd.AddCommand(getCleanCommand())
+	rootCmd.AddCommand(getGoCommand())
+	rootCmd.AddCommand(getCompileCommand())
+	rootCmd.AddCommand(getLibCommand())
+	rootCmd.AddCommand(getPlatformCommand())
+	rootCmd.AddCommand(getBoardCommand())
+	rootCmd.AddCommand(getVersionCommand(version))
 
 	return rootCmd
 }

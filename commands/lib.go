@@ -5,7 +5,7 @@ import (
 	"io/ioutil"
 	"strings"
 
-	"github.com/robgonnella/ardi/ardi"
+	"github.com/robgonnella/ardi/v3/ardi"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 )

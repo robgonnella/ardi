@@ -43,6 +43,7 @@ Available Commands:
   init        Download, install, and update platforms (alias: ardi update)
   lib         Library manager for ardi
   platform    Platform related commands
+  version     Prints current version of ardi
 
 Flags:
   -h, --help   help for ardi
@@ -51,9 +52,11 @@ Use "ardi [command] --help" for more information about a command.
 */
 package main
 
-import "github.com/robgonnella/ardi/commands"
+import "github.com/robgonnella/ardi/v3/commands"
+
+const version = "3.2.0"
 
 func main() {
-	rootCmd := commands.Initialize()
+	rootCmd := commands.Initialize(version)
 	rootCmd.Execute()
 }
