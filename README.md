@@ -42,16 +42,13 @@ Use "ardi [command] --help" for more information about a command.
 
   run:
 
-    GO111MODULE=on go get github.com/robgonnella/ardi
+    go get github.com/robgonnella/ardi
 
   Note:<br/>
   This tool is based directly on a specific commit of [arduino-cli]. The exact
   commit can be found in the [go.mod](./go.mod) file of ardi. When installing
   via "go get" be sure to omit the "-u" flag to prevent updating dependencies
   as arduino-cli may have changed and could behave unpredictably with ardi.
-  Also because ardi is written using go modules, you should include
-  `GO111MODULE=on` when installing to ensure the proper versions of dependencies
-  are used.
 
 # Usage
 
