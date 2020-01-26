@@ -1,9 +1,9 @@
 module github.com/robgonnella/ardi/v3
 
-go 1.12
+go 1.13
 
 require (
-	github.com/arduino/arduino-cli v0.0.0-20190926170006-4c32595f712e
+	github.com/arduino/arduino-cli v0.0.0-20191018145306-3a08b07d458e
 	github.com/fsnotify/fsnotify v1.4.7
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
 	github.com/sirupsen/logrus v1.4.2

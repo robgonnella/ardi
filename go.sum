@@ -4,6 +4,8 @@ cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMT
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/arduino/arduino-cli v0.0.0-20190926170006-4c32595f712e h1:aZ+eXkNdRlPzUPUVKZO0vWD1PjCdGk/x3Jz4amo7YwY=
 github.com/arduino/arduino-cli v0.0.0-20190926170006-4c32595f712e/go.mod h1:qXuYrcQ+SLQhjqqQSmjYI3ir2blnjhSS0bhv3W6NXCo=
+github.com/arduino/arduino-cli v0.0.0-20191018145306-3a08b07d458e h1:Anwc8xRegGoa+hsf65QJUFJUOrRNQ95DIMn1TXJ7DPY=
+github.com/arduino/arduino-cli v0.0.0-20191018145306-3a08b07d458e/go.mod h1:2WHoApmQByiIoGROOiggCcDScAdMxbqNTEiLmKSTd1w=
 github.com/arduino/board-discovery v0.0.0-20180823133458-1ba29327fb0c h1:agh2JT96G8egU7FEb13L4dq3fnCN7lxXhJ86t69+W7s=
 github.com/arduino/board-discovery v0.0.0-20180823133458-1ba29327fb0c/go.mod h1:HK7SpkEax/3P+0w78iRQx1sz1vCDYYw9RXwHjQTB5i8=
 github.com/arduino/go-paths-helper v1.0.1 h1:utYXLM2RfFlc9qp/MJTIYp3t6ux/xM6mWjeEb/WLK4Q=
