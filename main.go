@@ -54,7 +54,7 @@ package main
 
 import "github.com/robgonnella/ardi/commands"
 
-const version = "1.0.0"
+const version = "1.1.0"
 
 func main() {
 	rootCmd := commands.Initialize(version)
