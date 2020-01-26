@@ -1,8 +1,8 @@
 package commands
 
 import (
-	"github.com/robgonnella/ardi/v3/ardi"
-	"github.com/robgonnella/ardi/v3/arguments"
+	"github.com/robgonnella/ardi/ardi"
+	"github.com/robgonnella/ardi/arguments"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )

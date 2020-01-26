@@ -3,7 +3,7 @@ package commands
 import (
 	"os"
 
-	"github.com/robgonnella/ardi/v3/ardi"
+	"github.com/robgonnella/ardi/ardi"
 	"github.com/spf13/cobra"
 )
 

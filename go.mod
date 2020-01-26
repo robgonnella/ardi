@@ -1,4 +1,4 @@
-module github.com/robgonnella/ardi/v3
+module github.com/robgonnella/ardi
 
 go 1.13
 
