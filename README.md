@@ -39,17 +39,23 @@ Use "ardi [command] --help" for more information about a command.
 
 # Installation
 
-  Install golang: https://golang.org/doc/install
+Ardi can be installed with golang's `go get` for versions of go >= 1.12
 
-  run:
+```bash
+## go version >= 1.12
 
-    go get github.com/robgonnella/ardi
+# From outside of a module directory
+GO111MODULE=on go get github.com/robgonnella/ardi
 
-  Note:<br/>
-  This tool is based directly on a specific commit of [arduino-cli]. The exact
-  commit can be found in the [go.mod](./go.mod) file of ardi. When installing
-  via "go get" be sure to omit the "-u" flag to prevent updating dependencies
-  as arduino-cli may have changed and could behave unpredictably with ardi.
+# From inside of a module directory
+go get github.com/robgonnella/ardi
+```
+
+To install without using go
+```bash
+curl -L https://github.com/robgonnella/ardi/releases/latest/download/ardi --output /usr/local/bin/ardi
+chmod +x /usr/local/bin/ardi
+```
 
 # Usage
 
