@@ -51,11 +51,8 @@ GO111MODULE=on go get github.com/robgonnella/ardi
 go get github.com/robgonnella/ardi
 ```
 
-To install without using go
-```bash
-curl -L https://github.com/robgonnella/ardi/releases/latest/download/ardi --output /usr/local/bin/ardi
-chmod +x /usr/local/bin/ardi
-```
+You can also download and install the pre-built binaries
+[here](https://github.com/robgonnella/ardi/releases)
 
 # Usage
 

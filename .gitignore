@@ -3,3 +3,4 @@ ardie
 *.elf
 *.hex
 .env
+build/
