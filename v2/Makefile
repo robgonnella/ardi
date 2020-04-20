@@ -26,9 +26,6 @@ build_arm7:
 build_arm8:
 	os=linux arch=arm64 $(MAKE) build
 
-v2:
-	$(MAKE) -C v2
-
 .PHONY: all \
 build \
 build_osx \
@@ -36,5 +33,4 @@ build_linux \
 build_arm5 \
 build_arm6 \
 build_arm7 \
-build_arm8 \
-v2
+build_arm8
