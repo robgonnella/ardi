@@ -12,7 +12,7 @@ import (
 	"github.com/robgonnella/ardi/v2/paths"
 )
 
-// Compile repsents core module for compile commands
+// Compile represents core module for compile commands
 type Compile struct {
 	logger *log.Logger
 	RPC    *rpc.RPC
@@ -40,9 +40,13 @@ func (c *Compile) Compile(sketchDir, fqbn string, buildProps []string, showProps
 		return err
 	}
 
-	project, err := project.New(sketchDir, c.logger)
+	project, err := project.New(c.logger)
 	if err != nil {
 		c.logger.WithError(err).Error("Failed to compile")
+		return err
+	}
+	if err := project.ProcessSketch(sketchDir); err != nil {
+		c.logger.WithError(err).Error()
 		return err
 	}
 

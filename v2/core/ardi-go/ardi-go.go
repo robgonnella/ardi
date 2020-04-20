@@ -26,8 +26,11 @@ type ArdiGo struct {
 
 // New returns new Project instance
 func New(sketchDir string, buildProps []string, logger *log.Logger) (*ArdiGo, error) {
-	proj, err := project.New(sketchDir, logger)
+	proj, err := project.New(logger)
 	if err != nil {
+		return nil, err
+	}
+	if err := proj.ProcessSketch(sketchDir); err != nil {
 		return nil, err
 	}
 

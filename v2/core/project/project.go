@@ -11,6 +11,8 @@ import (
 	"strconv"
 	"strings"
 
+	ardijson "github.com/robgonnella/ardi/v2/core/ardi-json"
+	"github.com/robgonnella/ardi/v2/core/rpc"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -19,37 +21,103 @@ type Project struct {
 	Sketch    string
 	Directory string
 	Baud      int
+	ardiJSON  *ardijson.ArdiJSON
+	logger    *log.Logger
 }
 
 // New returns new Project instance
-func New(sketchDir string, logger *log.Logger) (*Project, error) {
+func New(logger *log.Logger) (*Project, error) {
+	ardiJSON, err := ardijson.New(logger)
+	if err != nil {
+		logger.WithError(err).Error()
+		return nil, err
+	}
+
+	return &Project{
+		ardiJSON: ardiJSON,
+		logger:   logger,
+	}, nil
+}
+
+// ProcessSketch to find directory, filepath, and baud
+func (p *Project) ProcessSketch(sketchDir string) error {
 	if sketchDir == "" {
 		msg := "Must provide a sketch directory as an argument"
 		err := errors.New("Missing directory argument")
-		logger.WithError(err).Error(msg)
-		return nil, err
+		p.logger.WithError(err).Error(msg)
+		return err
 	}
 
 	// Guard in case someone tries to pass full path to .ino file
 	sketchDir = path.Dir(sketchDir)
 
-	sketchFile, err := findSketch(sketchDir, logger)
+	sketchFile, err := findSketch(sketchDir, p.logger)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	sketchBaud := parseSketchBaud(sketchFile, logger)
+	sketchBaud := parseSketchBaud(sketchFile, p.logger)
 	if sketchBaud != 0 {
 		fmt.Println("")
-		logger.WithField("detected baud", sketchBaud).Info("Detected baud rate from sketch file.")
+		p.logger.WithField("detected baud", sketchBaud).Info("Detected baud rate from sketch file.")
 		fmt.Println("")
 	}
 
-	return &Project{
-		Sketch:    sketchFile,
-		Directory: sketchDir,
-		Baud:      sketchBaud,
-	}, nil
+	p.Sketch = sketchFile
+	p.Directory = sketchDir
+	p.Baud = sketchBaud
+	return nil
+}
+
+// ListBuilds specified in ardi.json
+func (p *Project) ListBuilds() {
+	p.ardiJSON.ListBuilds()
+}
+
+// ListLibraries specified in ardi.json
+func (p *Project) ListLibraries() {
+	p.ardiJSON.ListLibraries()
+}
+
+// AddBuild to ardi.json build specifications
+func (p *Project) AddBuild(sketch, fqbn string, buildProps []string) {
+	p.ardiJSON.AddBuild(sketch, fqbn, buildProps)
+}
+
+// Build specified project from ardi.json, or build all projects if left blank
+func (p *Project) Build(rpc *rpc.RPC, builds []string) error {
+	if len(builds) > 0 {
+		for _, sketch := range builds {
+			for _, build := range p.ardiJSON.Config.Builds {
+				if sketch == build.Path {
+					buildProps := []string{}
+					for prop, instruction := range build.Props {
+						buildProps = append(buildProps, fmt.Sprintf("%s=%s", prop, instruction))
+					}
+					p.logger.Infof("Building %s", sketch)
+					if err := rpc.Compile(build.FQBN, sketch, buildProps, false); err != nil {
+						p.logger.WithError(err).Errorf("Build failed for %s", sketch)
+						return err
+					}
+					break
+				}
+			}
+		}
+		return nil
+	}
+	// Build all
+	for _, build := range p.ardiJSON.Config.Builds {
+		buildProps := []string{}
+		for prop, instruction := range build.Props {
+			buildProps = append(buildProps, fmt.Sprintf("%s=%s", prop, instruction))
+		}
+		p.logger.Infof("Building %s", build.Path)
+		if err := rpc.Compile(build.FQBN, build.Path, buildProps, false); err != nil {
+			p.logger.WithError(err).Errorf("Build faild for %s", build.Path)
+			return err
+		}
+	}
+	return nil
 }
 
 // helpers

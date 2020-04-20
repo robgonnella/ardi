@@ -20,6 +20,7 @@ func getRootCommand() *cobra.Command {
 func Initialize(version string) *cobra.Command {
 	rootCmd := getRootCommand()
 
+	rootCmd.AddCommand(getVersionCommand(version))
 	rootCmd.AddCommand(getInitCommand())
 	rootCmd.AddCommand(getCleanCommand())
 	rootCmd.AddCommand(getGoCommand())
@@ -27,7 +28,7 @@ func Initialize(version string) *cobra.Command {
 	rootCmd.AddCommand(getLibCommand())
 	rootCmd.AddCommand(getPlatformCommand())
 	rootCmd.AddCommand(getBoardCommand())
-	rootCmd.AddCommand(getVersionCommand(version))
+	rootCmd.AddCommand(getProjectCommand())
 
 	return rootCmd
 }

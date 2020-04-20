@@ -3,6 +3,7 @@ package commands
 import (
 	"strings"
 
+	ardijson "github.com/robgonnella/ardi/v2/core/ardi-json"
 	"github.com/robgonnella/ardi/v2/core/lib"
 	"github.com/robgonnella/ardi/v2/paths"
 	log "github.com/sirupsen/logrus"
@@ -10,32 +11,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func getLibInitCommand() *cobra.Command {
-	initCmd := &cobra.Command{
-		Use:   "init",
-		Short: "Initializes current directory with library dependency config file",
-		Long: "Initializes current directory with library dependency config\n" +
-			"file. Each project directory can then specify its own separate\n" +
-			"library versions.",
-		Run: func(cmd *cobra.Command, args []string) {
-			logger := log.New()
-			logger.Info("Initializing library manager")
-			libCore, err := lib.New(paths.ArdiDataConfig, logger)
-			if err != nil {
-				return
-			}
-			defer libCore.RPC.Connection.Close()
-			libCore.Init()
-		},
-	}
-	return initCmd
-}
-
 func getLibSearchCommand() *cobra.Command {
 	initCmd := &cobra.Command{
 		Use:     "search",
 		Short:   "Searches for availables libraries with optional search filter",
-		Aliases: []string{"find", "list"},
+		Aliases: []string{"find"},
 		Args:    cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			logger := log.New()
@@ -109,6 +89,23 @@ func getLibInstallCommand() *cobra.Command {
 	return installCmd
 }
 
+func getLibListCommand() *cobra.Command {
+	installCmd := &cobra.Command{
+		Use:   "list",
+		Short: "Lists installed libraries specified in ardi.json",
+		Args:  cobra.NoArgs,
+		Run: func(cmd *cobra.Command, args []string) {
+			logger := log.New()
+			ardiJSON, err := ardijson.New(logger)
+			if err != nil {
+				return
+			}
+			ardiJSON.ListLibraries()
+		},
+	}
+	return installCmd
+}
+
 func getLibCommand() *cobra.Command {
 	var libCmd = &cobra.Command{
 		Use:   "lib",
@@ -118,11 +115,11 @@ func getLibCommand() *cobra.Command {
 			"configured with its own list of dependencies for consistent\n" +
 			"repeatable builds every time.",
 	}
-	libCmd.AddCommand(getLibInitCommand())
 	libCmd.AddCommand(getLibAddCommand())
 	libCmd.AddCommand(getLibRemoveCommand())
 	libCmd.AddCommand(getLibInstallCommand())
 	libCmd.AddCommand(getLibSearchCommand())
+	libCmd.AddCommand(getLibListCommand())
 
 	return libCmd
 }
