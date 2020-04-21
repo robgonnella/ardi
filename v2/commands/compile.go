@@ -13,6 +13,7 @@ func getCompileCommand() *cobra.Command {
 	var showProps bool
 	var compileCmd = &cobra.Command{
 		Use:   "compile [sketch]",
+		Long:  cyan("\nCompile specified sketch"),
 		Short: "Compile specified sketch",
 		Run: func(cmd *cobra.Command, args []string) {
 			logger := log.New()

@@ -13,8 +13,8 @@ func getInitCommand() *cobra.Command {
 	initCmd := &cobra.Command{
 		Use:   "init",
 		Short: "Download, install, and update platforms (alias: ardi update)",
-		Long: "Downloads, installs, and updates all available platforms to\n" +
-			"support a maximum number of boards. (alias: ardi update)",
+		Long: cyan("\nDownloads, installs, and updates all available platforms to\n" +
+			"support a maximum number of boards. (alias: ardi update)"),
 		Aliases: []string{"update"},
 		Run: func(cmd *cobra.Command, args []string) {
 			logger := log.New()

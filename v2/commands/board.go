@@ -9,6 +9,7 @@ import (
 func getBoardListCmd() *cobra.Command {
 	listCmd := &cobra.Command{
 		Use:     "list",
+		Long:    cyan("\nList all available boards"),
 		Short:   "List all available boards",
 		Aliases: []string{"search"},
 		Run: func(cmd *cobra.Command, args []string) {
@@ -32,6 +33,7 @@ func getBoardListCmd() *cobra.Command {
 func getBoardCommand() *cobra.Command {
 	boardCmd := &cobra.Command{
 		Use:   "board",
+		Long:  cyan("\nBoard related commands"),
 		Short: "Board related commands",
 	}
 	boardCmd.AddCommand(getBoardListCmd())

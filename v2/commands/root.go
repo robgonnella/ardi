@@ -11,8 +11,8 @@ func getRootCommand() *cobra.Command {
 	return &cobra.Command{
 		Use:   "ardi",
 		Short: "Ardi uploads sketches and prints logs for a variety of arduino boards.",
-		Long: "A light wrapper around arduino-cli that offers a quick way to upload\n" +
-			"sketches and watch logs from command line for a variety of arduino boards.",
+		Long: cyan("\nA light wrapper around arduino-cli that offers a quick way to upload\n" +
+			"sketches and watch logs from command line for a variety of arduino boards."),
 	}
 }
 

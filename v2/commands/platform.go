@@ -10,6 +10,7 @@ import (
 func getPlatformListCmd() *cobra.Command {
 	listCmd := &cobra.Command{
 		Use:     "list",
+		Long:    cyan("\nList all available platforms"),
 		Short:   "List all available platforms",
 		Aliases: []string{"search"},
 		Run: func(cmd *cobra.Command, args []string) {
@@ -31,6 +32,7 @@ func getPlatformListCmd() *cobra.Command {
 func getPlatformCommand() *cobra.Command {
 	platCmd := &cobra.Command{
 		Use:   "platform",
+		Long:  cyan("\nPlatform related commands"),
 		Short: "Platform related commands",
 	}
 	platCmd.AddCommand(getPlatformListCmd())

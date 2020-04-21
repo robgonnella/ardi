@@ -40,10 +40,10 @@ func getGoCommand() *cobra.Command {
 	var goCmd = &cobra.Command{
 		Use:   "go [sketch]",
 		Short: "Compile and upload code to a connected arduino board",
-		Long: "Compile and upload code to an arduino board. Simply pass the\n" +
+		Long: cyan("\nCompile and upload code to an arduino board. Simply pass the\n" +
 			"directory containing the .ino file as the first argument. To watch\n" +
 			"your sketch file for changes and auto re-compile & re-upload, use\n" +
-			"the --watch flag. Baud will automatically be detected from sketch file.",
+			"the --watch flag. Baud will automatically be detected from sketch file."),
 		Args: cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			sketchDir := args[0]
