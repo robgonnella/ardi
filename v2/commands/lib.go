@@ -1,8 +1,6 @@
 package commands
 
 import (
-	"strings"
-
 	ardijson "github.com/robgonnella/ardi/v2/core/ardi-json"
 	"github.com/robgonnella/ardi/v2/core/lib"
 	"github.com/robgonnella/ardi/v2/paths"
@@ -37,18 +35,12 @@ func getLibAddCommand() *cobra.Command {
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			logger := log.New()
-			libParts := strings.Split(args[0], "@")
-			library := libParts[0]
-			version := ""
-			if len(libParts) > 1 {
-				version = libParts[1]
-			}
 			libCore, err := lib.New(paths.ArdiDataConfig, logger)
 			if err != nil {
 				return
 			}
 			defer libCore.RPC.Connection.Close()
-			libCore.Add(library, version)
+			libCore.Add(args)
 		},
 	}
 	return addCmd
@@ -66,7 +58,7 @@ func getLibRemoveCommand() *cobra.Command {
 				return
 			}
 			defer libCore.RPC.Connection.Close()
-			libCore.Remove(args[0])
+			libCore.Remove(args)
 		},
 	}
 	return removeCmd

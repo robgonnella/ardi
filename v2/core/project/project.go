@@ -80,8 +80,14 @@ func (p *Project) ListLibraries() {
 }
 
 // AddBuild to ardi.json build specifications
-func (p *Project) AddBuild(sketch, fqbn string, buildProps []string) {
-	p.ardiJSON.AddBuild(sketch, fqbn, buildProps)
+func (p *Project) AddBuild(name, path, fqbn string, buildProps []string) {
+	p.ardiJSON.AddBuild(name, path, fqbn, buildProps)
+}
+
+func (p *Project) RemoveBuild(builds []string) {
+	for _, build := range builds {
+		p.ardiJSON.RemoveBuild(build)
+	}
 }
 
 // Build specified project from ardi.json, or build all projects if left blank

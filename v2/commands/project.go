@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"github.com/robgonnella/ardi/v2/core/lib"
 	"github.com/robgonnella/ardi/v2/core/project"
 	"github.com/robgonnella/ardi/v2/core/rpc"
 	"github.com/robgonnella/ardi/v2/paths"
@@ -8,7 +9,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func getListLibrariesCmd() *cobra.Command {
+func getProjectListLibrariesCmd() *cobra.Command {
 	listCmd := &cobra.Command{
 		Use:     "libraries",
 		Short:   "List all project libraries specified in ardi.json",
@@ -25,7 +26,7 @@ func getListLibrariesCmd() *cobra.Command {
 	return listCmd
 }
 
-func getListBuildsCmd() *cobra.Command {
+func getProjectListBuildsCmd() *cobra.Command {
 	listCmd := &cobra.Command{
 		Use:     "builds",
 		Short:   "List all project builds specified in ardi.json",
@@ -47,31 +48,104 @@ func getProjectListCmd() *cobra.Command {
 		Use:   "list",
 		Short: "List project attributes saved in ardi.json",
 	}
-	listCmd.AddCommand(getListLibrariesCmd())
-	listCmd.AddCommand(getListBuildsCmd())
+	listCmd.AddCommand(getProjectListLibrariesCmd())
+	listCmd.AddCommand(getProjectListBuildsCmd())
 	return listCmd
 }
 
-func getAddBuildCmd() *cobra.Command {
+func getProjectAddBuildCmd() *cobra.Command {
+	var name string
 	var fqbn string
-	var sketch string
+	var path string
 	var buildProps []string
 	addCmd := &cobra.Command{
-		Use:   "add",
-		Short: "Add build config to ardi.json",
+		Use:   "build",
+		Short: "Add build config to project",
 		Run: func(cmd *cobra.Command, args []string) {
 			logger := log.New()
 			projectCore, err := project.New(logger)
 			if err != nil {
 				return
 			}
-			projectCore.AddBuild(sketch, fqbn, buildProps)
+			projectCore.AddBuild(name, path, fqbn, buildProps)
 		},
 	}
+	addCmd.Flags().StringVarP(&name, "name", "n", "", "Custom name for the build")
 	addCmd.Flags().StringVarP(&fqbn, "fqbn", "f", "", "Specify fully qualified board name")
-	addCmd.Flags().StringVarP(&sketch, "sketch", "s", "", "Specify sketch directory")
+	addCmd.Flags().StringVarP(&path, "path", "i", "", "Path to .ino file or sketch directory")
 	addCmd.Flags().StringArrayVarP(&buildProps, "build-prop", "p", []string{}, "Specify build property to compiler")
 	return addCmd
+}
+
+func getProjectAddLibCmd() *cobra.Command {
+	addCmd := &cobra.Command{
+		Use:   "lib",
+		Short: "Add libraries to project",
+		Args:  cobra.MinimumNArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			logger := log.New()
+			libCore, err := lib.New(paths.ArdiDataConfig, logger)
+			if err != nil {
+				return
+			}
+			libCore.Add(args)
+		},
+	}
+	return addCmd
+}
+
+func getProjectAddCmd() *cobra.Command {
+	addCmd := &cobra.Command{
+		Use:   "add",
+		Short: "Add libraries and builds to project",
+	}
+	addCmd.AddCommand(getProjectAddBuildCmd())
+	addCmd.AddCommand(getProjectAddLibCmd())
+	return addCmd
+}
+
+func getProjectRemoveBuildCmd() *cobra.Command {
+	removeCmd := &cobra.Command{
+		Use:     "build",
+		Short:   "Remove build config from project",
+		Aliases: []string{"builds"},
+		Run: func(cmd *cobra.Command, args []string) {
+			logger := log.New()
+			projectCore, err := project.New(logger)
+			if err != nil {
+				return
+			}
+			projectCore.RemoveBuild(args)
+		},
+	}
+	return removeCmd
+}
+
+func getProjectRemoveLibCmd() *cobra.Command {
+	removeCmd := &cobra.Command{
+		Use:   "lib",
+		Short: "Remove libraries from project",
+		Args:  cobra.MinimumNArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			logger := log.New()
+			libCore, err := lib.New(paths.ArdiDataConfig, logger)
+			if err != nil {
+				return
+			}
+			libCore.Remove(args)
+		},
+	}
+	return removeCmd
+}
+
+func getProjectRemoveCmd() *cobra.Command {
+	removeCmd := &cobra.Command{
+		Use:   "remove",
+		Short: "Remove libraries and builds from project",
+	}
+	removeCmd.AddCommand(getProjectRemoveBuildCmd())
+	removeCmd.AddCommand(getProjectRemoveLibCmd())
+	return removeCmd
 }
 
 func getProjectBuildCmd() *cobra.Command {
@@ -91,7 +165,6 @@ func getProjectBuildCmd() *cobra.Command {
 			projectCore.Build(rpc, args)
 		},
 	}
-	buildCmd.AddCommand(getAddBuildCmd())
 	return buildCmd
 }
 
@@ -101,6 +174,8 @@ func getProjectCommand() *cobra.Command {
 		Short: "Project related commands",
 	}
 	projectCmd.AddCommand(getProjectListCmd())
+	projectCmd.AddCommand(getProjectAddCmd())
+	projectCmd.AddCommand(getProjectRemoveCmd())
 	projectCmd.AddCommand(getProjectBuildCmd())
 
 	return projectCmd

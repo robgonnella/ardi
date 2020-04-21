@@ -22,8 +22,8 @@ type BuildJSON struct {
 
 // Config represents the ardi.json file
 type Config struct {
-	Libraries map[string]string `json:"libraries"`
-	Builds    []BuildJSON       `json:"builds"`
+	Libraries map[string]string    `json:"libraries"`
+	Builds    map[string]BuildJSON `json:"builds"`
 }
 
 // ArdiJSON represents core module for ardi.json manipulation
@@ -52,9 +52,9 @@ func New(logger *log.Logger) (*ArdiJSON, error) {
 }
 
 // AddBuild to ardi.json
-func (a *ArdiJSON) AddBuild(sketch, fqbn string, buildProps []string) {
+func (a *ArdiJSON) AddBuild(name, path, fqbn string, buildProps []string) error {
 	newBuild := BuildJSON{
-		Path:  sketch,
+		Path:  path,
 		FQBN:  fqbn,
 		Props: make(map[string]string),
 	}
@@ -65,15 +65,21 @@ func (a *ArdiJSON) AddBuild(sketch, fqbn string, buildProps []string) {
 		newBuild.Props[label] = instruction
 	}
 
-	a.Config.Builds = append(a.Config.Builds, newBuild)
-	a.write()
+	a.Config.Builds[name] = newBuild
+	return a.write()
+}
+
+// RemoveBuild removes specified build from ardi.json
+func (a *ArdiJSON) RemoveBuild(build string) error {
+	delete(a.Config.Builds, build)
+	return a.write()
 }
 
 // ListBuilds lists build specifications in ardi.json
 func (a *ArdiJSON) ListBuilds() {
 	fmt.Println("")
-	for _, build := range a.Config.Builds {
-		fmt.Println("Build")
+	for name, build := range a.Config.Builds {
+		fmt.Printf("%s:\n", name)
 		fmt.Printf("\tPath: %s\n", build.Path)
 		fmt.Printf("\tFQBN: %s\n", build.FQBN)
 		fmt.Printf("\tProps:\n")
@@ -138,7 +144,7 @@ func initConfigFiles(logger *log.Logger) {
 	if _, err := os.Stat(paths.ArdiBuildConfig); os.IsNotExist(err) {
 		buildConfig := Config{
 			Libraries: make(map[string]string),
-			Builds:    make([]BuildJSON, 0),
+			Builds:    make(map[string]BuildJSON),
 		}
 		jsonConfig, _ := json.MarshalIndent(&buildConfig, "\n", " ")
 		ioutil.WriteFile(paths.ArdiBuildConfig, jsonConfig, 0644)

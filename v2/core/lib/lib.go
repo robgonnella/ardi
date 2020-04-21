@@ -65,29 +65,47 @@ func (l *Lib) Search(searchArg string) error {
 }
 
 // Add library for project
-func (l *Lib) Add(name, version string) error {
-	l.logger.Infof("Installing library: %s %s", name, version)
-	installedVersion, err := l.RPC.InstallLibrary(name, version)
-	if err != nil {
-		l.logger.WithError(err).Errorf("Failed to install %s", name)
-		return err
+func (l *Lib) Add(libraries []string) error {
+	for _, lib := range libraries {
+		libParts := strings.Split(lib, "@")
+		library := libParts[0]
+		version := ""
+		if len(libParts) > 1 {
+			version = libParts[1]
+		}
+		l.logger.Infof("Installing library: %s %s", library, version)
+		installedVersion, err := l.RPC.InstallLibrary(library, version)
+		if err != nil {
+			l.logger.WithError(err).Errorf("Failed to install %s", library)
+			return err
+		}
+		if err := l.ardiJSON.AddLibrary(library, installedVersion); err != nil {
+			l.logger.WithError(err).Error("Failed to update ardi.json")
+			return err
+		}
 	}
-	return l.ardiJSON.AddLibrary(name, installedVersion)
+	return nil
 }
 
 // Remove library either globally or for project
-func (l *Lib) Remove(name string) error {
-	l.logger.Infof("Removing library: %s", name)
-	if err := l.RPC.UninstallLibrary(name); err != nil {
-		return err
+func (l *Lib) Remove(libraries []string) error {
+	for _, lib := range libraries {
+		l.logger.Infof("Removing library: %s", lib)
+		if err := l.RPC.UninstallLibrary(lib); err != nil {
+			return err
+		}
+		if err := l.ardiJSON.RemoveLibrary(lib); err != nil {
+			return err
+		}
 	}
-	return l.ardiJSON.RemoveLibrary(name)
+	return nil
 }
 
 // Install all libraries specified in ardi.json
 func (l *Lib) Install() error {
 	for name, version := range l.ardiJSON.Config.Libraries {
-		if err := l.Add(name, version); err != nil {
+		lib := []string{fmt.Sprintf("%s@%s", name, version)}
+		if err := l.Add(lib); err != nil {
 			return err
 		}
 	}
