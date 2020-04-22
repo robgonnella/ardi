@@ -32,7 +32,7 @@ func getCompileCommand() *cobra.Command {
 			if err != nil {
 				return
 			}
-			defer compileCore.RPC.Connection.Close()
+			defer compileCore.Client.Connection.Close()
 
 			compileCore.Compile(sketchDir, fqbn, buildProps, showProps)
 		},

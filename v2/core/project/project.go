@@ -12,7 +12,7 @@ import (
 	"strings"
 
 	ardijson "github.com/robgonnella/ardi/v2/core/ardi-json"
-	"github.com/robgonnella/ardi/v2/core/rpc"
+	"github.com/robgonnella/ardi/v2/rpc"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -21,12 +21,18 @@ type Project struct {
 	Sketch    string
 	Directory string
 	Baud      int
+	Client    *rpc.Client
 	ardiJSON  *ardijson.ArdiJSON
 	logger    *log.Logger
 }
 
 // New returns new Project instance
 func New(logger *log.Logger) (*Project, error) {
+	client, err := rpc.NewClient(logger)
+	if err != nil {
+		return nil, err
+	}
+
 	ardiJSON, err := ardijson.New(logger)
 	if err != nil {
 		logger.WithError(err).Error()
@@ -34,6 +40,7 @@ func New(logger *log.Logger) (*Project, error) {
 	}
 
 	return &Project{
+		Client:   client,
 		ardiJSON: ardiJSON,
 		logger:   logger,
 	}, nil
@@ -84,6 +91,7 @@ func (p *Project) AddBuild(name, path, fqbn string, buildProps []string) {
 	p.ardiJSON.AddBuild(name, path, fqbn, buildProps)
 }
 
+// RemoveBuild removes specified build(s) from project
 func (p *Project) RemoveBuild(builds []string) {
 	for _, build := range builds {
 		p.ardiJSON.RemoveBuild(build)
@@ -91,7 +99,7 @@ func (p *Project) RemoveBuild(builds []string) {
 }
 
 // Build specified project from ardi.json, or build all projects if left blank
-func (p *Project) Build(rpc *rpc.RPC, builds []string) error {
+func (p *Project) Build(builds []string) error {
 	if len(builds) > 0 {
 		for _, sketch := range builds {
 			for _, build := range p.ardiJSON.Config.Builds {
@@ -101,7 +109,7 @@ func (p *Project) Build(rpc *rpc.RPC, builds []string) error {
 						buildProps = append(buildProps, fmt.Sprintf("%s=%s", prop, instruction))
 					}
 					p.logger.Infof("Building %s", sketch)
-					if err := rpc.Compile(build.FQBN, sketch, buildProps, false); err != nil {
+					if err := p.Client.Compile(build.FQBN, sketch, buildProps, false); err != nil {
 						p.logger.WithError(err).Errorf("Build failed for %s", sketch)
 						return err
 					}
@@ -118,7 +126,7 @@ func (p *Project) Build(rpc *rpc.RPC, builds []string) error {
 			buildProps = append(buildProps, fmt.Sprintf("%s=%s", prop, instruction))
 		}
 		p.logger.Infof("Building %s", build.Path)
-		if err := rpc.Compile(build.FQBN, build.Path, buildProps, false); err != nil {
+		if err := p.Client.Compile(build.FQBN, build.Path, buildProps, false); err != nil {
 			p.logger.WithError(err).Errorf("Build faild for %s", build.Path)
 			return err
 		}

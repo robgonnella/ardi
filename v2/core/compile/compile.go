@@ -7,28 +7,27 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/robgonnella/ardi/v2/core/project"
-	"github.com/robgonnella/ardi/v2/core/rpc"
 	"github.com/robgonnella/ardi/v2/core/target"
 	"github.com/robgonnella/ardi/v2/paths"
+	"github.com/robgonnella/ardi/v2/rpc"
 )
 
 // Compile represents core module for compile commands
 type Compile struct {
 	logger *log.Logger
-	RPC    *rpc.RPC
+	Client *rpc.Client
 }
 
 // New instance of core module for compile commands
 func New(logger *log.Logger) (*Compile, error) {
-	rpc, err := rpc.New(paths.ArdiDataConfig, logger)
+	client, err := rpc.NewClient(logger)
 	if err != nil {
-		logger.WithError(err).Error("Failed to initialize compiler")
 		return nil, err
 	}
 
 	return &Compile{
 		logger: logger,
-		RPC:    rpc,
+		Client: client,
 	}, nil
 }
 
@@ -50,13 +49,13 @@ func (c *Compile) Compile(sketchDir, fqbn string, buildProps []string, showProps
 		return err
 	}
 
-	target, err := target.New(c.RPC, c.logger, fqbn, false)
+	target, err := target.New(c.logger, fqbn, false)
 	if err != nil {
 		c.logger.WithError(err).Error("Failed to compile")
 		return err
 	}
 
-	if err := c.RPC.Compile(target.Board.FQBN, project.Directory, buildProps, showProps); err != nil {
+	if err := c.Client.Compile(target.Board.FQBN, project.Directory, buildProps, showProps); err != nil {
 		c.logger.WithError(err).Error("Failed to compile sketch")
 		return err
 	}
@@ -65,6 +64,6 @@ func (c *Compile) Compile(sketchDir, fqbn string, buildProps []string, showProps
 }
 
 func isInitialized() bool {
-	_, err := os.Stat(paths.ArdiGlobalDataDir)
+	_, err := os.Stat(paths.ArdiDataDir)
 	return !os.IsNotExist(err)
 }

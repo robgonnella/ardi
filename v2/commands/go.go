@@ -13,7 +13,7 @@ func process(sketchDir string, buildProps []string, watchSketch, verbose bool) {
 	if err != nil {
 		return
 	}
-	defer ardiGo.RPC.Connection.Close()
+	defer ardiGo.Client.Connection.Close()
 
 	if err := ardiGo.Compile(); err != nil {
 		return

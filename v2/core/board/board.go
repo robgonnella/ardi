@@ -7,32 +7,31 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/robgonnella/ardi/v2/core/rpc"
-	"github.com/robgonnella/ardi/v2/paths"
+	"github.com/robgonnella/ardi/v2/rpc"
 )
 
 // Board module for board commands
 type Board struct {
-	RPC    *rpc.RPC
+	Client *rpc.Client
 	logger *log.Logger
 }
 
 // New module instance for board commands
 func New(logger *log.Logger) (*Board, error) {
-	rpc, err := rpc.New(paths.ArdiGlobalDataConfig, logger)
+	client, err := rpc.NewClient(logger)
 	if err != nil {
 		return nil, err
 	}
 
 	return &Board{
 		logger: logger,
-		RPC:    rpc,
+		Client: client,
 	}, nil
 }
 
 // List all available boards with optional search filter
 func (b *Board) List(query string) error {
-	platforms, err := b.RPC.GetPlatforms(query)
+	platforms, err := b.Client.GetPlatforms(query)
 
 	if err != nil {
 		b.logger.WithError(err).Error("Platform search error")

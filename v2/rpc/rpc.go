@@ -15,8 +15,8 @@ import (
 
 var cli = arduino.ArduinoCli
 
-// RPC represents our arduino-cli rpc wrapper
-type RPC struct {
+// Client represents a client connection to arduino-cli grpc daemon
+type Client struct {
 	// Connection grpc client connection availabel to defer close
 	Connection *grpc.ClientConn
 	client     rpc.ArduinoCoreClient
@@ -31,11 +31,8 @@ type Board struct {
 	Port string
 }
 
-// New return new RPC controller
-func New(dataConfigPath string, logger *log.Logger) (*RPC, error) {
-	logger.Info("Starting daemon")
-	go startDaemon(dataConfigPath)
-
+// NewClient return new RPC controller
+func NewClient(logger *log.Logger) (*Client, error) {
 	logger.Info("Connecting to server")
 	conn, err := getServerConnection()
 	if err != nil {
@@ -49,40 +46,52 @@ func New(dataConfigPath string, logger *log.Logger) (*RPC, error) {
 		return nil, err
 	}
 
-	rpc := &RPC{
+	return &Client{
 		Connection: conn,
 		logger:     logger,
 		client:     client,
 		instance:   instance,
-	}
+	}, nil
+}
 
-	return rpc, nil
+//StartDaemon starts the arduino-cli grpc server locally
+func StartDaemon(dataConfigPath string) {
+	cli.SetArgs(
+		[]string{
+			"daemon",
+			"--config-file",
+			dataConfigPath,
+		},
+	)
+	if err := cli.Execute(); err != nil {
+		fmt.Printf("Error starting daemon: %s", err.Error())
+	}
 }
 
 // UpdateIndexFiles updates platform and library index files
-func (r *RPC) UpdateIndexFiles() error {
-	if err := r.UpdatePlatformIndex(); err != nil {
+func (c *Client) UpdateIndexFiles() error {
+	if err := c.UpdatePlatformIndex(); err != nil {
 		return err
 	}
-	if err := r.UpdateLibraryIndex(); err != nil {
+	if err := c.UpdateLibraryIndex(); err != nil {
 		return err
 	}
 	return nil
 }
 
 // UpdateLibraryIndex updates library index file
-func (r *RPC) UpdateLibraryIndex() error {
-	r.logger.Debug("Updating library index...")
+func (c *Client) UpdateLibraryIndex() error {
+	c.logger.Debug("Updating library index...")
 
-	libIdxUpdateStream, err := r.client.UpdateLibrariesIndex(
+	libIdxUpdateStream, err := c.client.UpdateLibrariesIndex(
 		context.Background(),
 		&rpc.UpdateLibrariesIndexReq{
-			Instance: r.instance,
+			Instance: c.instance,
 		},
 	)
 
 	if err != nil {
-		r.logger.WithError(err).Error("Error updating libraries index")
+		c.logger.WithError(err).Error("Error updating libraries index")
 		return err
 	}
 
@@ -90,33 +99,33 @@ func (r *RPC) UpdateLibraryIndex() error {
 	for {
 		resp, err := libIdxUpdateStream.Recv()
 		if err == io.EOF {
-			r.logger.Debug("Library index update done")
+			c.logger.Debug("Library index update done")
 			return nil
 		}
 
 		if err != nil {
-			r.logger.WithError(err).Error("Error updating libraries index")
+			c.logger.WithError(err).Error("Error updating libraries index")
 			return err
 		}
 
 		if resp.GetDownloadProgress() != nil {
-			r.logger.Debugf("DOWNLOAD: %s", resp.GetDownloadProgress())
+			c.logger.Debugf("DOWNLOAD: %s", resp.GetDownloadProgress())
 		}
 	}
 }
 
 // UpdatePlatformIndex updates platform index file
-func (r *RPC) UpdatePlatformIndex() error {
-	r.logger.Debug("Updating platform index...")
+func (c *Client) UpdatePlatformIndex() error {
+	c.logger.Debug("Updating platform index...")
 
-	uiRespStream, err := r.client.UpdateIndex(
+	uiRespStream, err := c.client.UpdateIndex(
 		context.Background(),
 		&rpc.UpdateIndexReq{
-			Instance: r.instance,
+			Instance: c.instance,
 		},
 	)
 	if err != nil {
-		r.logger.WithError(err).Error("Error updating platform index")
+		c.logger.WithError(err).Error("Error updating platform index")
 		return err
 	}
 
@@ -126,38 +135,38 @@ func (r *RPC) UpdatePlatformIndex() error {
 
 		// the server is done
 		if err == io.EOF {
-			r.logger.Debug("Platform index updated")
+			c.logger.Debug("Platform index updated")
 			return nil
 		}
 
 		// there was an error
 		if err != nil {
-			r.logger.WithError(err).Error("Error updating platform index")
+			c.logger.WithError(err).Error("Error updating platform index")
 			return err
 		}
 
 		// operations in progress
 		if uiResp.GetDownloadProgress() != nil {
-			r.logger.Debugf("DOWNLOAD: %s", uiResp.GetDownloadProgress())
+			c.logger.Debugf("DOWNLOAD: %s", uiResp.GetDownloadProgress())
 		}
 	}
 }
 
 // UpgradePlatform upgrades a given platform
-func (r *RPC) UpgradePlatform(platPackage, arch string) error {
-	r.logger.Debugf("Upgrading platform: %s:%s\n", platPackage, arch)
+func (c *Client) UpgradePlatform(platPackage, arch string) error {
+	c.logger.Debugf("Upgrading platform: %s:%s\n", platPackage, arch)
 
-	upgradeRespStream, err := r.client.PlatformUpgrade(
+	upgradeRespStream, err := c.client.PlatformUpgrade(
 		context.Background(),
 		&rpc.PlatformUpgradeReq{
-			Instance:        r.instance,
+			Instance:        c.instance,
 			PlatformPackage: platPackage,
 			Architecture:    arch,
 		},
 	)
 
 	if err != nil {
-		r.logger.WithError(err).Error("Error upgrading platform")
+		c.logger.WithError(err).Error("Error upgrading platform")
 		return err
 	}
 
@@ -167,50 +176,50 @@ func (r *RPC) UpgradePlatform(platPackage, arch string) error {
 
 		// The server is done.
 		if err == io.EOF {
-			r.logger.Debug("Upgrade done")
+			c.logger.Debug("Upgrade done")
 			return nil
 		}
 
 		// There was an error.
 		if err != nil {
 			if !strings.Contains(err.Error(), "platform already at latest version") {
-				r.logger.WithError(err).Error("Cannot upgrade platform")
+				c.logger.WithError(err).Error("Cannot upgrade platform")
 			}
 			return err
 		}
 
 		// When a download is ongoing, log the progress
 		if upgradeResp.GetProgress() != nil {
-			r.logger.Debugf("DOWNLOAD: %s", upgradeResp.GetProgress())
+			c.logger.Debugf("DOWNLOAD: %s", upgradeResp.GetProgress())
 		}
 
 		// When an overall task is ongoing, log the progress
 		if upgradeResp.GetTaskProgress() != nil {
-			r.logger.Debugf("TASK: %s", upgradeResp.GetTaskProgress())
+			c.logger.Debugf("TASK: %s", upgradeResp.GetTaskProgress())
 		}
 	}
 }
 
 // InstallPlatform installs a given platform
-func (r *RPC) InstallPlatform(platPackage, arch, version string) error {
-	if err := r.UpdateIndexFiles(); err != nil {
-		r.logger.WithError(err).Error("Failed to update index files")
+func (c *Client) InstallPlatform(platPackage, arch, version string) error {
+	if err := c.UpdateIndexFiles(); err != nil {
+		c.logger.WithError(err).Error("Failed to update index files")
 		return err
 	}
 
-	r.logger.Debugf("Installing platform: %s:%s\n", arch, version)
+	c.logger.Debugf("Installing platform: %s:%s\n", arch, version)
 
-	installRespStream, err := r.client.PlatformInstall(
+	installRespStream, err := c.client.PlatformInstall(
 		context.Background(),
 		&rpc.PlatformInstallReq{
-			Instance:        r.instance,
+			Instance:        c.instance,
 			PlatformPackage: platPackage,
 			Architecture:    arch,
 			Version:         version,
 		})
 
 	if err != nil {
-		r.logger.WithError(err).Warn("Failed to install platform")
+		c.logger.WithError(err).Warn("Failed to install platform")
 		return err
 	}
 
@@ -220,44 +229,44 @@ func (r *RPC) InstallPlatform(platPackage, arch, version string) error {
 
 		// The server is done.
 		if err == io.EOF {
-			r.logger.Debug("Install done")
+			c.logger.Debug("Install done")
 			return nil
 		}
 
 		// There was an error.
 		if err != nil {
-			r.logger.WithError(err).Error("Failed to install platform")
+			c.logger.WithError(err).Error("Failed to install platform")
 			return err
 		}
 
 		// When a download is ongoing, log the progress
 		if installResp.GetProgress() != nil {
-			r.logger.Debugf("DOWNLOAD: %s", installResp.GetProgress())
+			c.logger.Debugf("DOWNLOAD: %s", installResp.GetProgress())
 		}
 
 		// When an overall task is ongoing, log the progress
 		if installResp.GetTaskProgress() != nil {
-			r.logger.Debugf("TASK: %s", installResp.GetTaskProgress())
+			c.logger.Debugf("TASK: %s", installResp.GetTaskProgress())
 		}
 	}
 }
 
 // InstallAllPlatforms installs and upgrades all platforms
-func (r *RPC) InstallAllPlatforms() error {
-	if err := r.UpdateIndexFiles(); err != nil {
-		r.logger.WithError(err).Error("Failed to update index files")
+func (c *Client) InstallAllPlatforms() error {
+	if err := c.UpdateIndexFiles(); err != nil {
+		c.logger.WithError(err).Error("Failed to update index files")
 		return err
 	}
 
-	searchResp, err := r.client.PlatformSearch(
+	searchResp, err := c.client.PlatformSearch(
 		context.Background(),
 		&rpc.PlatformSearchReq{
-			Instance: r.instance,
+			Instance: c.instance,
 		},
 	)
 
 	if err != nil {
-		r.logger.WithError(err).Error("Search error")
+		c.logger.WithError(err).Error("Search error")
 		return err
 	}
 
@@ -269,52 +278,52 @@ func (r *RPC) InstallAllPlatforms() error {
 		platPackage := idParts[0]
 		arch := idParts[len(idParts)-1]
 		latest := plat.GetLatest()
-		r.logger.Debugf("Search result: %s: %s - %s", platPackage, id, latest)
+		c.logger.Debugf("Search result: %s: %s - %s", platPackage, id, latest)
 		// Ignore individual errors when installing and upgrading all platforms
-		r.InstallPlatform(platPackage, arch, latest)
-		r.UpgradePlatform(platPackage, arch)
+		c.InstallPlatform(platPackage, arch, latest)
+		c.UpgradePlatform(platPackage, arch)
 	}
 	return nil
 }
 
 // ListInstalledPlatforms lists all installed platforms
-func (r *RPC) ListInstalledPlatforms() error {
-	listResp, err := r.client.PlatformList(
+func (c *Client) ListInstalledPlatforms() error {
+	listResp, err := c.client.PlatformList(
 		context.Background(),
 		&rpc.PlatformListReq{
-			Instance: r.instance,
+			Instance: c.instance,
 		},
 	)
 
 	if err != nil {
-		r.logger.WithError(err).Error("List error")
+		c.logger.WithError(err).Error("List error")
 		return err
 	}
 
-	r.logger.Debug("------INSTALLED PLATFORMS------")
+	c.logger.Debug("------INSTALLED PLATFORMS------")
 	for _, plat := range listResp.GetInstalledPlatform() {
-		r.logger.Debugf("Installed platform: %s - %s", plat.GetID(), plat.GetInstalled())
+		c.logger.Debugf("Installed platform: %s - %s", plat.GetID(), plat.GetInstalled())
 	}
-	r.logger.Debug("-------------------------------")
+	c.logger.Debug("-------------------------------")
 	return nil
 }
 
 // GetPlatforms returns specified platform or all platforms if unspecified
-func (r *RPC) GetPlatforms(query string) ([]*rpc.Platform, error) {
-	if err := r.UpdateIndexFiles(); err != nil {
+func (c *Client) GetPlatforms(query string) ([]*rpc.Platform, error) {
+	if err := c.UpdateIndexFiles(); err != nil {
 		return nil, err
 	}
 
-	searchResp, err := r.client.PlatformSearch(
+	searchResp, err := c.client.PlatformSearch(
 		context.Background(),
 		&rpc.PlatformSearchReq{
-			Instance:   r.instance,
+			Instance:   c.instance,
 			SearchArgs: query,
 		},
 	)
 
 	if err != nil {
-		r.logger.WithError(err).Error("Platform search error")
+		c.logger.WithError(err).Error("Platform search error")
 		return nil, err
 	}
 
@@ -322,18 +331,18 @@ func (r *RPC) GetPlatforms(query string) ([]*rpc.Platform, error) {
 }
 
 // ConnectedBoards returns a list of connected arduino boards
-func (r *RPC) ConnectedBoards() []*Board {
+func (c *Client) ConnectedBoards() []*Board {
 	boardList := []*Board{}
 
-	boardListResp, err := r.client.BoardList(
+	boardListResp, err := c.client.BoardList(
 		context.Background(),
 		&rpc.BoardListReq{
-			Instance: r.instance,
+			Instance: c.instance,
 		},
 	)
 
 	if err != nil {
-		r.logger.WithError(err).Error("Board list error")
+		c.logger.WithError(err).Error("Board list error")
 		return boardList
 	}
 
@@ -352,20 +361,20 @@ func (r *RPC) ConnectedBoards() []*Board {
 }
 
 // AllBoards returns a list of all supported boards
-func (r *RPC) AllBoards() []*Board {
-	r.logger.Debug("Getting list of supported boards...")
+func (c *Client) AllBoards() []*Board {
+	c.logger.Debug("Getting list of supported boards...")
 
 	boardList := []*Board{}
 
-	listResp, err := r.client.PlatformList(
+	listResp, err := c.client.PlatformList(
 		context.Background(),
 		&rpc.PlatformListReq{
-			Instance: r.instance,
+			Instance: c.instance,
 		},
 	)
 
 	if err != nil {
-		r.logger.WithError(err).Error("Failed to get board list")
+		c.logger.WithError(err).Error("Failed to get board list")
 		return boardList
 	}
 
@@ -382,19 +391,19 @@ func (r *RPC) AllBoards() []*Board {
 }
 
 // Upload a sketch to target board
-func (r *RPC) Upload(fqbn, sketchDir, device string) error {
-	uplRespStream, err := r.client.Upload(
+func (c *Client) Upload(fqbn, sketchDir, device string) error {
+	uplRespStream, err := c.client.Upload(
 		context.Background(),
 		&rpc.UploadReq{
-			Instance:   r.instance,
+			Instance:   c.instance,
 			Fqbn:       fqbn,
 			SketchPath: sketchDir,
 			Port:       device,
-			Verbose:    r.isVerbose(),
+			Verbose:    c.isVerbose(),
 		})
 
 	if err != nil {
-		r.logger.WithError(err).Error("Failed to upload")
+		c.logger.WithError(err).Error("Failed to upload")
 		return err
 	}
 
@@ -402,33 +411,33 @@ func (r *RPC) Upload(fqbn, sketchDir, device string) error {
 		uplResp, err := uplRespStream.Recv()
 		if err == io.EOF {
 			// target.Uploading = false
-			r.logger.Info("Upload complete")
+			c.logger.Info("Upload complete")
 			return nil
 		}
 
 		if err != nil {
-			r.logger.WithError(err).Error("Failed to upload")
+			c.logger.WithError(err).Error("Failed to upload")
 			// target.Uploading = false
 			return err
 		}
 
 		// When an operation is ongoing you can get its output
 		if resp := uplResp.GetOutStream(); resp != nil {
-			r.logger.Debugf("STDOUT: %s", resp)
+			c.logger.Debugf("STDOUT: %s", resp)
 		}
 		if resperr := uplResp.GetErrStream(); resperr != nil {
-			r.logger.Debugf("STDERR: %s", resperr)
+			c.logger.Debugf("STDERR: %s", resperr)
 		}
 	}
 }
 
 // Compile the specified sketch
-func (r *RPC) Compile(fqbn, sketchDir string, buildProps []string, showProps bool) error {
+func (c *Client) Compile(fqbn, sketchDir string, buildProps []string, showProps bool) error {
 
-	compRespStream, err := r.client.Compile(
+	compRespStream, err := c.client.Compile(
 		context.Background(),
 		&rpc.CompileReq{
-			Instance:        r.instance,
+			Instance:        c.instance,
 			Fqbn:            fqbn,
 			SketchPath:      sketchDir,
 			BuildProperties: buildProps,
@@ -437,7 +446,7 @@ func (r *RPC) Compile(fqbn, sketchDir string, buildProps []string, showProps boo
 		})
 
 	if err != nil {
-		r.logger.WithError(err).Error("Failed to compile")
+		c.logger.WithError(err).Error("Failed to compile")
 		return err
 	}
 
@@ -452,31 +461,31 @@ func (r *RPC) Compile(fqbn, sketchDir string, buildProps []string, showProps boo
 
 		// There was an error.
 		if err != nil {
-			r.logger.WithError(err).Error("Failed to compile")
+			c.logger.WithError(err).Error("Failed to compile")
 			return err
 		}
 
 		// When an operation is ongoing you can get its output
 		if resp := compResp.GetOutStream(); resp != nil {
-			r.logger.Debugf("STDOUT: %s", resp)
+			c.logger.Debugf("STDOUT: %s", resp)
 		}
 		if resperr := compResp.GetErrStream(); resperr != nil {
-			r.logger.Errorf("STDERR: %s", resperr)
+			c.logger.Errorf("STDERR: %s", resperr)
 		}
 	}
 }
 
 // SearchLibraries searches available libraries for download
-func (r *RPC) SearchLibraries(query string) ([]*rpc.SearchedLibrary, error) {
-	searchResp, err := r.client.LibrarySearch(
+func (c *Client) SearchLibraries(query string) ([]*rpc.SearchedLibrary, error) {
+	searchResp, err := c.client.LibrarySearch(
 		context.Background(),
 		&rpc.LibrarySearchReq{
-			Instance: r.instance,
+			Instance: c.instance,
 			Query:    query,
 		},
 	)
 	if err != nil {
-		r.logger.WithError(err).Error("Error searching libraries")
+		c.logger.WithError(err).Error("Error searching libraries")
 		return nil, err
 	}
 
@@ -484,17 +493,17 @@ func (r *RPC) SearchLibraries(query string) ([]*rpc.SearchedLibrary, error) {
 }
 
 // InstallLibrary installs specified version of a library
-func (r *RPC) InstallLibrary(name, version string) (string, error) {
-	installRespStream, err := r.client.LibraryInstall(
+func (c *Client) InstallLibrary(name, version string) (string, error) {
+	installRespStream, err := c.client.LibraryInstall(
 		context.Background(),
 		&rpc.LibraryInstallReq{
-			Instance: r.instance,
+			Instance: c.instance,
 			Name:     name,
 			Version:  version,
 		})
 
 	if err != nil {
-		r.logger.WithError(err).Error("Error installing library")
+		c.logger.WithError(err).Error("Error installing library")
 		return "", err
 	}
 
@@ -503,22 +512,22 @@ func (r *RPC) InstallLibrary(name, version string) (string, error) {
 	for {
 		installResp, err := installRespStream.Recv()
 		if err == io.EOF {
-			r.logger.Info("Lib install done")
+			c.logger.Info("Lib install done")
 			return foundVersion, nil
 		}
 
 		if err != nil {
-			r.logger.WithError(err).Error("Library install error")
+			c.logger.WithError(err).Error("Library install error")
 			return "", err
 		}
 
 		if installResp.GetProgress() != nil {
-			r.logger.Infof("DOWNLOAD: %s\n", installResp.GetProgress())
+			c.logger.Infof("DOWNLOAD: %s\n", installResp.GetProgress())
 		}
 		if installResp.GetTaskProgress() != nil {
 			msg := installResp.GetTaskProgress()
 			lib := msg.GetName()
-			r.logger.Infof("TASK: %s\n", msg)
+			c.logger.Infof("TASK: %s\n", msg)
 			if foundVersion == "" {
 				foundVersion = strings.Split(lib, "@")[1]
 			}
@@ -527,11 +536,11 @@ func (r *RPC) InstallLibrary(name, version string) (string, error) {
 }
 
 // UninstallLibrary removes specified library
-func (r *RPC) UninstallLibrary(name string) error {
-	uninstallRespStream, err := r.client.LibraryUninstall(
+func (c *Client) UninstallLibrary(name string) error {
+	uninstallRespStream, err := c.client.LibraryUninstall(
 		context.Background(),
 		&rpc.LibraryUninstallReq{
-			Instance: r.instance,
+			Instance: c.instance,
 			// Assume spaces in name were intended to be underscore. This indicates
 			// a potential bug in the arduino-cli package manager as names
 			// potentially do not have a one-to-one mapping with regards to install
@@ -542,31 +551,31 @@ func (r *RPC) UninstallLibrary(name string) error {
 		})
 
 	if err != nil {
-		r.logger.WithError(err).Error("Error uninstalling library")
+		c.logger.WithError(err).Error("Error uninstalling library")
 		return err
 	}
 
 	for {
 		uninstallRespStream, err := uninstallRespStream.Recv()
 		if err == io.EOF {
-			r.logger.Info("Lib uninstall done")
+			c.logger.Info("Lib uninstall done")
 			return nil
 		}
 
 		if err != nil {
-			r.logger.WithError(err).Error("Library install error")
+			c.logger.WithError(err).Error("Library install error")
 			return err
 		}
 
 		if uninstallRespStream.GetTaskProgress() != nil {
-			r.logger.Infof("TASK: %s\n", uninstallRespStream.GetTaskProgress())
+			c.logger.Infof("TASK: %s\n", uninstallRespStream.GetTaskProgress())
 		}
 	}
 }
 
 // private
-func (r *RPC) isVerbose() bool {
-	return r.logger.Level == log.DebugLevel
+func (c *Client) isVerbose() bool {
+	return c.logger.Level == log.DebugLevel
 }
 
 // helpers
@@ -624,11 +633,4 @@ func getServerConnection() (*grpc.ClientConn, error) {
 		return nil, err
 	}
 	return conn, nil
-}
-
-func startDaemon(dataConfigPath string) {
-	cli.SetArgs([]string{"daemon", "--config-file", dataConfigPath})
-	if err := cli.Execute(); err != nil {
-		fmt.Printf("Error starting daemon: %s", err.Error())
-	}
 }

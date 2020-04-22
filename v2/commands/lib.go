@@ -3,7 +3,6 @@ package commands
 import (
 	ardijson "github.com/robgonnella/ardi/v2/core/ardi-json"
 	"github.com/robgonnella/ardi/v2/core/lib"
-	"github.com/robgonnella/ardi/v2/paths"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/spf13/cobra"
@@ -18,11 +17,11 @@ func getLibSearchCommand() *cobra.Command {
 		Args:    cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			logger := log.New()
-			libCore, err := lib.New(paths.ArdiGlobalDataConfig, logger)
+			libCore, err := lib.New(logger)
 			if err != nil {
 				return
 			}
-			defer libCore.RPC.Connection.Close()
+			defer libCore.Client.Connection.Close()
 			libCore.Search(args[0])
 		},
 	}
@@ -37,11 +36,11 @@ func getLibAddCommand() *cobra.Command {
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			logger := log.New()
-			libCore, err := lib.New(paths.ArdiDataConfig, logger)
+			libCore, err := lib.New(logger)
 			if err != nil {
 				return
 			}
-			defer libCore.RPC.Connection.Close()
+			defer libCore.Client.Connection.Close()
 			libCore.Add(args)
 		},
 	}
@@ -56,11 +55,11 @@ func getLibRemoveCommand() *cobra.Command {
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			logger := log.New()
-			libCore, err := lib.New(paths.ArdiDataConfig, logger)
+			libCore, err := lib.New(logger)
 			if err != nil {
 				return
 			}
-			defer libCore.RPC.Connection.Close()
+			defer libCore.Client.Connection.Close()
 			libCore.Remove(args)
 		},
 	}
@@ -75,10 +74,11 @@ func getLibInstallCommand() *cobra.Command {
 		Args:  cobra.NoArgs,
 		Run: func(cmd *cobra.Command, args []string) {
 			logger := log.New()
-			libCore, err := lib.New(paths.ArdiDataConfig, logger)
+			libCore, err := lib.New(logger)
 			if err != nil {
 				return
 			}
+			defer libCore.Client.Connection.Close()
 			libCore.Install()
 		},
 	}

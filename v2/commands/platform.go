@@ -23,6 +23,7 @@ func getPlatformListCmd() *cobra.Command {
 			if err != nil {
 				return
 			}
+			defer platformCore.Client.Connection.Close()
 			platformCore.List(query)
 		},
 	}

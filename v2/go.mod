@@ -3,7 +3,8 @@ module github.com/robgonnella/ardi/v2
 go 1.13
 
 require (
-	github.com/arduino/arduino-cli v0.0.0-20200417152809-932f0eda3444
+	github.com/arduino/arduino-cli v0.0.0-20200422172014-9073c1354f7e
+	github.com/arduino/go-properties-orderedmap v1.1.0 // indirect
 	github.com/fatih/color v1.9.0 // indirect
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/golang/protobuf v1.4.0 // indirect
@@ -15,7 +16,7 @@ require (
 	github.com/miekg/dns v1.1.29 // indirect
 	github.com/mitchellh/mapstructure v1.2.2 // indirect
 	github.com/pelletier/go-toml v1.7.0 // indirect
-	github.com/segmentio/fasthash v1.0.1 // indirect
+	github.com/segmentio/fasthash v1.0.2 // indirect
 	github.com/sirupsen/logrus v1.5.0
 	github.com/spf13/afero v1.2.2 // indirect
 	github.com/spf13/cast v1.3.1 // indirect
@@ -26,11 +27,11 @@ require (
 	github.com/tarm/serial v0.0.0-20180830185346-98f6abe2eb07
 	go.bug.st/serial v1.1.0 // indirect
 	go.bug.st/serial.v1 v0.0.0-20191202182710-24a6610f0541 // indirect
-	golang.org/x/crypto v0.0.0-20200414173820-0848c9571904 // indirect
-	golang.org/x/net v0.0.0-20200324143707-d3edc9973b7e // indirect
-	golang.org/x/sys v0.0.0-20200413165638-669c56c373c4 // indirect
-	google.golang.org/genproto v0.0.0-20200417142217-fb6d0575620b // indirect
-	google.golang.org/grpc v1.28.1
+	golang.org/x/crypto v0.0.0-20200422194213-44a606286825 // indirect
+	golang.org/x/net v0.0.0-20200421231249-e086a090c8fd // indirect
+	golang.org/x/sys v0.0.0-20200420163511-1957bb5e6d1f // indirect
+	google.golang.org/genproto v0.0.0-20200420144010-e5e8543f8aeb // indirect
+	google.golang.org/grpc v1.29.0
 	gopkg.in/ini.v1 v1.55.0 // indirect
 	gopkg.in/yaml.v2 v2.2.8
 )

@@ -9,7 +9,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/robgonnella/ardi/v2/core/rpc"
+	"github.com/robgonnella/ardi/v2/rpc"
 )
 
 // Target represents a targeted arduino board
@@ -18,15 +18,20 @@ type Target struct {
 }
 
 // New returns new target
-func New(rpc *rpc.RPC, logger *log.Logger, fqbn string, onlyConnected bool) (*Target, error) {
-	board, err := getTargetBoard(rpc, logger, fqbn, onlyConnected)
+func New(logger *log.Logger, fqbn string, onlyConnected bool) (*Target, error) {
+	client, err := rpc.NewClient(logger)
+	if err != nil {
+		return nil, err
+	}
+	defer client.Connection.Close()
+	board, err := getTargetBoard(client, logger, fqbn, onlyConnected)
 	if err != nil {
 		return nil, err
 	}
 	return &Target{board}, nil
 }
 
-func getTargetBoard(server *rpc.RPC, logger *log.Logger, fqbn string, onlyConnected bool) (*rpc.Board, error) {
+func getTargetBoard(client *rpc.Client, logger *log.Logger, fqbn string, onlyConnected bool) (*rpc.Board, error) {
 	var board *rpc.Board
 	var err error
 
@@ -35,8 +40,8 @@ func getTargetBoard(server *rpc.RPC, logger *log.Logger, fqbn string, onlyConnec
 		return board, nil
 	}
 
-	connectedBoards := server.ConnectedBoards()
-	allBoards := server.AllBoards()
+	connectedBoards := client.ConnectedBoards()
+	allBoards := client.AllBoards()
 
 	if len(connectedBoards) == 0 {
 		if onlyConnected {

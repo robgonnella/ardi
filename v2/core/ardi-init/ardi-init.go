@@ -2,34 +2,28 @@ package ardiinit
 
 import (
 	"fmt"
-	"io/ioutil"
-	"os"
 	"strings"
 	"time"
 
-	"github.com/robgonnella/ardi/v2/core/rpc"
-	"github.com/robgonnella/ardi/v2/paths"
-	"github.com/robgonnella/ardi/v2/types"
+	"github.com/robgonnella/ardi/v2/rpc"
 	log "github.com/sirupsen/logrus"
-	"gopkg.in/yaml.v2"
 )
 
 // Init represents core module for init commands
 type Init struct {
 	logger *log.Logger
-	RPC    *rpc.RPC
+	Client *rpc.Client
 }
 
 // New init module instance
 func New(logger *log.Logger) (*Init, error) {
-	rpc, err := rpc.New(paths.ArdiGlobalDataConfig, logger)
+	client, err := rpc.NewClient(logger)
 	if err != nil {
-		logger.WithError(err).Error("Failed to initialize ardi")
 		return nil, err
 	}
 	return &Init{
 		logger: logger,
-		RPC:    rpc,
+		Client: client,
 	}, nil
 }
 
@@ -37,11 +31,6 @@ func New(logger *log.Logger) (*Init, error) {
 func (i *Init) Initialize(platform, version string) error {
 	var err error
 	errMsg := "Failed to initialize ardi"
-	if err = initializeDataDirectory(); err != nil {
-		i.logger.WithError(err).Error(errMsg)
-		return err
-	}
-
 	i.logger.Info("Initializing. This may take some time...")
 	quit := make(chan bool, 1)
 
@@ -62,12 +51,12 @@ func (i *Init) Initialize(platform, version string) error {
 	}
 
 	if platform == "" {
-		err = i.RPC.InstallAllPlatforms()
+		err = i.Client.InstallAllPlatforms()
 	} else {
 		platParts := strings.Split(platform, ":")
 		platPackage := platParts[0]
 		arch := platParts[len(platParts)-1]
-		err = i.RPC.InstallPlatform(platPackage, arch, version)
+		err = i.Client.InstallPlatform(platPackage, arch, version)
 	}
 
 	quit <- true
@@ -85,28 +74,4 @@ func (i *Init) Initialize(platform, version string) error {
 // private methods
 func (i *Init) isQuiet() bool {
 	return i.logger.Level == log.InfoLevel
-}
-
-// private helpers
-func initializeDataDirectory() error {
-	if _, err := os.Stat(paths.ArdiGlobalDataDir); os.IsNotExist(err) {
-		if err := os.MkdirAll(paths.ArdiGlobalDataDir, 0744); err != nil {
-			return err
-		}
-	}
-
-	if _, err := os.Stat(paths.ArdiGlobalDataConfig); os.IsNotExist(err) {
-		dataConfig := types.DataConfig{
-			ProxyType:      "auto",
-			SketchbookPath: ".",
-			ArduinoData:    ".",
-			BoardManager:   make(map[string]interface{}),
-		}
-		yamlConfig, _ := yaml.Marshal(&dataConfig)
-		if err := ioutil.WriteFile(paths.ArdiGlobalDataConfig, yamlConfig, 0644); err != nil {
-			return err
-		}
-	}
-
-	return nil
 }

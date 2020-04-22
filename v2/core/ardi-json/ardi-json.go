@@ -4,38 +4,22 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"os"
 	"strings"
 
 	"github.com/robgonnella/ardi/v2/paths"
 	"github.com/robgonnella/ardi/v2/types"
 	log "github.com/sirupsen/logrus"
-	"gopkg.in/yaml.v2"
 )
-
-// BuildJSON represents the build properties in ardi.json
-type BuildJSON struct {
-	Path  string            `json:"path"`
-	FQBN  string            `json:"fqbn"`
-	Props map[string]string `json:"props"`
-}
-
-// Config represents the ardi.json file
-type Config struct {
-	Libraries map[string]string    `json:"libraries"`
-	Builds    map[string]BuildJSON `json:"builds"`
-}
 
 // ArdiJSON represents core module for ardi.json manipulation
 type ArdiJSON struct {
-	Config Config
+	Config types.ArdiConfig
 	logger *log.Logger
 }
 
 // New returns core json module for handling ardi.json config
 func New(logger *log.Logger) (*ArdiJSON, error) {
-	initConfigFiles(logger)
-	config := Config{}
+	config := types.ArdiConfig{}
 	buildConfig, err := ioutil.ReadFile(paths.ArdiBuildConfig)
 	if err != nil {
 		logger.WithError(err).Error("Failed to read ardi.json")
@@ -53,7 +37,7 @@ func New(logger *log.Logger) (*ArdiJSON, error) {
 
 // AddBuild to ardi.json
 func (a *ArdiJSON) AddBuild(name, path, fqbn string, buildProps []string) error {
-	newBuild := BuildJSON{
+	newBuild := types.ArdiBuildJSON{
 		Path:  path,
 		FQBN:  fqbn,
 		Props: make(map[string]string),
@@ -126,28 +110,4 @@ func (a *ArdiJSON) write() error {
 	}
 
 	return nil
-}
-
-// private helper
-func initConfigFiles(logger *log.Logger) {
-	if _, err := os.Stat(paths.ArdiDataConfig); os.IsNotExist(err) {
-		dataConfig := types.DataConfig{
-			ProxyType:      "auto",
-			SketchbookPath: ".",
-			ArduinoData:    ".",
-			BoardManager:   make(map[string]interface{}),
-		}
-		yamlConfig, _ := yaml.Marshal(&dataConfig)
-		ioutil.WriteFile(paths.ArdiDataConfig, yamlConfig, 0644)
-		logger.Info("ardi.yaml initialized")
-	}
-	if _, err := os.Stat(paths.ArdiBuildConfig); os.IsNotExist(err) {
-		buildConfig := Config{
-			Libraries: make(map[string]string),
-			Builds:    make(map[string]BuildJSON),
-		}
-		jsonConfig, _ := json.MarshalIndent(&buildConfig, "\n", " ")
-		ioutil.WriteFile(paths.ArdiBuildConfig, jsonConfig, 0644)
-		logger.Info("ardi.json initialized")
-	}
 }

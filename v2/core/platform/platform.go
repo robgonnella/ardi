@@ -8,31 +8,30 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/robgonnella/ardi/v2/core/rpc"
-	"github.com/robgonnella/ardi/v2/paths"
+	"github.com/robgonnella/ardi/v2/rpc"
 )
 
 // Platform module for platform commands
 type Platform struct {
 	logger *log.Logger
-	RPC    *rpc.RPC
+	Client *rpc.Client
 }
 
 // New platform module instance
 func New(logger *log.Logger) (*Platform, error) {
-	rpc, err := rpc.New(paths.ArdiGlobalDataConfig, logger)
+	client, err := rpc.NewClient(logger)
 	if err != nil {
 		return nil, err
 	}
 	return &Platform{
 		logger: logger,
-		RPC:    rpc,
+		Client: client,
 	}, nil
 }
 
 // List all available platforms or filter with a search arg
 func (p *Platform) List(query string) error {
-	platforms, err := p.RPC.GetPlatforms(query)
+	platforms, err := p.Client.GetPlatforms(query)
 	if err != nil {
 		return err
 	}

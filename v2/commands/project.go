@@ -3,8 +3,6 @@ package commands
 import (
 	"github.com/robgonnella/ardi/v2/core/lib"
 	"github.com/robgonnella/ardi/v2/core/project"
-	"github.com/robgonnella/ardi/v2/core/rpc"
-	"github.com/robgonnella/ardi/v2/paths"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -21,6 +19,7 @@ func getProjectListLibrariesCmd() *cobra.Command {
 			if err != nil {
 				return
 			}
+			defer projectCore.Client.Connection.Close()
 			projectCore.ListLibraries()
 		},
 	}
@@ -39,6 +38,7 @@ func getProjectListBuildsCmd() *cobra.Command {
 			if err != nil {
 				return
 			}
+			defer projectCore.Client.Connection.Close()
 			projectCore.ListBuilds()
 		},
 	}
@@ -71,6 +71,7 @@ func getProjectAddBuildCmd() *cobra.Command {
 			if err != nil {
 				return
 			}
+			defer projectCore.Client.Connection.Close()
 			projectCore.AddBuild(name, path, fqbn, buildProps)
 		},
 	}
@@ -89,10 +90,11 @@ func getProjectAddLibCmd() *cobra.Command {
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			logger := log.New()
-			libCore, err := lib.New(paths.ArdiDataConfig, logger)
+			libCore, err := lib.New(logger)
 			if err != nil {
 				return
 			}
+			defer libCore.Client.Connection.Close()
 			libCore.Add(args)
 		},
 	}
@@ -122,6 +124,7 @@ func getProjectRemoveBuildCmd() *cobra.Command {
 			if err != nil {
 				return
 			}
+			defer projectCore.Client.Connection.Close()
 			projectCore.RemoveBuild(args)
 		},
 	}
@@ -136,10 +139,11 @@ func getProjectRemoveLibCmd() *cobra.Command {
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			logger := log.New()
-			libCore, err := lib.New(paths.ArdiDataConfig, logger)
+			libCore, err := lib.New(logger)
 			if err != nil {
 				return
 			}
+			defer libCore.Client.Connection.Close()
 			libCore.Remove(args)
 		},
 	}
@@ -164,15 +168,12 @@ func getProjectBuildCmd() *cobra.Command {
 		Long:  cyan("\nCompile builds specified in ardi.json"),
 		Run: func(cmd *cobra.Command, args []string) {
 			logger := log.New()
-			rpc, err := rpc.New(paths.ArdiDataConfig, logger)
-			if err != nil {
-				return
-			}
 			projectCore, err := project.New(logger)
 			if err != nil {
 				return
 			}
-			projectCore.Build(rpc, args)
+			defer projectCore.Client.Connection.Close()
+			projectCore.Build(args)
 		},
 	}
 	return buildCmd

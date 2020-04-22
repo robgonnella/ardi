@@ -1,6 +1,7 @@
-ardie
 .vscode/
 *.elf
 *.hex
 .env
+.ardi
+ardi.json
 build/

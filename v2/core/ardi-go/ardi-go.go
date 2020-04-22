@@ -5,17 +5,16 @@ import (
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/robgonnella/ardi/v2/core/project"
-	"github.com/robgonnella/ardi/v2/core/rpc"
 	"github.com/robgonnella/ardi/v2/core/serial"
 	"github.com/robgonnella/ardi/v2/core/target"
-	"github.com/robgonnella/ardi/v2/paths"
+	"github.com/robgonnella/ardi/v2/rpc"
 	log "github.com/sirupsen/logrus"
 )
 
 // ArdiGo represents core module for adi go commands
 type ArdiGo struct {
 	logger     *log.Logger
-	RPC        *rpc.RPC
+	Client     *rpc.Client
 	target     *target.Target
 	project    *project.Project
 	buildProps []string
@@ -34,12 +33,12 @@ func New(sketchDir string, buildProps []string, logger *log.Logger) (*ArdiGo, er
 		return nil, err
 	}
 
-	rpc, err := rpc.New(paths.ArdiDataConfig, logger)
+	client, err := rpc.NewClient(logger)
 	if err != nil {
 		return nil, err
 	}
 
-	target, err := target.New(rpc, logger, "", true)
+	target, err := target.New(logger, "", true)
 	if err != nil {
 		return nil, err
 	}
@@ -47,7 +46,7 @@ func New(sketchDir string, buildProps []string, logger *log.Logger) (*ArdiGo, er
 	port := serial.New(target.Board.Port, proj.Baud, logger)
 
 	return &ArdiGo{
-		RPC:        rpc,
+		Client:     client,
 		project:    proj,
 		target:     target,
 		buildProps: buildProps,
@@ -68,7 +67,7 @@ func (a *ArdiGo) Upload() error {
 	sketchDir := a.project.Directory
 
 	a.uploading = true
-	if err := a.RPC.Upload(fqbn, sketchDir, device); err != nil {
+	if err := a.Client.Upload(fqbn, sketchDir, device); err != nil {
 		a.logger.WithError(err).Error("Failed to upload sketch")
 		a.uploading = false
 		return err
@@ -89,7 +88,7 @@ func (a *ArdiGo) Compile() error {
 	buildProps := a.buildProps
 
 	a.compiling = true
-	if err := a.RPC.Compile(fqbn, sketchDir, buildProps, false); err != nil {
+	if err := a.Client.Compile(fqbn, sketchDir, buildProps, false); err != nil {
 		a.logger.WithError(err).Error("Failed to compile sketch")
 		a.compiling = false
 		return err

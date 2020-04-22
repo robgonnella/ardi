@@ -23,7 +23,7 @@ func getInitCommand() *cobra.Command {
 			if err != nil {
 				return
 			}
-			defer ardiInit.RPC.Connection.Close()
+			defer ardiInit.Client.Connection.Close()
 
 			if verbose {
 				logger.SetLevel(log.DebugLevel)

@@ -10,19 +10,19 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	ardijson "github.com/robgonnella/ardi/v2/core/ardi-json"
-	"github.com/robgonnella/ardi/v2/core/rpc"
+	"github.com/robgonnella/ardi/v2/rpc"
 )
 
 // Lib core module for lib commands
 type Lib struct {
 	ardiJSON *ardijson.ArdiJSON
 	logger   *log.Logger
-	RPC      *rpc.RPC
+	Client   *rpc.Client
 }
 
 // New Lib instance
-func New(dataConfig string, logger *log.Logger) (*Lib, error) {
-	rpc, err := rpc.New(dataConfig, logger)
+func New(logger *log.Logger) (*Lib, error) {
+	client, err := rpc.NewClient(logger)
 	if err != nil {
 		return nil, err
 	}
@@ -35,13 +35,13 @@ func New(dataConfig string, logger *log.Logger) (*Lib, error) {
 	return &Lib{
 		ardiJSON: ardiJSON,
 		logger:   logger,
-		RPC:      rpc,
+		Client:   client,
 	}, nil
 }
 
 // Search all available libraries with optional search filter
 func (l *Lib) Search(searchArg string) error {
-	libraries, err := l.RPC.SearchLibraries(searchArg)
+	libraries, err := l.Client.SearchLibraries(searchArg)
 	if err != nil {
 		return err
 	}
@@ -74,7 +74,7 @@ func (l *Lib) Add(libraries []string) error {
 			version = libParts[1]
 		}
 		l.logger.Infof("Installing library: %s %s", library, version)
-		installedVersion, err := l.RPC.InstallLibrary(library, version)
+		installedVersion, err := l.Client.InstallLibrary(library, version)
 		if err != nil {
 			l.logger.WithError(err).Errorf("Failed to install %s", library)
 			return err
@@ -91,7 +91,7 @@ func (l *Lib) Add(libraries []string) error {
 func (l *Lib) Remove(libraries []string) error {
 	for _, lib := range libraries {
 		l.logger.Infof("Removing library: %s", lib)
-		if err := l.RPC.UninstallLibrary(lib); err != nil {
+		if err := l.Client.UninstallLibrary(lib); err != nil {
 			return err
 		}
 		if err := l.ardiJSON.RemoveLibrary(lib); err != nil {

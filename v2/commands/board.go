@@ -19,12 +19,12 @@ func getBoardListCmd() *cobra.Command {
 				query = args[0]
 			}
 
-			board, err := board.New(logger)
+			boardCore, err := board.New(logger)
 			if err != nil {
 				return
 			}
-			defer board.RPC.Connection.Close()
-			board.List(query)
+			defer boardCore.Client.Connection.Close()
+			boardCore.List(query)
 		},
 	}
 	return listCmd
