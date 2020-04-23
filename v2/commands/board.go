@@ -6,12 +6,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func getBoardListCmd() *cobra.Command {
+func getBoardFQBNSCmd() *cobra.Command {
 	listCmd := &cobra.Command{
-		Use:     "list",
-		Long:    cyan("\nList all available boards"),
-		Short:   "List all available boards",
-		Aliases: []string{"search"},
+		Use:     "fqbns",
+		Long:    cyan("\nList supported board fqbns"),
+		Short:   "List supported board fqbns",
+		Aliases: []string{"fqbn"},
 		Run: func(cmd *cobra.Command, args []string) {
 			logger := log.New()
 			query := ""
@@ -24,7 +24,31 @@ func getBoardListCmd() *cobra.Command {
 				return
 			}
 			defer boardCore.Client.Connection.Close()
-			boardCore.List(query)
+			boardCore.FQBNS(query)
+		},
+	}
+	return listCmd
+}
+
+func getBoardPlatformsCmd() *cobra.Command {
+	listCmd := &cobra.Command{
+		Use:     "platforms",
+		Long:    cyan("\nList boards with their associated platform"),
+		Short:   "List boards with their associated platform",
+		Aliases: []string{"platform"},
+		Run: func(cmd *cobra.Command, args []string) {
+			logger := log.New()
+			query := ""
+			if len(args) > 0 {
+				query = args[0]
+			}
+
+			boardCore, err := board.New(logger)
+			if err != nil {
+				return
+			}
+			defer boardCore.Client.Connection.Close()
+			boardCore.Platforms(query)
 		},
 	}
 	return listCmd
@@ -36,7 +60,8 @@ func getBoardCommand() *cobra.Command {
 		Long:  cyan("\nBoard related commands"),
 		Short: "Board related commands",
 	}
-	boardCmd.AddCommand(getBoardListCmd())
+	boardCmd.AddCommand(getBoardPlatformsCmd())
+	boardCmd.AddCommand(getBoardFQBNSCmd())
 
 	return boardCmd
 }

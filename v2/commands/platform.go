@@ -7,12 +7,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func getPlatformListCmd() *cobra.Command {
-	listCmd := &cobra.Command{
-		Use:     "list",
-		Long:    cyan("\nList all available platforms"),
-		Short:   "List all available platforms",
-		Aliases: []string{"search"},
+func getPlatformCommand() *cobra.Command {
+	platCmd := &cobra.Command{
+		Use:   "platforms",
+		Long:  cyan("\nList all available platforms"),
+		Short: "List all available platforms",
 		Run: func(cmd *cobra.Command, args []string) {
 			logger := log.New()
 			query := ""
@@ -27,16 +26,5 @@ func getPlatformListCmd() *cobra.Command {
 			platformCore.List(query)
 		},
 	}
-	return listCmd
-}
-
-func getPlatformCommand() *cobra.Command {
-	platCmd := &cobra.Command{
-		Use:   "platform",
-		Long:  cyan("\nPlatform related commands"),
-		Short: "Platform related commands",
-	}
-	platCmd.AddCommand(getPlatformListCmd())
-
 	return platCmd
 }

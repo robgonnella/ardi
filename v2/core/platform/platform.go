@@ -43,9 +43,9 @@ func (p *Platform) List(query string) error {
 	p.logger.Info("------AVAILABLE PLATFORMS------")
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 8, ' ', 0)
 	defer w.Flush()
-	fmt.Fprintln(w, "Platform\tID")
+	fmt.Fprintln(w, "Platform\tID\tLatest")
 	for _, plat := range platforms {
-		fmt.Fprintf(w, "%s\t%s\n", plat.GetName(), plat.GetID())
+		fmt.Fprintf(w, "%s\t%s\t%s\n", plat.GetName(), plat.GetID(), plat.GetLatest())
 	}
 	return nil
 }

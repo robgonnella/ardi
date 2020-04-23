@@ -33,7 +33,7 @@ type Board struct {
 
 // NewClient return new RPC controller
 func NewClient(logger *log.Logger) (*Client, error) {
-	logger.Info("Connecting to server")
+	logger.Debug("Connecting to server")
 	conn, err := getServerConnection()
 	if err != nil {
 		logger.WithError(err).Error("error connecting to arduino-cli rpc server")

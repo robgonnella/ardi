@@ -53,11 +53,23 @@ func (l *Lib) Search(searchArg string) error {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 8, ' ', 0)
 	defer w.Flush()
 
-	fmt.Fprintln(w, "Library\tLatest\tReleases")
+	fmt.Fprintln(w, "Library\tLatest\tOther Releases")
 	for _, lib := range libraries {
 		releases := []string{}
 		for _, rel := range lib.GetReleases() {
 			releases = append(releases, rel.GetVersion())
+		}
+		sort.Slice(releases, func(i, j int) bool {
+			return releases[i] > releases[j]
+		})
+		if len(releases) > 1 {
+			releases = releases[1:]
+		} else {
+			releases = []string{}
+		}
+		if len(releases) > 4 {
+			releases = releases[:4]
+			releases = append(releases, "...")
 		}
 		fmt.Fprintf(w, "%s\t%s\t%s\n", lib.GetName(), lib.GetLatest().GetVersion(), strings.Join(releases, ", "))
 	}
