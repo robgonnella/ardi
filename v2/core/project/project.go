@@ -10,6 +10,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	ardijson "github.com/robgonnella/ardi/v2/core/ardi-json"
 	"github.com/robgonnella/ardi/v2/rpc"
@@ -73,6 +74,50 @@ func (p *Project) ProcessSketch(sketchDir string) error {
 	p.Sketch = sketchFile
 	p.Directory = sketchDir
 	p.Baud = sketchBaud
+	return nil
+}
+
+// Init initialize directory as ardi project
+func (p *Project) Init(platform, version string) error {
+	var err error
+	errMsg := "Failed to initialize ardi"
+	p.logger.Info("Initializing. This may take some time...")
+	quit := make(chan bool, 1)
+
+	// Show simple "processing" indicator if not logging verbosely
+	if p.isQuiet() {
+		p.logger.Info("Installing platforms...")
+		ticker := time.NewTicker(2 * time.Second)
+		go func() {
+			for {
+				select {
+				case <-ticker.C:
+					fmt.Print(".")
+				case <-quit:
+					ticker.Stop()
+				}
+			}
+		}()
+	}
+
+	if platform == "" {
+		err = p.Client.InstallAllPlatforms()
+	} else {
+		platParts := strings.Split(platform, ":")
+		platPackage := platParts[0]
+		arch := platParts[len(platParts)-1]
+		err = p.Client.InstallPlatform(platPackage, arch, version)
+	}
+
+	quit <- true
+	fmt.Println("")
+	if err != nil {
+		p.logger.WithError(err).Error(errMsg)
+		return err
+	}
+
+	p.logger.Info("Successfully initialized!")
+	fmt.Println("")
 	return nil
 }
 
@@ -203,4 +248,9 @@ func parseSketchBaud(sketch string, logger *log.Logger) int {
 	}
 
 	return baud
+}
+
+// private methods
+func (p *Project) isQuiet() bool {
+	return p.logger.Level == log.InfoLevel
 }

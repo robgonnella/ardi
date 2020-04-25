@@ -1,11 +1,58 @@
 package commands
 
 import (
+	"strings"
+
 	"github.com/robgonnella/ardi/v2/core/lib"
 	"github.com/robgonnella/ardi/v2/core/project"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
+
+func getProjectInitCommand() *cobra.Command {
+	var verbose bool
+	initCmd := &cobra.Command{
+		Use:   "init",
+		Short: "Initialize directory as an ardi project",
+		Long: cyan("\nDownloads, installs, and updates specified platforms, or\n" +
+			"all platforms if not specified, creates project data directory, and\n" +
+			"creates project level ardi.json"),
+		Aliases: []string{"update"},
+		Run: func(cmd *cobra.Command, args []string) {
+			logger := log.New()
+
+			projectCore, err := project.New(logger)
+			if err != nil {
+				return
+			}
+			defer projectCore.Client.Connection.Close()
+
+			if verbose {
+				logger.SetLevel(log.DebugLevel)
+			} else {
+				logger.SetLevel(log.InfoLevel)
+			}
+
+			platform := ""
+			version := ""
+			if len(args) > 0 {
+				platParts := strings.Split(args[0], "@")
+				if len(platParts) > 0 {
+					platform = platParts[0]
+				}
+				if len(platParts) > 1 {
+					version = platParts[1]
+				}
+			}
+
+			projectCore.Init(platform, version)
+		},
+	}
+
+	initCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Print all logs")
+
+	return initCmd
+}
 
 func getProjectListLibrariesCmd() *cobra.Command {
 	listCmd := &cobra.Command{
@@ -185,6 +232,7 @@ func getProjectCommand() *cobra.Command {
 		Short: "Project related commands",
 		Long:  cyan("\nProject related commands"),
 	}
+	projectCmd.AddCommand(getProjectInitCommand())
 	projectCmd.AddCommand(getProjectListCmd())
 	projectCmd.AddCommand(getProjectAddCmd())
 	projectCmd.AddCommand(getProjectRemoveCmd())

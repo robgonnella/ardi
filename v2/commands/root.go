@@ -44,7 +44,6 @@ func Initialize(version string) *cobra.Command {
 	rootCmd := getRootCommand()
 
 	rootCmd.AddCommand(getVersionCommand(version))
-	rootCmd.AddCommand(getInitCommand())
 	rootCmd.AddCommand(getCleanCommand())
 	rootCmd.AddCommand(getGoCommand())
 	rootCmd.AddCommand(getCompileCommand())
