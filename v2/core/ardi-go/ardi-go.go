@@ -85,10 +85,11 @@ func (a *ArdiGo) Compile() error {
 
 	fqbn := a.target.Board.FQBN
 	sketchDir := a.project.Directory
+	sketch := a.project.Sketch
 	buildProps := a.buildProps
 
 	a.compiling = true
-	if err := a.Client.Compile(fqbn, sketchDir, buildProps, false); err != nil {
+	if err := a.Client.Compile(fqbn, sketchDir, sketch, "", buildProps, false); err != nil {
 		a.logger.WithError(err).Error("Failed to compile sketch")
 		a.compiling = false
 		return err

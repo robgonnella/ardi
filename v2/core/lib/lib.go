@@ -27,6 +27,11 @@ func New(logger *log.Logger) (*Lib, error) {
 		return nil, err
 	}
 
+	if err := client.UpdateIndexFiles(); err != nil {
+		logger.WithError(err).Error("Failed to update index files")
+		return nil, err
+	}
+
 	ardiJSON, err := ardijson.New(logger)
 	if err != nil {
 		return nil, err

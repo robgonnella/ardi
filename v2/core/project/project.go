@@ -86,8 +86,18 @@ func (p *Project) ProcessSketch(sketchDir string) error {
 		return err
 	}
 
-	// Guard in case someone tries to pass full path to .ino file
-	sketchDir = path.Dir(sketchDir)
+	stat, err := os.Stat(sketchDir)
+	if err != nil {
+		p.logger.WithError(err).Error()
+		return err
+	}
+
+	mode := stat.Mode()
+	if mode.IsRegular() {
+		sketchDir = path.Dir(sketchDir)
+	}
+
+	fmt.Printf("SKETCH DIRECTORY: %s\n", sketchDir)
 
 	sketchFile, err := findSketch(sketchDir, p.logger)
 	if err != nil {
@@ -140,6 +150,11 @@ func (p *Project) Build(builds []string) error {
 	if len(builds) > 0 {
 		for _, name := range builds {
 			if build, ok := p.ardiJSON.Config.Builds[name]; ok {
+				fmt.Printf("Build PATH: %s\n", build.Path)
+				if err := p.ProcessSketch(build.Path); err != nil {
+					p.logger.WithError(err).Error()
+					return err
+				}
 				if build.Platform != "" {
 					p.Client.InstallPlatform(build.Platform)
 				}
@@ -151,8 +166,7 @@ func (p *Project) Build(builds []string) error {
 					buildProps = append(buildProps, fmt.Sprintf("%s=%s", prop, instruction))
 				}
 				p.logger.Infof("Building %s", build)
-				directory := path.Dir(build.Path)
-				if err := p.Client.Compile(build.FQBN, directory, buildProps, false); err != nil {
+				if err := p.Client.Compile(build.FQBN, p.Directory, p.Sketch, name, buildProps, false); err != nil {
 					p.logger.WithError(err).Errorf("Build failed for %s", build)
 					return err
 				}
@@ -164,13 +178,16 @@ func (p *Project) Build(builds []string) error {
 	}
 	// Build all
 	for name, build := range p.ardiJSON.Config.Builds {
+		if err := p.ProcessSketch(build.Path); err != nil {
+			p.logger.WithError(err).Error()
+			return err
+		}
 		buildProps := []string{}
 		for prop, instruction := range build.Props {
 			buildProps = append(buildProps, fmt.Sprintf("%s=%s", prop, instruction))
 		}
 		p.logger.Infof("Building %s", build.Path)
-		directory := path.Dir(build.Path)
-		if err := p.Client.Compile(build.FQBN, directory, buildProps, false); err != nil {
+		if err := p.Client.Compile(build.FQBN, p.Directory, p.Sketch, name, buildProps, false); err != nil {
 			p.logger.WithError(err).Errorf("Build faild for %s", name)
 			return err
 		}

@@ -32,12 +32,8 @@ func New(logger *log.Logger, fqbn string, onlyConnected bool) (*Target, error) {
 }
 
 func getTargetBoard(client *rpc.Client, logger *log.Logger, fqbn string, onlyConnected bool) (*rpc.Board, error) {
-	var board *rpc.Board
-	var err error
-
 	if fqbn != "" {
-		board.FQBN = fqbn
-		return board, nil
+		return &rpc.Board{FQBN: fqbn}, nil
 	}
 
 	connectedBoards := client.ConnectedBoards()
@@ -49,7 +45,9 @@ func getTargetBoard(client *rpc.Client, logger *log.Logger, fqbn string, onlyCon
 			logger.WithError(err).Error()
 			return nil, err
 		}
-		board, err = getUserInput(allBoards)
+		printFQBNs(allBoards)
+		fmt.Printf("\nYou must supply fqbn to compile. You can find a list of board fqbns for installed platforms above.\n\n")
+		return nil, errors.New("Must provide board fqbn")
 	}
 
 	if len(connectedBoards) == 1 {
@@ -57,39 +55,24 @@ func getTargetBoard(client *rpc.Client, logger *log.Logger, fqbn string, onlyCon
 	}
 
 	if len(connectedBoards) > 1 {
-		board, err = getUserInput(connectedBoards)
+		printFQBNs(connectedBoards)
+		fmt.Printf("\nYou must supply fqbn to compile. You can find a list of board fqbns for connected boards above.\n\n")
+		return nil, errors.New("Must provide board fqbn")
 	}
 
-	if err != nil {
-		logger.WithError(err).Error("Failed to parse target board")
-		return nil, err
-	}
-
-	return board, nil
+	return nil, errors.New("Error parsing target")
 }
 
 // private helpers
-func getUserInput(boardList []*rpc.Board) (*rpc.Board, error) {
+func printFQBNs(boardList []*rpc.Board) {
+	sort.Slice(boardList, func(i, j int) bool {
+		return boardList[i].Name < boardList[j].Name
+	})
+
 	printBoardsWithIndices(boardList)
-
-	var boardIdx int
-	fmt.Print("\nEnter number of board for which to compile: ")
-	if _, err := fmt.Scanf("%d", &boardIdx); err != nil {
-		return nil, err
-	}
-
-	if boardIdx < 0 || boardIdx > len(boardList)-1 {
-		err := errors.New("Invalid board selection")
-		return nil, err
-	}
-
-	return boardList[boardIdx], nil
 }
 
 func printBoardsWithIndices(boards []*rpc.Board) {
-	sort.Slice(boards, func(i, j int) bool {
-		return boards[i].Name < boards[j].Name
-	})
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 8, ' ', 0)
 	defer w.Flush()
 	fmt.Fprintln(w, "No.\tName\tFQBN")

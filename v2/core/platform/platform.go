@@ -24,6 +24,10 @@ func New(logger *log.Logger) (*Platform, error) {
 	if err != nil {
 		return nil, err
 	}
+	if err := client.UpdateIndexFiles(); err != nil {
+		logger.WithError(err).Error("Failed to update index files")
+		return nil, err
+	}
 	return &Platform{
 		logger: logger,
 		Client: client,

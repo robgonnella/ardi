@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"path"
 	"strings"
 	"time"
 
@@ -212,10 +213,6 @@ func (c *Client) InstallPlatform(platform string) error {
 		c.logger.WithError(err).Error()
 		return err
 	}
-	if err := c.UpdateIndexFiles(); err != nil {
-		c.logger.WithError(err).Error("Failed to update index files")
-		return err
-	}
 
 	pkg, arch, version := parsePlatform(platform)
 
@@ -284,10 +281,6 @@ func (c *Client) UninstallPlatform(platform string) error {
 		c.logger.WithError(err).Error()
 		return err
 	}
-	if err := c.UpdateIndexFiles(); err != nil {
-		c.logger.WithError(err).Error("Failed to update index files")
-		return err
-	}
 
 	pkg, arch, _ := parsePlatform(platform)
 
@@ -332,10 +325,6 @@ func (c *Client) UninstallPlatform(platform string) error {
 
 // InstallAllPlatforms installs and upgrades all platforms
 func (c *Client) InstallAllPlatforms() error {
-	if err := c.UpdateIndexFiles(); err != nil {
-		c.logger.WithError(err).Error("Failed to update index files")
-		return err
-	}
 
 	searchResp, err := c.client.PlatformSearch(
 		context.Background(),
@@ -503,14 +492,19 @@ func (c *Client) Upload(fqbn, sketchDir, device string) error {
 }
 
 // Compile the specified sketch
-func (c *Client) Compile(fqbn, sketchDir string, buildProps []string, showProps bool) error {
+func (c *Client) Compile(fqbn, sketchDir, sketchPath, exportName string, buildProps []string, showProps bool) error {
+	exportFile := ""
+	if exportName != "" {
+		exportFile = path.Join(sketchDir, exportName)
+	}
 
 	compRespStream, err := c.client.Compile(
 		context.Background(),
 		&rpc.CompileReq{
 			Instance:        c.instance,
 			Fqbn:            fqbn,
-			SketchPath:      sketchDir,
+			SketchPath:      sketchPath,
+			ExportFile:      exportFile,
 			BuildProperties: buildProps,
 			ShowProperties:  showProps,
 			Verbose:         true,

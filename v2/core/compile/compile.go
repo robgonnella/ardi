@@ -45,7 +45,7 @@ func (c *Compile) Compile(sketchDir, fqbn string, buildProps []string, showProps
 		return err
 	}
 
-	if err := c.Client.Compile(target.Board.FQBN, project.Directory, buildProps, showProps); err != nil {
+	if err := c.Client.Compile(target.Board.FQBN, project.Directory, project.Sketch, "", buildProps, showProps); err != nil {
 		c.logger.WithError(err).Error("Failed to compile sketch")
 		return err
 	}

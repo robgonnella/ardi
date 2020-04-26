@@ -18,9 +18,11 @@ Ardi should work for all boards and platforms supported by arduino-cli.
 */
 package main
 
-import "github.com/robgonnella/ardi/v2/commands"
+import (
+	"github.com/robgonnella/ardi/v2/commands"
+)
 
-const version = "2.0.0"
+const version = "2.0.0-alpha.2"
 
 func main() {
 	rootCmd := commands.Initialize(version)
