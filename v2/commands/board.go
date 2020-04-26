@@ -8,8 +8,8 @@ import (
 func getBoardFQBNSCmd() *cobra.Command {
 	listCmd := &cobra.Command{
 		Use:     "fqbns",
-		Long:    cyan("\nList supported board fqbns"),
-		Short:   "List supported board fqbns",
+		Long:    cyan("\nList boards with associated fqbns"),
+		Short:   "List boards with associated fqbns",
 		Aliases: []string{"fqbn"},
 		Run: func(cmd *cobra.Command, args []string) {
 			query := ""
