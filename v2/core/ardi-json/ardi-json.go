@@ -20,7 +20,7 @@ type ArdiJSON struct {
 // New returns core json module for handling ardi.json config
 func New(logger *log.Logger) (*ArdiJSON, error) {
 	config := types.ArdiConfig{}
-	buildConfig, err := ioutil.ReadFile(paths.ArdiBuildConfig)
+	buildConfig, err := ioutil.ReadFile(paths.ArdiProjectBuildConfig)
 	if err != nil {
 		logger.WithError(err).Error("Failed to read ardi.json")
 		return nil, err
@@ -110,7 +110,7 @@ func (a *ArdiJSON) write() error {
 		return err
 	}
 
-	if err := ioutil.WriteFile(paths.ArdiBuildConfig, newData, 0644); err != nil {
+	if err := ioutil.WriteFile(paths.ArdiProjectBuildConfig, newData, 0644); err != nil {
 		return err
 	}
 

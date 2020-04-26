@@ -18,8 +18,8 @@ import (
 	"github.com/robgonnella/ardi/v2/paths"
 	"github.com/robgonnella/ardi/v2/rpc"
 	"github.com/robgonnella/ardi/v2/types"
+	"github.com/robgonnella/ardi/v2/util"
 	log "github.com/sirupsen/logrus"
-	"gopkg.in/yaml.v2"
 )
 
 // Project represents an arduino project
@@ -62,7 +62,9 @@ func New(logger *log.Logger) (*Project, error) {
 
 // Init initializes directory as an ardi project
 func Init(logger *log.Logger) error {
-	if err := initializeDataDirectory(); err != nil {
+	dataDir := paths.ArdiProjectDataDir
+	confPath := paths.ArdiProjectDataConfig
+	if err := util.InitDataDirectory(dataDir, confPath); err != nil {
 		logger.WithError(err).Error()
 		return err
 	}
@@ -252,41 +254,14 @@ func (p *Project) isQuiet() bool {
 	return p.logger.Level == log.InfoLevel
 }
 
-// private helpers
-func initializeDataDirectory() error {
-	if _, err := os.Stat(paths.ArdiDataDir); os.IsNotExist(err) {
-		if err := os.MkdirAll(paths.ArdiDataDir, 0777); err != nil {
-			return err
-		}
-	}
-
-	if _, err := os.Stat(paths.ArdiDataConfig); os.IsNotExist(err) {
-		dataConfig := types.DataConfig{
-			BoardManager: types.BoardManager{AdditionalUrls: []string{}},
-			Directories: types.Directories{
-				Data:      paths.ArdiDataDir,
-				Downloads: path.Join(paths.ArdiDataDir, "staging"),
-				User:      path.Join(paths.ArdiDataDir, "Arduino"),
-			},
-			Telemetry: types.Telemetry{Enabled: false},
-		}
-		yamlConfig, _ := yaml.Marshal(&dataConfig)
-		if err := ioutil.WriteFile(paths.ArdiDataConfig, yamlConfig, 0644); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
 func initializeArdiJSON() error {
-	if _, err := os.Stat(paths.ArdiBuildConfig); os.IsNotExist(err) {
+	if _, err := os.Stat(paths.ArdiProjectBuildConfig); os.IsNotExist(err) {
 		buildConfig := types.ArdiConfig{
 			Libraries: make(map[string]string),
 			Builds:    make(map[string]types.ArdiBuildJSON),
 		}
 		jsonConfig, _ := json.MarshalIndent(&buildConfig, "\n", " ")
-		if err := ioutil.WriteFile(paths.ArdiBuildConfig, jsonConfig, 0644); err != nil {
+		if err := ioutil.WriteFile(paths.ArdiProjectBuildConfig, jsonConfig, 0644); err != nil {
 			return err
 		}
 	}

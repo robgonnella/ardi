@@ -15,6 +15,7 @@ import (
 )
 
 var cli = arduino.ArduinoCli
+var port = "50051"
 
 // Client represents a client connection to arduino-cli grpc daemon
 type Client struct {
@@ -60,6 +61,8 @@ func StartDaemon(dataConfigPath string) {
 	cli.SetArgs(
 		[]string{
 			"daemon",
+			"--port",
+			port,
 			"--config-file",
 			dataConfigPath,
 		},
@@ -229,7 +232,7 @@ func (c *Client) InstallPlatform(platform string) error {
 	)
 
 	if err != nil {
-		c.logger.WithError(err).Warn("Failed to install platform")
+		c.logger.WithError(err).Error("Failed to install platform")
 		return err
 	}
 
@@ -264,7 +267,8 @@ func (c *Client) InstallPlatform(platform string) error {
 				if parts := strings.Split(msg, "@"); len(parts) > 1 {
 					installedVersion = strings.Replace(parts[1], " installed", "", 1)
 				}
-			} else if strings.Contains(name, "already installed") {
+			}
+			if strings.Contains(name, "already installed") {
 				if parts := strings.Split(name, "@"); len(parts) > 1 {
 					installedVersion = strings.Replace(parts[1], " already installed", "", 1)
 				}
@@ -299,36 +303,29 @@ func (c *Client) UninstallPlatform(platform string) error {
 	)
 
 	if err != nil {
-		c.logger.WithError(err).Warn("Failed to uninstall platform")
+		c.logger.WithError(err).Error("Failed to uninstall platform")
 		return err
 	}
 
-	version := ""
 	// Loop and consume the server stream until all the operations are done.
 	for {
 		uninstallResp, err := uninstallRespStream.Recv()
 
 		// The server is done.
 		if err == io.EOF {
-			c.logger.Infof("Uninstalled: %s:%s@%s", pkg, arch, version)
+			c.logger.Infof("Uninstalled: %s:%s", pkg, arch)
 			return nil
 		}
 
 		// There was an error.
 		if err != nil {
-			c.logger.WithError(err).Error("Failed to install platform")
+			c.logger.WithError(err).Error("Failed to uninstall platform")
 			return err
 		}
 
 		// When an overall task is ongoing, log the progress
 		if progress := uninstallResp.GetTaskProgress(); progress != nil {
 			c.logger.Debugf("TASK: %s", progress)
-			if version == "" {
-				name := progress.GetName()
-				if parts := strings.Split(name, "@"); len(parts) > 1 {
-					version = parts[1]
-				}
-			}
 		}
 	}
 }
@@ -721,8 +718,9 @@ func getServerConnection() (*grpc.ClientConn, error) {
 	backgroundCtx := context.Background()
 	ctx, cancel := context.WithTimeout(backgroundCtx, 2*time.Second)
 	defer cancel()
+	addr := fmt.Sprintf("localhost:%s", port)
 	// Establish a connection with the gRPC server, started with the command: arduino-cli daemon
-	conn, err := grpc.DialContext(ctx, "localhost:50051", grpc.WithInsecure(), grpc.WithBlock())
+	conn, err := grpc.DialContext(ctx, addr, grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {
 		return nil, err
 	}

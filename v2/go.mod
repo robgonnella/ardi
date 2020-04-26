@@ -3,7 +3,7 @@ module github.com/robgonnella/ardi/v2
 go 1.13
 
 require (
-	github.com/arduino/arduino-cli v0.0.0-20200422172014-9073c1354f7e
+	github.com/arduino/arduino-cli v0.0.0-20200424151500-83d7f6e33d55
 	github.com/arduino/go-properties-orderedmap v1.1.0 // indirect
 	github.com/fatih/color v1.9.0 // indirect
 	github.com/fsnotify/fsnotify v1.4.9
@@ -27,11 +27,11 @@ require (
 	github.com/tarm/serial v0.0.0-20180830185346-98f6abe2eb07
 	go.bug.st/serial v1.1.0 // indirect
 	go.bug.st/serial.v1 v0.0.0-20191202182710-24a6610f0541 // indirect
-	golang.org/x/crypto v0.0.0-20200422194213-44a606286825 // indirect
-	golang.org/x/net v0.0.0-20200421231249-e086a090c8fd // indirect
+	golang.org/x/crypto v0.0.0-20200423211502-4bdfaf469ed5 // indirect
+	golang.org/x/net v0.0.0-20200425230154-ff2c4b7c35a0 // indirect
 	golang.org/x/sys v0.0.0-20200420163511-1957bb5e6d1f // indirect
-	google.golang.org/genproto v0.0.0-20200420144010-e5e8543f8aeb // indirect
-	google.golang.org/grpc v1.29.0
+	google.golang.org/genproto v0.0.0-20200424135956-bca184e23272 // indirect
+	google.golang.org/grpc v1.29.1
 	gopkg.in/ini.v1 v1.55.0 // indirect
 	gopkg.in/yaml.v2 v2.2.8
 )

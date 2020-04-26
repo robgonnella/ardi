@@ -16,8 +16,14 @@ var noDaemon = []string{
 	"ardi project init",
 }
 
+var noProjectCheck = []string{
+	"ardi project init",
+	"ardi version",
+}
+
 var verbose bool
 var quiet bool
+var dataDir = paths.ArdiProjectDataDir
 
 func setLogger() {
 	if verbose {
@@ -37,9 +43,17 @@ func getRootCommand() *cobra.Command {
 			"sketches and watch logs from command line for a variety of arduino boards."),
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			setLogger()
-			if !util.ArrayContains(noDaemon, cmd.CommandPath()) {
-				dataConfig := paths.ArdiDataDir
-				go rpc.StartDaemon(dataConfig)
+			cmdPath := cmd.CommandPath()
+			dataDir := paths.ArdiProjectDataDir
+
+			if !util.IsProjectDirectory() {
+				dataDir = paths.ArdiGlobalDataDir
+				confPath := paths.ArdiGlobalDataConfig
+				util.InitDataDirectory(dataDir, confPath)
+			}
+
+			if !util.ArrayContains(noDaemon, cmdPath) {
+				go rpc.StartDaemon(dataDir)
 			}
 		},
 	}

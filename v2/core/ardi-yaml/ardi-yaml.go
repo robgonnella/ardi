@@ -19,7 +19,7 @@ type ArdiYAML struct {
 // New returns core yaml module for handling data config file
 func New(logger *log.Logger) (*ArdiYAML, error) {
 	config := types.DataConfig{}
-	dataConfig, err := ioutil.ReadFile(paths.ArdiDataConfig)
+	dataConfig, err := ioutil.ReadFile(paths.ArdiProjectDataConfig)
 	if err != nil {
 		logger.WithError(err).Error("Failed to read data config file")
 		return nil, err
@@ -51,7 +51,7 @@ func (a *ArdiYAML) write() error {
 		return err
 	}
 
-	if err := ioutil.WriteFile(paths.ArdiDataConfig, newData, 0644); err != nil {
+	if err := ioutil.WriteFile(paths.ArdiProjectDataConfig, newData, 0644); err != nil {
 		return err
 	}
 

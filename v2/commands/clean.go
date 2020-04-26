@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/robgonnella/ardi/v2/paths"
+	"github.com/robgonnella/ardi/v2/util"
 	"github.com/spf13/cobra"
 )
 
@@ -13,17 +14,27 @@ func getCleanCommand() *cobra.Command {
 		Short: "Delete all ardi global data",
 		Long:  cyan("\nRemoves all installed platforms and libraries from ~/.ardi"),
 		Run: func(cmd *cobra.Command, args []string) {
-			logger.Info("Cleaning ardi data directory...")
-			if err := os.RemoveAll(paths.ArdiDataDir); err != nil {
-				logger.WithError(err).Errorf("Failed to clean ardi directory. You can manually clean all data by removing %s", paths.ArdiDataDir)
+			global := !util.IsProjectDirectory()
+			dataDir := paths.ArdiProjectDataDir
+			if global {
+				dataDir = paths.ArdiGlobalDataDir
+			}
+
+			logger.Infof("Cleaning ardi data directory: %s", dataDir)
+			if err := util.CleanDataDirectory(dataDir); err != nil {
+				logger.WithError(err).Errorf("Failed to clean ardi directory. You can manually clean all data by removing %s", dataDir)
 				return
 			}
-			logger.Info("Cleaning ardi build config...")
-			if err := os.RemoveAll(paths.ArdiBuildConfig); err != nil {
-				logger.WithError(err).Error("Failed to remove %s", paths.ArdiBuildConfig)
-				return
+
+			if !global {
+				logger.Info("Cleaning ardi build config")
+				if err := os.RemoveAll(paths.ArdiProjectBuildConfig); err != nil {
+					logger.WithError(err).Error("Failed to remove %s", paths.ArdiProjectBuildConfig)
+					return
+				}
 			}
-			logger.Infof("Successfully removed all data from project directory")
+
+			logger.Infof("Successfully removed all data from %s", dataDir)
 		},
 	}
 }

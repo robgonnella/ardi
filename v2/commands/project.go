@@ -1,16 +1,12 @@
 package commands
 
 import (
-	"errors"
-	"fmt"
-	"os"
 	"path"
 	"strings"
 
 	"github.com/robgonnella/ardi/v2/core/lib"
 	"github.com/robgonnella/ardi/v2/core/platform"
 	"github.com/robgonnella/ardi/v2/core/project"
-	"github.com/robgonnella/ardi/v2/paths"
 	"github.com/spf13/cobra"
 )
 
@@ -37,7 +33,6 @@ func getProjectListPlatformCmd() *cobra.Command {
 		Short:   "Add platform(s) to project",
 		Aliases: []string{"platforms"},
 		Run: func(cmd *cobra.Command, args []string) {
-			runProjectInitializationChecker()
 			platformCore, err := platform.New(logger)
 			if err != nil {
 				return
@@ -56,7 +51,6 @@ func getProjectListLibrariesCmd() *cobra.Command {
 		Short:   "List all project libraries specified in ardi.json",
 		Aliases: []string{"libs"},
 		Run: func(cmd *cobra.Command, args []string) {
-			runProjectInitializationChecker()
 			projectCore, err := project.New(logger)
 			if err != nil {
 				return
@@ -75,7 +69,6 @@ func getProjectListBuildsCmd() *cobra.Command {
 		Short:   "List all project builds specified in ardi.json",
 		Aliases: []string{"build"},
 		Run: func(cmd *cobra.Command, args []string) {
-			runProjectInitializationChecker()
 			projectCore, err := project.New(logger)
 			if err != nil {
 				return
@@ -106,7 +99,6 @@ func getProjectAddPlatformCmd() *cobra.Command {
 		Short:   "Add platform(s) to project",
 		Aliases: []string{"platforms"},
 		Run: func(cmd *cobra.Command, args []string) {
-			runProjectInitializationChecker()
 			platformCore, err := platform.New(logger)
 			if err != nil {
 				return
@@ -134,7 +126,6 @@ func getProjectAddBuildCmd() *cobra.Command {
 		Long:  cyan("\nAdd build config to project"),
 		Short: "Add build config to project",
 		Run: func(cmd *cobra.Command, args []string) {
-			runProjectInitializationChecker()
 			projectCore, err := project.New(logger)
 			if err != nil {
 				return
@@ -160,7 +151,6 @@ func getProjectAddLibCmd() *cobra.Command {
 		Short: "Add libraries to project\\e[0m",
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			runProjectInitializationChecker()
 			libCore, err := lib.New(logger)
 			if err != nil {
 				return
@@ -191,7 +181,6 @@ func getProjectRemovePlatformCmd() *cobra.Command {
 		Short:   "Remove platform(s) from project",
 		Aliases: []string{"platforms"},
 		Run: func(cmd *cobra.Command, args []string) {
-			runProjectInitializationChecker()
 			platformCore, err := platform.New(logger)
 			if err != nil {
 				return
@@ -210,7 +199,6 @@ func getProjectRemoveBuildCmd() *cobra.Command {
 		Short:   "Remove build config from project",
 		Aliases: []string{"builds"},
 		Run: func(cmd *cobra.Command, args []string) {
-			runProjectInitializationChecker()
 			projectCore, err := project.New(logger)
 			if err != nil {
 				return
@@ -229,7 +217,6 @@ func getProjectRemoveLibCmd() *cobra.Command {
 		Short: "Remove libraries from project",
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			runProjectInitializationChecker()
 			libCore, err := lib.New(logger)
 			if err != nil {
 				return
@@ -259,7 +246,6 @@ func getProjectBuildCmd() *cobra.Command {
 		Short: "Compile builds specified in ardi.json",
 		Long:  cyan("\nCompile builds specified in ardi.json"),
 		Run: func(cmd *cobra.Command, args []string) {
-			runProjectInitializationChecker()
 			projectCore, err := project.New(logger)
 			if err != nil {
 				return
@@ -284,22 +270,4 @@ func getProjectCommand() *cobra.Command {
 	projectCmd.AddCommand(getProjectBuildCmd())
 
 	return projectCmd
-}
-
-// initilization checker
-func runProjectInitializationChecker() {
-	failMsg := "Ardi project directory is not initialized. Please run 'ardi project init' first"
-	customErr := errors.New(failMsg)
-	if _, err := os.Stat(paths.ArdiBuildConfig); os.IsNotExist(err) {
-		fmt.Println("")
-		logger.WithError(customErr).Error("Project Command Failed")
-		fmt.Println("")
-		os.Exit(1)
-	}
-	if _, err := os.Stat(paths.ArdiDataConfig); os.IsNotExist(err) {
-		fmt.Println("")
-		logger.WithError(customErr).Error("Project Command Failed")
-		fmt.Println("")
-		os.Exit(1)
-	}
 }

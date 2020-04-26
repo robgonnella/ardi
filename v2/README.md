@@ -1,39 +1,23 @@
 [![GoDoc](https://godoc.org/github.com/robgonnella/ardi?status.svg)](https://godoc.org/github.com/robgonnella/ardi) ![Build](https://codebuild.us-east-1.amazonaws.com/badges?uuid=eyJlbmNyeXB0ZWREYXRhIjoiclFVTnRkYjY1QXlnTjdueC9rZFhhRjNXVzdaUlZhL0tpdW9wMlA4TU94MC9POU5lcGJkTE4rSDJkSTdhYWJianBPWDhXdzR4a2x3U1lZL1h1NEYzSzBBPSIsIml2UGFyYW1ldGVyU3BlYyI6ImUxUXhjTjhhZFlHb0Q5b3AiLCJtYXRlcmlhbFNldFNlcmlhbCI6MX0%3D&branch=master)
 
-
 # Ardi
 
-Ardi is a command-line tool for compiling, uploading, and watching logs for
-your usb connected arduino board. Ardi allows you to develop in an environment
-you feel comfortable, without being forced to use arduino's web or desktop IDEs.
+Ardi is a command-line tool for ardiuno that enables you to properly version and
+manage project builds, and provides tools to help facilitate the development
+process.
 
-Ardi's `--watch` flag allows you to auto re-compile and upload on save, saving
-you time and improving efficiency.
+Things ardi can fo for you:
+
+- Manage versioned platforms and libraries on a per-project basis
+- Store user defined build configurations with a mechanism for easily running
+  consistent and repeatable builds.
+- Enable running your builds in a CI pipeline
+- Compile and upload to an auto discovered connected board
+- Watche a sketch for changes and auto recompil / reupload to a connected board
+- Print various info about platforms and boards
+- Search and print available libraries and versions
 
 Ardi should work for all boards and platforms supported by arduino-cli.
-Run `ardi init` to download all supported platforms and index files to ensure
-maximum board support. To initialize only for a specific platform, run
-`ardi init <platform_id>` or `ardi init <platform_id@version>`. To see a list of
-supported platforms and associated IDs, run `ardi platform list`. To see a list
-of all supported boards and their associated platforms and fqbns run
-`ardi board list`.
-(Note board fqbn will only be filled in once platform is initialized)
-
-Once initialized run `ardi go <sketch_dir> --watch --verbose` and ardi will try
-to auto detect your board, compile your sketch, upload, watch for changes in
-your sketch file, and re-compile and re-upload. You can also run,
-`ardi compile <sketch_directory> --fqbn <board_fqbn>` to only compile and
-skip uploading.
-
-Ardi also includes a basic library manager. Run `ardi lib init` in your project
-directory to initialize it as an ardi project directory. Once initialized,
-you can use `ardi lib add <lib_name>` to add libraries,
-`ardi lib remove <lib_name>`, `ardi lib install` to install missing libraries
-defined in ardi.json, and `ardi lib search <searchFilter>` to search existing
-libraries.
-
-Ardi stores all its platform data in `~/.ardi/` to avoid any conflicts with
-existing `arduino-cli` installations.
 
 Use "ardi [command] --help" for more information about a command.
 
@@ -45,10 +29,10 @@ Ardi can be installed with golang's `go get` for versions of go >= 1.12
 ## go version >= 1.12
 
 # From outside of a module directory
-GO111MODULE=on go get github.com/robgonnella/ardi
+GO111MODULE=on go get github.com/robgonnella/ardi@latest
 
 # From inside of a module directory
-go get github.com/robgonnella/ardi
+go get github.com/robgonnella/ardi@latest
 ```
 
 You can also download and install the pre-built binaries
@@ -56,59 +40,72 @@ You can also download and install the pre-built binaries
 
 # Usage
 
-## Installing Platforms
+Ardi requires certain packages to be downloaded before it can properly compile
+sketches, detect connected boards, and perform other tasks. Ardi will check for
+a project level data directory for these packages and if found it will use this
+directory, othewise ardi will use a global data directory located in the
+uses home directory, `~/.ardi`. To initialize a directory as an ardi project
+directory run `ardi project init`.
 
-Ardi requires certain binaries to be downloaded before it can properly compile
-sketches, detect connected boards, or list FQBNs (fully qualified board names)
-for supported boards.
+Any command run from within an "arid initialized" project directory will
+use the local data directory for that project.
+
+To initialize an ardi project directory run:
 
 ```bash
+ardi project init
+```
+
+## Platform & Board Commands
+
+The following "platform" commands will operate on the global data directory if
+run from outside of an ardi project directory and on the the local project
+data directory if run from within an ardi project directory.
+
+```bash
+# list all available platforms and their ids
+ardi platform list --all
 # from any directory
-ardi init --verbose
-# or to initialize only for a specified platform
-ardi init --verbose <platform_id>
-# or to initialize for a specific version of a platform
-ardi init --verbose <platform_id@version>
-# to list the available platforms
-ardi platform list <optional_search_param>
+ardi platform add <platform_ids>
+# list all installed platforms
+ardi platform list --installed
+# remove installed platform
+ardi platform remove <platfor_ids>
 ```
 
-Note: Unfortunately, at this time ardi cannot provide a list of available
-versions for each platform. However, you can find some of the arduino
-platforms (aka cores) listed
-[here](https://github.com/arduino?utf8=%E2%9C%93&q=core&type=&language=). Click
-on your desired platform / core, then click on the "releases" tab to see
-a list of versions for that platform / core.
-
-## Remove Installed Platforms and Data
+The above platform commands are also duplicated via the project
+command
 
 ```bash
-# from any directory
-ardi clean
+# add project level platform
+ardi project add platform <platform_ids>
+# remove project level platform
+ardi project remove platform <platform_ids>
+# list project level installed platforms
+ardi project list platforms
 ```
 
-## List Available Platforms
+To see a list of boards and their associated platforms run
 
 ```bash
-# list all (alias: search)
-ardi platform list
-# filter output based on keyword
-ardi platform list mega
+ardi board platforms
 ```
 
-## List Board Info
-
-Ardi will only be able to list FQBNs for boards that have their associated
-platforms installed (initialized) already. Use the board list command
-bellow to find the desired platform for any board, then run
-`ardi init <platform_id>`, then run the board list command again to find your
-boards FQBN (fully qualified board name).
+After installing your desired platform, to see a list of boards and their
+associated fqbns run:
 
 ```bash
-# list all
-ardi board list
-# filter output based on keyword
-ardi board list mega
+ardi board fqbns
+```
+
+## Remove All Installed Platforms and Data
+
+```bash
+# from inside initialized project directory
+ardi clean # removes only project level data
+
+# from outside of project directory
+ardi clean # removes global data directory
 ```
 
 ## Uploading Sketches
@@ -120,8 +117,16 @@ Point ardi at any absolute or relative path to a sketch directory.
 By default ardi will read the sketch file, auto-detect the baud rate, connect
 to the serial port, and print logs.
 
-Accepts the a custom build property flag - see
+Accepts custom build properties flag - see
 [Build Properties](#Build-Properties)
+
+## Using the "watch" Feature
+
+Ardi allows you to optionally watch a specified sketch file for changes and
+auto re-compile and re-upload. Just add the `--watch` flag to the `ardi go`
+command.
+
+    ardi go <path_to_sketch_dir> --watch
 
 ## Compiling Only (no upload)
 
@@ -133,7 +138,7 @@ names and their associated fqbns for each installed platform.
 
     ardi compile <sketch_directory> --fqbn <board_fqbn> --verbose
 
-Accepts the a custom build property flag - see
+Accepts custom build properties flag - see
 [Build Properties](#Build-Properties)
 
 The compile command also allows you print all build properties by using the
@@ -151,33 +156,59 @@ To specify multiple build properties just precede each property with the
     -p build.extra_flags="-DSOME_OPTION" \
     -p compiler.cpp.extra_flags="-std=c++11"
 
-## Using Ardi's "Watch" Feature
+## Storing Builds in ardi.json
 
-Ardi allows you to optionally watch a specified sketch file for changes and
-auto re-compile and re-upload. Just add the `--watch` flag to the `ardi go`
-command.
+Ardi enables you to store custom build details in ardi.json which you can
+then easily run via the `ardi project build` command.
 
-    ardi go <path_to_sketch_dir> --watch
+To add a build either manually modify ardi.json or use `ardi project add build`
+
+```bash
+ardi project add build \
+--name <name> \
+--platform <platform_id> \
+--fqbn <fqbn> \
+--build-prop build.extra_flags="-DSOME_OPTION" \
+--build-prop compiler.cpp.extra_flags="-std=c++11"
+
+# To see list of all options
+ardi project add build --help
+```
+
+To run stored builds
+
+```bash
+# Run a single build
+ardi project build <name>
+# Run multiple builds
+ardi project build <name1> <name2> <name3>
+# Run all builds
+ardi project build
+```
 
 ## Adding Libraries
 
-Ardi has a minimal library manager. Run `ardi lib init` in your project
-directory and ardi will create the necessary config files to create repeatable
-versioned local library downloads and installs for that project.
-
-Available library commands
+Ardi has a built in library manager allowing you to use repeatable
+versioned local libraries for your project.
 
 ```bash
-# initialize a project directory to use local libraries
-ardi lib init
-# add a library locally
-ardi lib add <library_name>
+# add a library
+ardi lib add <library_name1> <libaray_name2>
 # remove a local library
-ardi lib remove <library_name>
+ardi lib remove <library_name1> <libaray_name2>
 # install all local library dependencies specified in ardi.json
 ardi lib install
 # search for available libraries (alias find, list)
 ardi lib search <search_filter>
+```
+
+The above commands are duplicated via the `ardi project` command too
+
+```bash
+ardi project add lib <library_name> ...
+ardi project remove lib <library_name> ...
+# lists installed libraries
+ardi project list lib
 ```
 
 [arduino-cli]: https://github.com/arduino/arduino-cli

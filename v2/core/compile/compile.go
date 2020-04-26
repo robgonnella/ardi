@@ -1,14 +1,10 @@
 package compile
 
 import (
-	"errors"
-	"os"
-
 	log "github.com/sirupsen/logrus"
 
 	"github.com/robgonnella/ardi/v2/core/project"
 	"github.com/robgonnella/ardi/v2/core/target"
-	"github.com/robgonnella/ardi/v2/paths"
 	"github.com/robgonnella/ardi/v2/rpc"
 )
 
@@ -33,12 +29,6 @@ func New(logger *log.Logger) (*Compile, error) {
 
 // Compile a given project
 func (c *Compile) Compile(sketchDir, fqbn string, buildProps []string, showProps bool) error {
-	if !isInitialized() {
-		err := errors.New("Ardi has not been initialized. Please run \"ardi init\" first")
-		c.logger.WithError(err).Error("Cannot compile")
-		return err
-	}
-
 	project, err := project.New(c.logger)
 	if err != nil {
 		c.logger.WithError(err).Error("Failed to compile")
@@ -61,9 +51,4 @@ func (c *Compile) Compile(sketchDir, fqbn string, buildProps []string, showProps
 	}
 
 	return nil
-}
-
-func isInitialized() bool {
-	_, err := os.Stat(paths.ArdiDataDir)
-	return !os.IsNotExist(err)
 }

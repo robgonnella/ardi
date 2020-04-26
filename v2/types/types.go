@@ -5,6 +5,11 @@ type BoardManager struct {
 	AdditionalUrls []string `yaml:"additional_urls"`
 }
 
+// Daemon daemon configuration
+type Daemon struct {
+	Port string `yaml:"port"`
+}
+
 // Directories paths where arduino-cli grpc server can find data
 type Directories struct {
 	Data      string `yaml:"data"`
@@ -12,15 +17,25 @@ type Directories struct {
 	User      string `yaml:"user"`
 }
 
+// Logging logging configuration
+type Logging struct {
+	File   string `yaml:"file"`
+	Format string `yaml:"format"`
+	Level  string `yaml:"level"`
+}
+
 // Telemetry enable/disable flag for arduino-cli grpc server
 type Telemetry struct {
-	Enabled bool `yaml:"enabled"`
+	Addr    string `yaml:"addr"`
+	Enabled bool   `yaml:"enabled"`
 }
 
 // DataConfig represents yaml config for telling arduino-cli where to find libraries
 type DataConfig struct {
 	BoardManager BoardManager `yaml:"board_manager"`
+	Daemon       Daemon       `yaml:"daemon"`
 	Directories  Directories  `yaml:"directories"`
+	Logging      Logging      `yaml:"logging"`
 	Telemetry    Telemetry    `yaml:"telemetry"`
 }
 
