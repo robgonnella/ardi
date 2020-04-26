@@ -1,16 +1,20 @@
 package commands
 
 import (
+	"errors"
+	"fmt"
+	"os"
+	"path"
 	"strings"
 
 	"github.com/robgonnella/ardi/v2/core/lib"
+	"github.com/robgonnella/ardi/v2/core/platform"
 	"github.com/robgonnella/ardi/v2/core/project"
-	log "github.com/sirupsen/logrus"
+	"github.com/robgonnella/ardi/v2/paths"
 	"github.com/spf13/cobra"
 )
 
 func getProjectInitCommand() *cobra.Command {
-	var verbose bool
 	initCmd := &cobra.Command{
 		Use:   "init",
 		Short: "Initialize directory as an ardi project",
@@ -19,39 +23,30 @@ func getProjectInitCommand() *cobra.Command {
 			"creates project level ardi.json"),
 		Aliases: []string{"update"},
 		Run: func(cmd *cobra.Command, args []string) {
-			logger := log.New()
-
-			projectCore, err := project.New(logger)
-			if err != nil {
-				return
-			}
-			defer projectCore.Client.Connection.Close()
-
-			if verbose {
-				logger.SetLevel(log.DebugLevel)
-			} else {
-				logger.SetLevel(log.InfoLevel)
-			}
-
-			platform := ""
-			version := ""
-			if len(args) > 0 {
-				platParts := strings.Split(args[0], "@")
-				if len(platParts) > 0 {
-					platform = platParts[0]
-				}
-				if len(platParts) > 1 {
-					version = platParts[1]
-				}
-			}
-
-			projectCore.Init(platform, version)
+			project.Init(logger)
 		},
 	}
 
-	initCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Print all logs")
-
 	return initCmd
+}
+
+func getProjectListPlatformCmd() *cobra.Command {
+	listCmd := &cobra.Command{
+		Use:     "platform",
+		Long:    cyan("\nAdd platform(s) to project"),
+		Short:   "Add platform(s) to project",
+		Aliases: []string{"platforms"},
+		Run: func(cmd *cobra.Command, args []string) {
+			runProjectInitializationChecker()
+			platformCore, err := platform.New(logger)
+			if err != nil {
+				return
+			}
+			defer platformCore.Client.Connection.Close()
+			platformCore.ListInstalled()
+		},
+	}
+	return listCmd
 }
 
 func getProjectListLibrariesCmd() *cobra.Command {
@@ -61,7 +56,7 @@ func getProjectListLibrariesCmd() *cobra.Command {
 		Short:   "List all project libraries specified in ardi.json",
 		Aliases: []string{"libs"},
 		Run: func(cmd *cobra.Command, args []string) {
-			logger := log.New()
+			runProjectInitializationChecker()
 			projectCore, err := project.New(logger)
 			if err != nil {
 				return
@@ -80,13 +75,13 @@ func getProjectListBuildsCmd() *cobra.Command {
 		Short:   "List all project builds specified in ardi.json",
 		Aliases: []string{"build"},
 		Run: func(cmd *cobra.Command, args []string) {
-			logger := log.New()
+			runProjectInitializationChecker()
 			projectCore, err := project.New(logger)
 			if err != nil {
 				return
 			}
 			defer projectCore.Client.Connection.Close()
-			projectCore.ListBuilds()
+			projectCore.ListBuilds(args)
 		},
 	}
 	return listCmd
@@ -98,34 +93,63 @@ func getProjectListCmd() *cobra.Command {
 		Long:  cyan("\nList project attributes saved in ardi.json"),
 		Short: "List project attributes saved in ardi.json",
 	}
+	listCmd.AddCommand(getProjectListPlatformCmd())
 	listCmd.AddCommand(getProjectListLibrariesCmd())
 	listCmd.AddCommand(getProjectListBuildsCmd())
 	return listCmd
 }
 
+func getProjectAddPlatformCmd() *cobra.Command {
+	addCmd := &cobra.Command{
+		Use:     "platform",
+		Long:    cyan("\nAdd platform(s) to project"),
+		Short:   "Add platform(s) to project",
+		Aliases: []string{"platforms"},
+		Run: func(cmd *cobra.Command, args []string) {
+			runProjectInitializationChecker()
+			platformCore, err := platform.New(logger)
+			if err != nil {
+				return
+			}
+			defer platformCore.Client.Connection.Close()
+			if len(args) == 0 || strings.ToLower(args[0]) == "all" {
+				platformCore.AddAll()
+				return
+			}
+			platformCore.Add(args)
+		},
+	}
+	return addCmd
+}
+
 func getProjectAddBuildCmd() *cobra.Command {
 	var name string
+	var platform string
+	var boardURL string
 	var fqbn string
-	var path string
+	var sketch string
 	var buildProps []string
 	addCmd := &cobra.Command{
 		Use:   "build",
 		Long:  cyan("\nAdd build config to project"),
 		Short: "Add build config to project",
 		Run: func(cmd *cobra.Command, args []string) {
-			logger := log.New()
+			runProjectInitializationChecker()
 			projectCore, err := project.New(logger)
 			if err != nil {
 				return
 			}
 			defer projectCore.Client.Connection.Close()
-			projectCore.AddBuild(name, path, fqbn, buildProps)
+			sketchDir := path.Dir(sketch)
+			projectCore.AddBuild(name, platform, boardURL, sketchDir, fqbn, buildProps)
 		},
 	}
 	addCmd.Flags().StringVarP(&name, "name", "n", "", "Custom name for the build")
 	addCmd.Flags().StringVarP(&fqbn, "fqbn", "f", "", "Specify fully qualified board name")
-	addCmd.Flags().StringVarP(&path, "path", "i", "", "Path to .ino file or sketch directory")
-	addCmd.Flags().StringArrayVarP(&buildProps, "build-prop", "p", []string{}, "Specify build property to compiler")
+	addCmd.Flags().StringVarP(&sketch, "sketch", "s", "", "Path to .ino file or sketch directory")
+	addCmd.Flags().StringVarP(&platform, "platform", "m", "", "Platform for this build \"package:architecture@version\" (optional)")
+	addCmd.Flags().StringVarP(&boardURL, "board-url", "u", "", "Custom board url (optional)")
+	addCmd.Flags().StringArrayVarP(&buildProps, "build-prop", "p", []string{}, "Specify build property to compiler (optional)")
 	return addCmd
 }
 
@@ -136,7 +160,7 @@ func getProjectAddLibCmd() *cobra.Command {
 		Short: "Add libraries to project\\e[0m",
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			logger := log.New()
+			runProjectInitializationChecker()
 			libCore, err := lib.New(logger)
 			if err != nil {
 				return
@@ -154,9 +178,29 @@ func getProjectAddCmd() *cobra.Command {
 		Long:  cyan("\nAdd libraries and builds to project"),
 		Short: "Add libraries and builds to project",
 	}
+	addCmd.AddCommand(getProjectAddPlatformCmd())
 	addCmd.AddCommand(getProjectAddBuildCmd())
 	addCmd.AddCommand(getProjectAddLibCmd())
 	return addCmd
+}
+
+func getProjectRemovePlatformCmd() *cobra.Command {
+	removeCmd := &cobra.Command{
+		Use:     "platform",
+		Long:    cyan("\nRemove platform(s) from project"),
+		Short:   "Remove platform(s) from project",
+		Aliases: []string{"platforms"},
+		Run: func(cmd *cobra.Command, args []string) {
+			runProjectInitializationChecker()
+			platformCore, err := platform.New(logger)
+			if err != nil {
+				return
+			}
+			defer platformCore.Client.Connection.Close()
+			platformCore.Remove(args)
+		},
+	}
+	return removeCmd
 }
 
 func getProjectRemoveBuildCmd() *cobra.Command {
@@ -166,7 +210,7 @@ func getProjectRemoveBuildCmd() *cobra.Command {
 		Short:   "Remove build config from project",
 		Aliases: []string{"builds"},
 		Run: func(cmd *cobra.Command, args []string) {
-			logger := log.New()
+			runProjectInitializationChecker()
 			projectCore, err := project.New(logger)
 			if err != nil {
 				return
@@ -185,7 +229,7 @@ func getProjectRemoveLibCmd() *cobra.Command {
 		Short: "Remove libraries from project",
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			logger := log.New()
+			runProjectInitializationChecker()
 			libCore, err := lib.New(logger)
 			if err != nil {
 				return
@@ -203,6 +247,7 @@ func getProjectRemoveCmd() *cobra.Command {
 		Short: "Remove libraries and builds from project",
 		Long:  cyan("\nRemove libraries and builds from project"),
 	}
+	removeCmd.AddCommand(getProjectRemovePlatformCmd())
 	removeCmd.AddCommand(getProjectRemoveBuildCmd())
 	removeCmd.AddCommand(getProjectRemoveLibCmd())
 	return removeCmd
@@ -214,7 +259,7 @@ func getProjectBuildCmd() *cobra.Command {
 		Short: "Compile builds specified in ardi.json",
 		Long:  cyan("\nCompile builds specified in ardi.json"),
 		Run: func(cmd *cobra.Command, args []string) {
-			logger := log.New()
+			runProjectInitializationChecker()
 			projectCore, err := project.New(logger)
 			if err != nil {
 				return
@@ -239,4 +284,22 @@ func getProjectCommand() *cobra.Command {
 	projectCmd.AddCommand(getProjectBuildCmd())
 
 	return projectCmd
+}
+
+// initilization checker
+func runProjectInitializationChecker() {
+	failMsg := "Ardi project directory is not initialized. Please run 'ardi project init' first"
+	customErr := errors.New(failMsg)
+	if _, err := os.Stat(paths.ArdiBuildConfig); os.IsNotExist(err) {
+		fmt.Println("")
+		logger.WithError(customErr).Error("Project Command Failed")
+		fmt.Println("")
+		os.Exit(1)
+	}
+	if _, err := os.Stat(paths.ArdiDataConfig); os.IsNotExist(err) {
+		fmt.Println("")
+		logger.WithError(customErr).Error("Project Command Failed")
+		fmt.Println("")
+		os.Exit(1)
+	}
 }

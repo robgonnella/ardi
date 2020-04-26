@@ -2,13 +2,10 @@ package commands
 
 import (
 	ardiGoCore "github.com/robgonnella/ardi/v2/core/ardi-go"
-	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
-func process(sketchDir string, buildProps []string, watchSketch, verbose bool) {
-
-	logger := log.New()
+func process(sketchDir string, buildProps []string, watchSketch bool) {
 	ardiGo, err := ardiGoCore.New(sketchDir, buildProps, logger)
 	if err != nil {
 		return
@@ -34,7 +31,6 @@ func process(sketchDir string, buildProps []string, watchSketch, verbose bool) {
 func getGoCommand() *cobra.Command {
 
 	var watchSketch bool
-	var verbose bool
 	var buildProps []string
 
 	var goCmd = &cobra.Command{
@@ -47,11 +43,10 @@ func getGoCommand() *cobra.Command {
 		Args: cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			sketchDir := args[0]
-			process(sketchDir, buildProps, watchSketch, verbose)
+			process(sketchDir, buildProps, watchSketch)
 		},
 	}
 	goCmd.Flags().BoolVarP(&watchSketch, "watch", "w", false, "watch for changes, recompile and reupload")
-	goCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "print all logs")
 	goCmd.Flags().StringArrayVarP(&buildProps, "build-prop", "p", []string{}, "Specify build property to compiler")
 
 	return goCmd

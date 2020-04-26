@@ -2,19 +2,24 @@ package project
 
 import (
 	"bufio"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
-	"time"
 
 	ardijson "github.com/robgonnella/ardi/v2/core/ardi-json"
+	ardiyaml "github.com/robgonnella/ardi/v2/core/ardi-yaml"
+	"github.com/robgonnella/ardi/v2/paths"
 	"github.com/robgonnella/ardi/v2/rpc"
+	"github.com/robgonnella/ardi/v2/types"
 	log "github.com/sirupsen/logrus"
+	"gopkg.in/yaml.v2"
 )
 
 // Project represents an arduino project
@@ -24,6 +29,7 @@ type Project struct {
 	Baud      int
 	Client    *rpc.Client
 	ardiJSON  *ardijson.ArdiJSON
+	ardiYAML  *ardiyaml.ArdiYAML
 	logger    *log.Logger
 }
 
@@ -40,11 +46,33 @@ func New(logger *log.Logger) (*Project, error) {
 		return nil, err
 	}
 
+	ardiYAML, err := ardiyaml.New(logger)
+	if err != nil {
+		logger.WithError(err).Error()
+		return nil, err
+	}
+
 	return &Project{
 		Client:   client,
 		ardiJSON: ardiJSON,
+		ardiYAML: ardiYAML,
 		logger:   logger,
 	}, nil
+}
+
+// Init initializes directory as an ardi project
+func Init(logger *log.Logger) error {
+	if err := initializeDataDirectory(); err != nil {
+		logger.WithError(err).Error()
+		return err
+	}
+	logger.Info("data directory initialized")
+	if err := initializeArdiJSON(); err != nil {
+		logger.WithError(err).Error()
+		return err
+	}
+	logger.Info("ardi.json initialized")
+	return nil
 }
 
 // ProcessSketch to find directory, filepath, and baud
@@ -77,53 +105,9 @@ func (p *Project) ProcessSketch(sketchDir string) error {
 	return nil
 }
 
-// Init initialize directory as ardi project
-func (p *Project) Init(platform, version string) error {
-	var err error
-	errMsg := "Failed to initialize ardi"
-	p.logger.Info("Initializing. This may take some time...")
-	quit := make(chan bool, 1)
-
-	// Show simple "processing" indicator if not logging verbosely
-	if p.isQuiet() {
-		p.logger.Info("Installing platforms...")
-		ticker := time.NewTicker(2 * time.Second)
-		go func() {
-			for {
-				select {
-				case <-ticker.C:
-					fmt.Print(".")
-				case <-quit:
-					ticker.Stop()
-				}
-			}
-		}()
-	}
-
-	if platform == "" {
-		err = p.Client.InstallAllPlatforms()
-	} else {
-		platParts := strings.Split(platform, ":")
-		platPackage := platParts[0]
-		arch := platParts[len(platParts)-1]
-		err = p.Client.InstallPlatform(platPackage, arch, version)
-	}
-
-	quit <- true
-	fmt.Println("")
-	if err != nil {
-		p.logger.WithError(err).Error(errMsg)
-		return err
-	}
-
-	p.logger.Info("Successfully initialized!")
-	fmt.Println("")
-	return nil
-}
-
 // ListBuilds specified in ardi.json
-func (p *Project) ListBuilds() {
-	p.ardiJSON.ListBuilds()
+func (p *Project) ListBuilds(builds []string) {
+	p.ardiJSON.ListBuilds(builds)
 }
 
 // ListLibraries specified in ardi.json
@@ -132,8 +116,14 @@ func (p *Project) ListLibraries() {
 }
 
 // AddBuild to ardi.json build specifications
-func (p *Project) AddBuild(name, path, fqbn string, buildProps []string) {
-	p.ardiJSON.AddBuild(name, path, fqbn, buildProps)
+func (p *Project) AddBuild(name, platform, boardURL, path, fqbn string, buildProps []string) {
+	if platform != "" {
+		p.Client.InstallPlatform(platform)
+	}
+	if boardURL != "" {
+		p.ardiYAML.AddBoardURL(boardURL)
+	}
+	p.ardiJSON.AddBuild(name, platform, boardURL, path, fqbn, buildProps)
 }
 
 // RemoveBuild removes specified build(s) from project
@@ -146,33 +136,40 @@ func (p *Project) RemoveBuild(builds []string) {
 // Build specified project from ardi.json, or build all projects if left blank
 func (p *Project) Build(builds []string) error {
 	if len(builds) > 0 {
-		for _, sketch := range builds {
-			for _, build := range p.ardiJSON.Config.Builds {
-				if sketch == build.Path {
-					buildProps := []string{}
-					for prop, instruction := range build.Props {
-						buildProps = append(buildProps, fmt.Sprintf("%s=%s", prop, instruction))
-					}
-					p.logger.Infof("Building %s", sketch)
-					if err := p.Client.Compile(build.FQBN, sketch, buildProps, false); err != nil {
-						p.logger.WithError(err).Errorf("Build failed for %s", sketch)
-						return err
-					}
-					break
+		for _, name := range builds {
+			if build, ok := p.ardiJSON.Config.Builds[name]; ok {
+				if build.Platform != "" {
+					p.Client.InstallPlatform(build.Platform)
 				}
+				if build.BoardURL != "" {
+					p.ardiYAML.AddBoardURL(build.BoardURL)
+				}
+				buildProps := []string{}
+				for prop, instruction := range build.Props {
+					buildProps = append(buildProps, fmt.Sprintf("%s=%s", prop, instruction))
+				}
+				p.logger.Infof("Building %s", build)
+				directory := path.Dir(build.Path)
+				if err := p.Client.Compile(build.FQBN, directory, buildProps, false); err != nil {
+					p.logger.WithError(err).Errorf("Build failed for %s", build)
+					return err
+				}
+			} else {
+				p.logger.Warnf("No build specification for %s", build)
 			}
 		}
 		return nil
 	}
 	// Build all
-	for _, build := range p.ardiJSON.Config.Builds {
+	for name, build := range p.ardiJSON.Config.Builds {
 		buildProps := []string{}
 		for prop, instruction := range build.Props {
 			buildProps = append(buildProps, fmt.Sprintf("%s=%s", prop, instruction))
 		}
 		p.logger.Infof("Building %s", build.Path)
-		if err := p.Client.Compile(build.FQBN, build.Path, buildProps, false); err != nil {
-			p.logger.WithError(err).Errorf("Build faild for %s", build.Path)
+		directory := path.Dir(build.Path)
+		if err := p.Client.Compile(build.FQBN, directory, buildProps, false); err != nil {
+			p.logger.WithError(err).Errorf("Build faild for %s", name)
 			return err
 		}
 	}
@@ -253,4 +250,45 @@ func parseSketchBaud(sketch string, logger *log.Logger) int {
 // private methods
 func (p *Project) isQuiet() bool {
 	return p.logger.Level == log.InfoLevel
+}
+
+// private helpers
+func initializeDataDirectory() error {
+	if _, err := os.Stat(paths.ArdiDataDir); os.IsNotExist(err) {
+		if err := os.MkdirAll(paths.ArdiDataDir, 0777); err != nil {
+			return err
+		}
+	}
+
+	if _, err := os.Stat(paths.ArdiDataConfig); os.IsNotExist(err) {
+		dataConfig := types.DataConfig{
+			BoardManager: types.BoardManager{AdditionalUrls: []string{}},
+			Directories: types.Directories{
+				Data:      paths.ArdiDataDir,
+				Downloads: path.Join(paths.ArdiDataDir, "staging"),
+				User:      path.Join(paths.ArdiDataDir, "Arduino"),
+			},
+			Telemetry: types.Telemetry{Enabled: false},
+		}
+		yamlConfig, _ := yaml.Marshal(&dataConfig)
+		if err := ioutil.WriteFile(paths.ArdiDataConfig, yamlConfig, 0644); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func initializeArdiJSON() error {
+	if _, err := os.Stat(paths.ArdiBuildConfig); os.IsNotExist(err) {
+		buildConfig := types.ArdiConfig{
+			Libraries: make(map[string]string),
+			Builds:    make(map[string]types.ArdiBuildJSON),
+		}
+		jsonConfig, _ := json.MarshalIndent(&buildConfig, "\n", " ")
+		if err := ioutil.WriteFile(paths.ArdiBuildConfig, jsonConfig, 0644); err != nil {
+			return err
+		}
+	}
+	return nil
 }

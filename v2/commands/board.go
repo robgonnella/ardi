@@ -2,7 +2,6 @@ package commands
 
 import (
 	"github.com/robgonnella/ardi/v2/core/board"
-	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -13,7 +12,6 @@ func getBoardFQBNSCmd() *cobra.Command {
 		Short:   "List supported board fqbns",
 		Aliases: []string{"fqbn"},
 		Run: func(cmd *cobra.Command, args []string) {
-			logger := log.New()
 			query := ""
 			if len(args) > 0 {
 				query = args[0]
@@ -37,7 +35,6 @@ func getBoardPlatformsCmd() *cobra.Command {
 		Short:   "List boards with their associated platform",
 		Aliases: []string{"platform"},
 		Run: func(cmd *cobra.Command, args []string) {
-			logger := log.New()
 			query := ""
 			if len(args) > 0 {
 				query = args[0]

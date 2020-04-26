@@ -26,9 +26,11 @@ type DataConfig struct {
 
 // ArdiBuildJSON represents the build properties in ardi.json
 type ArdiBuildJSON struct {
-	Path  string            `json:"path"`
-	FQBN  string            `json:"fqbn"`
-	Props map[string]string `json:"props"`
+	Platform string            `json:"platform"`
+	BoardURL string            `json:"board_url"`
+	Path     string            `json:"path"`
+	FQBN     string            `json:"fqbn"`
+	Props    map[string]string `json:"props"`
 }
 
 // ArdiConfig represents the ardi.json file

@@ -31,9 +31,9 @@ func New(logger *log.Logger) (*Board, error) {
 	}, nil
 }
 
-// FQBNS all available boards with optional search filter
+// FQBNS lists all available boards with associated fqbns
 func (b *Board) FQBNS(query string) error {
-	platforms, err := b.Client.GetPlatforms(query)
+	platforms, err := b.Client.GetPlatforms()
 
 	if err != nil {
 		b.logger.WithError(err).Error("Platform search error")
@@ -51,7 +51,7 @@ func (b *Board) FQBNS(query string) error {
 	}
 
 	if len(boardList) == 0 {
-		b.logger.Info("You must install platforms with \"ardi init\" first")
+		b.logger.Info("You must install platforms with \"ardi platform add\" or \"ardi project add platform\" first")
 		return nil
 	}
 
@@ -68,9 +68,9 @@ func (b *Board) FQBNS(query string) error {
 	return nil
 }
 
-// Platforms all available boards with optional search filter
+// Platforms lists all available boards with associated platorms
 func (b *Board) Platforms(query string) error {
-	platforms, err := b.Client.GetPlatforms(query)
+	platforms, err := b.Client.GetPlatforms()
 
 	if err != nil {
 		b.logger.WithError(err).Error("Platform search error")

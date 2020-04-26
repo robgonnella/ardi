@@ -36,12 +36,15 @@ func New(logger *log.Logger) (*ArdiJSON, error) {
 }
 
 // AddBuild to ardi.json
-func (a *ArdiJSON) AddBuild(name, path, fqbn string, buildProps []string) error {
+func (a *ArdiJSON) AddBuild(name, platform, boardURL, path, fqbn string, buildProps []string) error {
 	newBuild := types.ArdiBuildJSON{
-		Path:  path,
-		FQBN:  fqbn,
-		Props: make(map[string]string),
+		Platform: platform,
+		BoardURL: boardURL,
+		Path:     path,
+		FQBN:     fqbn,
+		Props:    make(map[string]string),
 	}
+
 	for _, p := range buildProps {
 		parts := strings.SplitN(p, "=", 2)
 		label := parts[0]
@@ -49,6 +52,8 @@ func (a *ArdiJSON) AddBuild(name, path, fqbn string, buildProps []string) error 
 		newBuild.Props[label] = instruction
 	}
 
+	a.logger.Infof("Addding build: %s", name)
+	printBuild(name, newBuild)
 	a.Config.Builds[name] = newBuild
 	return a.write()
 }
@@ -60,18 +65,18 @@ func (a *ArdiJSON) RemoveBuild(build string) error {
 }
 
 // ListBuilds lists build specifications in ardi.json
-func (a *ArdiJSON) ListBuilds() {
+func (a *ArdiJSON) ListBuilds(builds []string) {
 	fmt.Println("")
-	for name, build := range a.Config.Builds {
-		fmt.Printf("%s:\n", name)
-		fmt.Printf("\tPath: %s\n", build.Path)
-		fmt.Printf("\tFQBN: %s\n", build.FQBN)
-		fmt.Printf("\tProps:\n")
-		for prop, instruction := range build.Props {
-			fmt.Printf("\t\t%s: %s\n", prop, instruction)
+	if len(builds) > 0 {
+		for _, name := range builds {
+			if b, ok := a.Config.Builds[name]; ok {
+				printBuild(name, b)
+			}
 		}
 	}
-	fmt.Println("")
+	for name, build := range a.Config.Builds {
+		printBuild(name, build)
+	}
 }
 
 // AddLibrary to ardi.json
@@ -100,7 +105,7 @@ func (a *ArdiJSON) ListLibraries() {
 }
 
 func (a *ArdiJSON) write() error {
-	newData, err := json.MarshalIndent(a.Config, "", " ")
+	newData, err := json.MarshalIndent(a.Config, "", "  ")
 	if err != nil {
 		return err
 	}
@@ -110,4 +115,19 @@ func (a *ArdiJSON) write() error {
 	}
 
 	return nil
+}
+
+// private helpers
+func printBuild(name string, b types.ArdiBuildJSON) {
+	fmt.Println("")
+	fmt.Printf("%s:\n", name)
+	fmt.Printf("\tPlatform: %s\n", b.Platform)
+	fmt.Printf("\tBoard URL: %s\n", b.BoardURL)
+	fmt.Printf("\tPath: %s\n", b.Path)
+	fmt.Printf("\tFQBN: %s\n", b.FQBN)
+	fmt.Printf("\tProps:\n")
+	for prop, instruction := range b.Props {
+		fmt.Printf("\t\t%s: %s\n", prop, instruction)
+	}
+	fmt.Println("")
 }

@@ -3,7 +3,6 @@ package commands
 import (
 	ardijson "github.com/robgonnella/ardi/v2/core/ardi-json"
 	"github.com/robgonnella/ardi/v2/core/lib"
-	log "github.com/sirupsen/logrus"
 
 	"github.com/spf13/cobra"
 )
@@ -16,7 +15,6 @@ func getLibSearchCommand() *cobra.Command {
 		Aliases: []string{"find"},
 		Args:    cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			logger := log.New()
 			libCore, err := lib.New(logger)
 			if err != nil {
 				return
@@ -35,7 +33,6 @@ func getLibAddCommand() *cobra.Command {
 		Short: "Adds specified libraries to either project or global library directory",
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			logger := log.New()
 			libCore, err := lib.New(logger)
 			if err != nil {
 				return
@@ -54,7 +51,6 @@ func getLibRemoveCommand() *cobra.Command {
 		Short: "Removes specified libraries from project library directory",
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			logger := log.New()
 			libCore, err := lib.New(logger)
 			if err != nil {
 				return
@@ -73,7 +69,6 @@ func getLibInstallCommand() *cobra.Command {
 		Short: "Installs all project level libraries specified in ardi.json",
 		Args:  cobra.NoArgs,
 		Run: func(cmd *cobra.Command, args []string) {
-			logger := log.New()
 			libCore, err := lib.New(logger)
 			if err != nil {
 				return
@@ -92,7 +87,6 @@ func getLibListCommand() *cobra.Command {
 		Short: "Lists installed libraries specified in ardi.json",
 		Args:  cobra.NoArgs,
 		Run: func(cmd *cobra.Command, args []string) {
-			logger := log.New()
 			ardiJSON, err := ardijson.New(logger)
 			if err != nil {
 				return

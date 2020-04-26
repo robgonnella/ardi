@@ -2,6 +2,7 @@ package rpc
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -153,14 +154,15 @@ func (c *Client) UpdatePlatformIndex() error {
 }
 
 // UpgradePlatform upgrades a given platform
-func (c *Client) UpgradePlatform(platPackage, arch string) error {
-	c.logger.Debugf("Upgrading platform: %s:%s\n", platPackage, arch)
+func (c *Client) UpgradePlatform(platform string) error {
+	pkg, arch, _ := parsePlatform(platform)
+	c.logger.Debugf("Upgrading platform: %s:%s\n", pkg, arch)
 
 	upgradeRespStream, err := c.client.PlatformUpgrade(
 		context.Background(),
 		&rpc.PlatformUpgradeReq{
 			Instance:        c.instance,
-			PlatformPackage: platPackage,
+			PlatformPackage: pkg,
 			Architecture:    arch,
 		},
 	)
@@ -201,35 +203,44 @@ func (c *Client) UpgradePlatform(platPackage, arch string) error {
 }
 
 // InstallPlatform installs a given platform
-func (c *Client) InstallPlatform(platPackage, arch, version string) error {
+func (c *Client) InstallPlatform(platform string) error {
+	if platform == "" {
+		err := errors.New("Must specify a platform to install")
+		c.logger.WithError(err).Error()
+		return err
+	}
 	if err := c.UpdateIndexFiles(); err != nil {
 		c.logger.WithError(err).Error("Failed to update index files")
 		return err
 	}
 
-	c.logger.Debugf("Installing platform: %s:%s\n", arch, version)
+	pkg, arch, version := parsePlatform(platform)
+
+	c.logger.Infof("Installing platform: %s:%s\n", pkg, arch)
 
 	installRespStream, err := c.client.PlatformInstall(
 		context.Background(),
 		&rpc.PlatformInstallReq{
 			Instance:        c.instance,
-			PlatformPackage: platPackage,
+			PlatformPackage: pkg,
 			Architecture:    arch,
 			Version:         version,
-		})
+		},
+	)
 
 	if err != nil {
 		c.logger.WithError(err).Warn("Failed to install platform")
 		return err
 	}
 
+	installedVersion := ""
 	// Loop and consume the server stream until all the operations are done.
 	for {
 		installResp, err := installRespStream.Recv()
 
 		// The server is done.
 		if err == io.EOF {
-			c.logger.Debug("Install done")
+			c.logger.Infof("Installed: %s:%s@%s", pkg, arch, installedVersion)
 			return nil
 		}
 
@@ -245,8 +256,79 @@ func (c *Client) InstallPlatform(platPackage, arch, version string) error {
 		}
 
 		// When an overall task is ongoing, log the progress
-		if installResp.GetTaskProgress() != nil {
-			c.logger.Debugf("TASK: %s", installResp.GetTaskProgress())
+		if progress := installResp.GetTaskProgress(); progress != nil {
+			c.logger.Debugf("TASK: %s", progress)
+			name := progress.GetName()
+			msg := progress.GetMessage()
+			if strings.Contains(msg, "installed") {
+				if parts := strings.Split(msg, "@"); len(parts) > 1 {
+					installedVersion = strings.Replace(parts[1], " installed", "", 1)
+				}
+			} else if strings.Contains(name, "already installed") {
+				if parts := strings.Split(name, "@"); len(parts) > 1 {
+					installedVersion = strings.Replace(parts[1], " already installed", "", 1)
+				}
+			}
+		}
+	}
+}
+
+// UninstallPlatform installs a given platform
+func (c *Client) UninstallPlatform(platform string) error {
+	if platform == "" {
+		err := errors.New("Must specify a platform to install")
+		c.logger.WithError(err).Error()
+		return err
+	}
+	if err := c.UpdateIndexFiles(); err != nil {
+		c.logger.WithError(err).Error("Failed to update index files")
+		return err
+	}
+
+	pkg, arch, _ := parsePlatform(platform)
+
+	c.logger.Infof("Uninstalling platform: %s:%s\n", pkg, arch)
+
+	uninstallRespStream, err := c.client.PlatformUninstall(
+		context.Background(),
+		&rpc.PlatformUninstallReq{
+			Instance:        c.instance,
+			PlatformPackage: pkg,
+			Architecture:    arch,
+		},
+	)
+
+	if err != nil {
+		c.logger.WithError(err).Warn("Failed to uninstall platform")
+		return err
+	}
+
+	version := ""
+	// Loop and consume the server stream until all the operations are done.
+	for {
+		uninstallResp, err := uninstallRespStream.Recv()
+
+		// The server is done.
+		if err == io.EOF {
+			c.logger.Infof("Uninstalled: %s:%s@%s", pkg, arch, version)
+			return nil
+		}
+
+		// There was an error.
+		if err != nil {
+			c.logger.WithError(err).Error("Failed to install platform")
+			return err
+		}
+
+		// When an overall task is ongoing, log the progress
+		if progress := uninstallResp.GetTaskProgress(); progress != nil {
+			c.logger.Debugf("TASK: %s", progress)
+			if version == "" {
+				name := progress.GetName()
+				if parts := strings.Split(name, "@"); len(parts) > 1 {
+					version = parts[1]
+				}
+			}
 		}
 	}
 }
@@ -274,20 +356,18 @@ func (c *Client) InstallAllPlatforms() error {
 
 	for _, plat := range platforms {
 		id := plat.GetID()
-		idParts := strings.Split(id, ":")
-		platPackage := idParts[0]
-		arch := idParts[len(idParts)-1]
 		latest := plat.GetLatest()
-		c.logger.Debugf("Search result: %s: %s - %s", platPackage, id, latest)
+		platform := fmt.Sprintf("%s@%s", id, latest)
+		c.logger.Debugf("Search result: %s", platform)
 		// Ignore individual errors when installing and upgrading all platforms
-		c.InstallPlatform(platPackage, arch, latest)
-		c.UpgradePlatform(platPackage, arch)
+		c.InstallPlatform(platform)
+		c.UpgradePlatform(platform)
 	}
 	return nil
 }
 
-// ListInstalledPlatforms lists all installed platforms
-func (c *Client) ListInstalledPlatforms() error {
+// GetInstalledPlatforms lists all installed platforms
+func (c *Client) GetInstalledPlatforms() ([]*rpc.Platform, error) {
 	listResp, err := c.client.PlatformList(
 		context.Background(),
 		&rpc.PlatformListReq{
@@ -297,19 +377,14 @@ func (c *Client) ListInstalledPlatforms() error {
 
 	if err != nil {
 		c.logger.WithError(err).Error("List error")
-		return err
+		return nil, err
 	}
 
-	c.logger.Debug("------INSTALLED PLATFORMS------")
-	for _, plat := range listResp.GetInstalledPlatform() {
-		c.logger.Debugf("Installed platform: %s - %s", plat.GetID(), plat.GetInstalled())
-	}
-	c.logger.Debug("-------------------------------")
-	return nil
+	return listResp.GetInstalledPlatform(), nil
 }
 
 // GetPlatforms returns specified platform or all platforms if unspecified
-func (c *Client) GetPlatforms(query string) ([]*rpc.Platform, error) {
+func (c *Client) GetPlatforms() ([]*rpc.Platform, error) {
 	if err := c.UpdateIndexFiles(); err != nil {
 		return nil, err
 	}
@@ -317,8 +392,7 @@ func (c *Client) GetPlatforms(query string) ([]*rpc.Platform, error) {
 	searchResp, err := c.client.PlatformSearch(
 		context.Background(),
 		&rpc.PlatformSearchReq{
-			Instance:   c.instance,
-			SearchArgs: query,
+			Instance: c.instance,
 		},
 	)
 
@@ -573,12 +647,32 @@ func (c *Client) UninstallLibrary(name string) error {
 	}
 }
 
-// private
+// private methods
 func (c *Client) isVerbose() bool {
 	return c.logger.Level == log.DebugLevel
 }
 
-// helpers
+// private helpers
+func parsePlatform(platform string) (string, string, string) {
+	version := ""
+	arch := ""
+	parts := strings.Split(platform, "@")
+
+	platform = parts[0]
+	if len(parts) > 1 {
+		version = parts[1]
+	}
+
+	platParts := strings.Split(platform, ":")
+	platform = platParts[0]
+
+	if len(platParts) > 1 {
+		arch = platParts[1]
+	}
+
+	return platform, arch, version
+}
+
 func getRPCInstance(client rpc.ArduinoCoreClient, logger *log.Logger) (*rpc.Instance, error) {
 	initRespStream, err := client.Init(
 		context.Background(),
