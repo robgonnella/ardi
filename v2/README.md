@@ -41,13 +41,13 @@ You can also download and install the pre-built binaries
 # Usage
 
 Ardi requires certain packages to be downloaded before it can properly compile
-sketches, detect connected boards, and perform other tasks. Ardi will check for
+sketches, detect connected boards, and perform other tasks. It will check for
 a project level data directory for these packages and if found it will use this
-directory, othewise ardi will use a global data directory located in the
-uses home directory, `~/.ardi`. To initialize a directory as an ardi project
+directory, othewise it will use a global data directory located in the
+user's home directory, `~/.ardi`. To initialize a directory as an ardi project
 directory run `ardi project init`.
 
-Any command run from within an "arid initialized" project directory will
+Any command run from within an "ardi initialized" project directory will
 use the local data directory for that project.
 
 To initialize an ardi project directory run:
@@ -77,11 +77,11 @@ The above platform commands are also duplicated via the project
 command
 
 ```bash
-# add project level platform
+# add platform
 ardi project add platform <platform_ids>
-# remove project level platform
+# remove platform
 ardi project remove platform <platform_ids>
-# list project level installed platforms
+# list installed platforms only
 ardi project list platforms
 ```
 
