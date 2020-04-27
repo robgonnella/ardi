@@ -138,37 +138,48 @@ func (p *Project) RemoveBuild(builds []string) {
 	}
 }
 
-// Build specified project from ardi.json, or build all projects if left blank
-func (p *Project) Build(builds []string) error {
-	if len(builds) > 0 {
-		for _, name := range builds {
-			if build, ok := p.ardiJSON.Config.Builds[name]; ok {
-				if err := p.ProcessSketch(build.Path); err != nil {
-					p.logger.WithError(err).Error()
-					return err
-				}
-				if build.Platform != "" {
-					p.client.InstallPlatform(build.Platform)
-				}
-				if build.BoardURL != "" {
-					p.ardiYAML.AddBoardURL(build.BoardURL)
-				}
-				buildProps := []string{}
-				for prop, instruction := range build.Props {
-					buildProps = append(buildProps, fmt.Sprintf("%s=%s", prop, instruction))
-				}
-				p.logger.Infof("Building %s", build)
-				if err := p.client.Compile(build.FQBN, p.Directory, p.Sketch, name, buildProps, false); err != nil {
-					p.logger.WithError(err).Errorf("Build failed for %s", build)
-					return err
-				}
-			} else {
-				p.logger.Warnf("No build specification for %s", build)
-			}
+// BuildList builds only the build-names specified by the user
+func (p *Project) BuildList(builds []string) error {
+	if len(builds) == 0 {
+		err := errors.New("Empty build list")
+		p.logger.WithError(err).Error("Cannot build")
+		return err
+	}
+	for _, name := range builds {
+		build, ok := p.ardiJSON.Config.Builds[name]
+		if !ok {
+			p.logger.Warnf("No build specification for %s", name)
+			continue
 		}
+		if err := p.ProcessSketch(build.Path); err != nil {
+			p.logger.WithError(err).Error()
+			return err
+		}
+		if build.Platform != "" {
+			p.client.InstallPlatform(build.Platform)
+		}
+		if build.BoardURL != "" {
+			p.ardiYAML.AddBoardURL(build.BoardURL)
+		}
+		buildProps := []string{}
+		for prop, instruction := range build.Props {
+			buildProps = append(buildProps, fmt.Sprintf("%s=%s", prop, instruction))
+		}
+		p.logger.Infof("Building %s", build)
+		if err := p.client.Compile(build.FQBN, p.Directory, p.Sketch, name, buildProps, false); err != nil {
+			p.logger.WithError(err).Errorf("Build failed for %s", build)
+			return err
+		}
+	}
+	return nil
+}
+
+// BuildAll builds all builds specified in config
+func (p *Project) BuildAll() error {
+	if len(p.ardiJSON.Config.Builds) == 0 {
+		p.logger.Warn("No builds defined. Use \"ardi project add build\" to define a build.")
 		return nil
 	}
-	// Build all
 	for name, build := range p.ardiJSON.Config.Builds {
 		if err := p.ProcessSketch(build.Path); err != nil {
 			p.logger.WithError(err).Error()

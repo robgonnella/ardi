@@ -241,7 +241,11 @@ func getProjectBuildCmd() *cobra.Command {
 			if err != nil {
 				return
 			}
-			projectCore.Build(args)
+			if len(args) == 0 {
+				projectCore.BuildAll()
+				return
+			}
+			projectCore.BuildList(args)
 		},
 	}
 	return buildCmd
