@@ -44,6 +44,7 @@ func getPlatformAddCmd() *cobra.Command {
 
 			if all {
 				platformCore.AddAll()
+				return
 			}
 
 			platformCore.Add(args)
