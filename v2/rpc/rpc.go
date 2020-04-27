@@ -20,8 +20,7 @@ var port = "50051"
 
 // Client represents a client connection to arduino-cli grpc daemon
 type Client struct {
-	// Connection grpc client connection availabel to defer close
-	Connection *grpc.ClientConn
+	connection *grpc.ClientConn
 	client     rpc.ArduinoCoreClient
 	instance   *rpc.Instance
 	logger     *log.Logger
@@ -50,7 +49,7 @@ func NewClient(logger *log.Logger) (*Client, error) {
 	}
 
 	return &Client{
-		Connection: conn,
+		connection: conn,
 		logger:     logger,
 		client:     client,
 		instance:   instance,

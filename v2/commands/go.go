@@ -6,11 +6,10 @@ import (
 )
 
 func process(sketchDir string, buildProps []string, watchSketch bool) {
-	ardiGo, err := ardiGoCore.New(sketchDir, buildProps, logger)
+	ardiGo, err := ardiGoCore.New(client, sketchDir, buildProps, logger)
 	if err != nil {
 		return
 	}
-	defer ardiGo.Client.Connection.Close()
 
 	if err := ardiGo.Compile(); err != nil {
 		return

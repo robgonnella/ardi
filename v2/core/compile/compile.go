@@ -11,42 +11,42 @@ import (
 // Compile represents core module for compile commands
 type Compile struct {
 	logger *log.Logger
-	Client *rpc.Client
+	client *rpc.Client
 }
 
 // New instance of core module for compile commands
-func New(logger *log.Logger) (*Compile, error) {
-	client, err := rpc.NewClient(logger)
-	if err != nil {
-		return nil, err
-	}
-
+func New(client *rpc.Client, logger *log.Logger) *Compile {
 	return &Compile{
 		logger: logger,
-		Client: client,
-	}, nil
+		client: client,
+	}
 }
 
 // Compile a given project
 func (c *Compile) Compile(sketchDir, fqbn string, buildProps []string, showProps bool) error {
-	project, err := project.New(c.logger)
+	project, err := project.New(c.client, c.logger)
 	if err != nil {
 		c.logger.WithError(err).Error("Failed to compile")
 		return err
 	}
+
 	if err := project.ProcessSketch(sketchDir); err != nil {
 		c.logger.WithError(err).Error()
 		return err
 	}
 
-	target, err := target.New(c.logger, fqbn, false)
+	target, err := target.New(c.client, c.logger, fqbn, false)
 	if err != nil {
 		c.logger.WithError(err).Error("Failed to compile")
 		return err
 	}
 
-	if err := c.Client.Compile(target.Board.FQBN, project.Directory, project.Sketch, "", buildProps, showProps); err != nil {
-		c.logger.WithError(err).Error("Failed to compile sketch")
+	boardFQBN := target.Board.FQBN
+	dir := project.Directory
+	sketch := project.Sketch
+
+	if err := c.client.Compile(boardFQBN, dir, sketch, "", buildProps, showProps); err != nil {
+		c.logger.Error("Failed to compile sketch")
 		return err
 	}
 

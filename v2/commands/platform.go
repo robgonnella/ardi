@@ -13,11 +13,10 @@ func getPlatformListCmd() *cobra.Command {
 		Long:  cyan("\nList platforms"),
 		Short: "List platforms",
 		Run: func(cmd *cobra.Command, args []string) {
-			platformCore, err := platform.New(logger)
+			platformCore, err := platform.New(client, logger)
 			if err != nil {
 				return
 			}
-			defer platformCore.Client.Connection.Close()
 			if all || (!all && !installed) {
 				platformCore.ListAll()
 			}
@@ -38,15 +37,13 @@ func getPlatformAddCmd() *cobra.Command {
 		Long:  cyan("\nInstall platforms"),
 		Short: "Install platforms",
 		Run: func(cmd *cobra.Command, args []string) {
-			platformCore, err := platform.New(logger)
+			platformCore, err := platform.New(client, logger)
 			if err != nil {
 				return
 			}
-			defer platformCore.Client.Connection.Close()
 
 			if all {
 				platformCore.AddAll()
-				return
 			}
 
 			platformCore.Add(args)
@@ -63,11 +60,10 @@ func getPlatformRemoveCmd() *cobra.Command {
 		Long:  cyan("\nRemove installed platforms"),
 		Short: "Remove installed platforms",
 		Run: func(cmd *cobra.Command, args []string) {
-			platformCore, err := platform.New(logger)
+			platformCore, err := platform.New(client, logger)
 			if err != nil {
 				return
 			}
-			defer platformCore.Client.Connection.Close()
 
 			platformCore.Remove(args)
 		},

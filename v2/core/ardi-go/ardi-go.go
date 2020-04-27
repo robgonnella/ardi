@@ -14,7 +14,7 @@ import (
 // ArdiGo represents core module for adi go commands
 type ArdiGo struct {
 	logger     *log.Logger
-	Client     *rpc.Client
+	client     *rpc.Client
 	target     *target.Target
 	project    *project.Project
 	buildProps []string
@@ -24,21 +24,17 @@ type ArdiGo struct {
 }
 
 // New returns new Project instance
-func New(sketchDir string, buildProps []string, logger *log.Logger) (*ArdiGo, error) {
-	proj, err := project.New(logger)
+func New(client *rpc.Client, sketchDir string, buildProps []string, logger *log.Logger) (*ArdiGo, error) {
+	proj, err := project.New(client, logger)
 	if err != nil {
 		return nil, err
 	}
+
 	if err := proj.ProcessSketch(sketchDir); err != nil {
 		return nil, err
 	}
 
-	client, err := rpc.NewClient(logger)
-	if err != nil {
-		return nil, err
-	}
-
-	target, err := target.New(logger, "", true)
+	target, err := target.New(client, logger, "", true)
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +42,7 @@ func New(sketchDir string, buildProps []string, logger *log.Logger) (*ArdiGo, er
 	port := serial.New(target.Board.Port, proj.Baud, logger)
 
 	return &ArdiGo{
-		Client:     client,
+		client:     client,
 		project:    proj,
 		target:     target,
 		buildProps: buildProps,
@@ -67,7 +63,7 @@ func (a *ArdiGo) Upload() error {
 	sketchDir := a.project.Directory
 
 	a.uploading = true
-	if err := a.Client.Upload(fqbn, sketchDir, device); err != nil {
+	if err := a.client.Upload(fqbn, sketchDir, device); err != nil {
 		a.logger.WithError(err).Error("Failed to upload sketch")
 		a.uploading = false
 		return err
@@ -89,7 +85,7 @@ func (a *ArdiGo) Compile() error {
 	buildProps := a.buildProps
 
 	a.compiling = true
-	if err := a.Client.Compile(fqbn, sketchDir, sketch, "", buildProps, false); err != nil {
+	if err := a.client.Compile(fqbn, sketchDir, sketch, "", buildProps, false); err != nil {
 		a.logger.WithError(err).Error("Failed to compile sketch")
 		a.compiling = false
 		return err

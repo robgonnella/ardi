@@ -1,6 +1,8 @@
 package commands
 
 import (
+	"os"
+
 	"github.com/robgonnella/ardi/v2/paths"
 	"github.com/robgonnella/ardi/v2/rpc"
 	"github.com/robgonnella/ardi/v2/util"
@@ -24,6 +26,7 @@ var noProjectCheck = []string{
 var verbose bool
 var quiet bool
 var dataDir = paths.ArdiProjectDataDir
+var client *rpc.Client
 
 func setLogger() {
 	if verbose {
@@ -43,6 +46,7 @@ func getRootCommand() *cobra.Command {
 			"sketches and watch logs from command line for a variety of arduino boards."),
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			setLogger()
+			var err error
 			cmdPath := cmd.CommandPath()
 			dataDir := paths.ArdiProjectDataDir
 
@@ -54,6 +58,9 @@ func getRootCommand() *cobra.Command {
 
 			if !util.ArrayContains(noDaemon, cmdPath) {
 				go rpc.StartDaemon(dataDir)
+				if client, err = rpc.NewClient(logger); err != nil {
+					os.Exit(1)
+				}
 			}
 		},
 	}

@@ -1,7 +1,6 @@
 package commands
 
 import (
-	"path"
 	"strings"
 
 	"github.com/robgonnella/ardi/v2/core/lib"
@@ -33,11 +32,10 @@ func getProjectListPlatformCmd() *cobra.Command {
 		Short:   "Add platform(s) to project",
 		Aliases: []string{"platforms"},
 		Run: func(cmd *cobra.Command, args []string) {
-			platformCore, err := platform.New(logger)
+			platformCore, err := platform.New(client, logger)
 			if err != nil {
 				return
 			}
-			defer platformCore.Client.Connection.Close()
 			platformCore.ListInstalled()
 		},
 	}
@@ -51,11 +49,10 @@ func getProjectListLibrariesCmd() *cobra.Command {
 		Short:   "List all project libraries specified in ardi.json",
 		Aliases: []string{"libs"},
 		Run: func(cmd *cobra.Command, args []string) {
-			projectCore, err := project.New(logger)
+			projectCore, err := project.New(client, logger)
 			if err != nil {
 				return
 			}
-			defer projectCore.Client.Connection.Close()
 			projectCore.ListLibraries()
 		},
 	}
@@ -69,11 +66,10 @@ func getProjectListBuildsCmd() *cobra.Command {
 		Short:   "List all project builds specified in ardi.json",
 		Aliases: []string{"build"},
 		Run: func(cmd *cobra.Command, args []string) {
-			projectCore, err := project.New(logger)
+			projectCore, err := project.New(client, logger)
 			if err != nil {
 				return
 			}
-			defer projectCore.Client.Connection.Close()
 			projectCore.ListBuilds(args)
 		},
 	}
@@ -99,11 +95,11 @@ func getProjectAddPlatformCmd() *cobra.Command {
 		Short:   "Add platform(s) to project",
 		Aliases: []string{"platforms"},
 		Run: func(cmd *cobra.Command, args []string) {
-			platformCore, err := platform.New(logger)
+			platformCore, err := platform.New(client, logger)
 			if err != nil {
 				return
 			}
-			defer platformCore.Client.Connection.Close()
+
 			if len(args) == 0 || strings.ToLower(args[0]) == "all" {
 				platformCore.AddAll()
 				return
@@ -126,13 +122,11 @@ func getProjectAddBuildCmd() *cobra.Command {
 		Long:  cyan("\nAdd build config to project"),
 		Short: "Add build config to project",
 		Run: func(cmd *cobra.Command, args []string) {
-			projectCore, err := project.New(logger)
+			projectCore, err := project.New(client, logger)
 			if err != nil {
 				return
 			}
-			defer projectCore.Client.Connection.Close()
-			sketchDir := path.Dir(sketch)
-			projectCore.AddBuild(name, platform, boardURL, sketchDir, fqbn, buildProps)
+			projectCore.AddBuild(name, platform, boardURL, sketch, fqbn, buildProps)
 		},
 	}
 	addCmd.Flags().StringVarP(&name, "name", "n", "", "Custom name for the build")
@@ -151,11 +145,10 @@ func getProjectAddLibCmd() *cobra.Command {
 		Short: "Add libraries to project\\e[0m",
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			libCore, err := lib.New(logger)
+			libCore, err := lib.New(client, logger)
 			if err != nil {
 				return
 			}
-			defer libCore.Client.Connection.Close()
 			libCore.Add(args)
 		},
 	}
@@ -181,11 +174,11 @@ func getProjectRemovePlatformCmd() *cobra.Command {
 		Short:   "Remove platform(s) from project",
 		Aliases: []string{"platforms"},
 		Run: func(cmd *cobra.Command, args []string) {
-			platformCore, err := platform.New(logger)
+			platformCore, err := platform.New(client, logger)
 			if err != nil {
 				return
 			}
-			defer platformCore.Client.Connection.Close()
+
 			platformCore.Remove(args)
 		},
 	}
@@ -199,11 +192,10 @@ func getProjectRemoveBuildCmd() *cobra.Command {
 		Short:   "Remove build config from project",
 		Aliases: []string{"builds"},
 		Run: func(cmd *cobra.Command, args []string) {
-			projectCore, err := project.New(logger)
+			projectCore, err := project.New(client, logger)
 			if err != nil {
 				return
 			}
-			defer projectCore.Client.Connection.Close()
 			projectCore.RemoveBuild(args)
 		},
 	}
@@ -217,11 +209,10 @@ func getProjectRemoveLibCmd() *cobra.Command {
 		Short: "Remove libraries from project",
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			libCore, err := lib.New(logger)
+			libCore, err := lib.New(client, logger)
 			if err != nil {
 				return
 			}
-			defer libCore.Client.Connection.Close()
 			libCore.Remove(args)
 		},
 	}
@@ -246,11 +237,10 @@ func getProjectBuildCmd() *cobra.Command {
 		Short: "Compile builds specified in ardi.json",
 		Long:  cyan("\nCompile builds specified in ardi.json"),
 		Run: func(cmd *cobra.Command, args []string) {
-			projectCore, err := project.New(logger)
+			projectCore, err := project.New(client, logger)
 			if err != nil {
 				return
 			}
-			defer projectCore.Client.Connection.Close()
 			projectCore.Build(args)
 		},
 	}

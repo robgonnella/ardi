@@ -19,12 +19,7 @@ func getCompileCommand() *cobra.Command {
 				sketchDir = args[0]
 			}
 
-			compileCore, err := compile.New(logger)
-			if err != nil {
-				return
-			}
-			defer compileCore.Client.Connection.Close()
-
+			compileCore := compile.New(client, logger)
 			compileCore.Compile(sketchDir, fqbn, buildProps, showProps)
 		},
 	}

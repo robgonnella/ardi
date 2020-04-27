@@ -27,19 +27,14 @@ type Project struct {
 	Sketch    string
 	Directory string
 	Baud      int
-	Client    *rpc.Client
+	client    *rpc.Client
 	ardiJSON  *ardijson.ArdiJSON
 	ardiYAML  *ardiyaml.ArdiYAML
 	logger    *log.Logger
 }
 
 // New returns new Project instance
-func New(logger *log.Logger) (*Project, error) {
-	client, err := rpc.NewClient(logger)
-	if err != nil {
-		return nil, err
-	}
-
+func New(client *rpc.Client, logger *log.Logger) (*Project, error) {
 	ardiJSON, err := ardijson.New(logger)
 	if err != nil {
 		logger.WithError(err).Error()
@@ -53,7 +48,7 @@ func New(logger *log.Logger) (*Project, error) {
 	}
 
 	return &Project{
-		Client:   client,
+		client:   client,
 		ardiJSON: ardiJSON,
 		ardiYAML: ardiYAML,
 		logger:   logger,
@@ -97,8 +92,6 @@ func (p *Project) ProcessSketch(sketchDir string) error {
 		sketchDir = path.Dir(sketchDir)
 	}
 
-	fmt.Printf("SKETCH DIRECTORY: %s\n", sketchDir)
-
 	sketchFile, err := findSketch(sketchDir, p.logger)
 	if err != nil {
 		return err
@@ -130,7 +123,7 @@ func (p *Project) ListLibraries() {
 // AddBuild to ardi.json build specifications
 func (p *Project) AddBuild(name, platform, boardURL, path, fqbn string, buildProps []string) {
 	if platform != "" {
-		p.Client.InstallPlatform(platform)
+		p.client.InstallPlatform(platform)
 	}
 	if boardURL != "" {
 		p.ardiYAML.AddBoardURL(boardURL)
@@ -150,13 +143,12 @@ func (p *Project) Build(builds []string) error {
 	if len(builds) > 0 {
 		for _, name := range builds {
 			if build, ok := p.ardiJSON.Config.Builds[name]; ok {
-				fmt.Printf("Build PATH: %s\n", build.Path)
 				if err := p.ProcessSketch(build.Path); err != nil {
 					p.logger.WithError(err).Error()
 					return err
 				}
 				if build.Platform != "" {
-					p.Client.InstallPlatform(build.Platform)
+					p.client.InstallPlatform(build.Platform)
 				}
 				if build.BoardURL != "" {
 					p.ardiYAML.AddBoardURL(build.BoardURL)
@@ -166,7 +158,7 @@ func (p *Project) Build(builds []string) error {
 					buildProps = append(buildProps, fmt.Sprintf("%s=%s", prop, instruction))
 				}
 				p.logger.Infof("Building %s", build)
-				if err := p.Client.Compile(build.FQBN, p.Directory, p.Sketch, name, buildProps, false); err != nil {
+				if err := p.client.Compile(build.FQBN, p.Directory, p.Sketch, name, buildProps, false); err != nil {
 					p.logger.WithError(err).Errorf("Build failed for %s", build)
 					return err
 				}
@@ -187,7 +179,7 @@ func (p *Project) Build(builds []string) error {
 			buildProps = append(buildProps, fmt.Sprintf("%s=%s", prop, instruction))
 		}
 		p.logger.Infof("Building %s", build.Path)
-		if err := p.Client.Compile(build.FQBN, p.Directory, p.Sketch, name, buildProps, false); err != nil {
+		if err := p.client.Compile(build.FQBN, p.Directory, p.Sketch, name, buildProps, false); err != nil {
 			p.logger.WithError(err).Errorf("Build faild for %s", name)
 			return err
 		}

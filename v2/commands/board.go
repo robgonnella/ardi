@@ -17,11 +17,7 @@ func getBoardFQBNSCmd() *cobra.Command {
 				query = args[0]
 			}
 
-			boardCore, err := board.New(logger)
-			if err != nil {
-				return
-			}
-			defer boardCore.Client.Connection.Close()
+			boardCore := board.New(client, logger)
 			boardCore.FQBNS(query)
 		},
 	}
@@ -40,11 +36,7 @@ func getBoardPlatformsCmd() *cobra.Command {
 				query = args[0]
 			}
 
-			boardCore, err := board.New(logger)
-			if err != nil {
-				return
-			}
-			defer boardCore.Client.Connection.Close()
+			boardCore := board.New(client, logger)
 			boardCore.Platforms(query)
 		},
 	}

@@ -14,26 +14,21 @@ import (
 
 // Board module for board commands
 type Board struct {
-	Client *rpc.Client
+	client *rpc.Client
 	logger *log.Logger
 }
 
 // New module instance for board commands
-func New(logger *log.Logger) (*Board, error) {
-	client, err := rpc.NewClient(logger)
-	if err != nil {
-		return nil, err
-	}
-
+func New(client *rpc.Client, logger *log.Logger) *Board {
 	return &Board{
 		logger: logger,
-		Client: client,
-	}, nil
+		client: client,
+	}
 }
 
 // FQBNS lists all available boards with associated fqbns
 func (b *Board) FQBNS(query string) error {
-	platforms, err := b.Client.GetPlatforms()
+	platforms, err := b.client.GetPlatforms()
 
 	if err != nil {
 		b.logger.WithError(err).Error("Platform search error")
@@ -70,7 +65,7 @@ func (b *Board) FQBNS(query string) error {
 
 // Platforms lists all available boards with associated platorms
 func (b *Board) Platforms(query string) error {
-	platforms, err := b.Client.GetPlatforms()
+	platforms, err := b.client.GetPlatforms()
 
 	if err != nil {
 		b.logger.WithError(err).Error("Platform search error")

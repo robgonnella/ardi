@@ -15,28 +15,24 @@ import (
 // Platform module for platform commands
 type Platform struct {
 	logger *log.Logger
-	Client *rpc.Client
+	client *rpc.Client
 }
 
 // New platform module instance
-func New(logger *log.Logger) (*Platform, error) {
-	client, err := rpc.NewClient(logger)
-	if err != nil {
-		return nil, err
-	}
+func New(client *rpc.Client, logger *log.Logger) (*Platform, error) {
 	if err := client.UpdateIndexFiles(); err != nil {
 		logger.WithError(err).Error("Failed to update index files")
 		return nil, err
 	}
 	return &Platform{
 		logger: logger,
-		Client: client,
+		client: client,
 	}, nil
 }
 
 // ListInstalled lists only installed platforms
 func (p *Platform) ListInstalled() error {
-	platforms, err := p.Client.GetInstalledPlatforms()
+	platforms, err := p.client.GetInstalledPlatforms()
 	if err != nil {
 		return err
 	}
@@ -57,7 +53,7 @@ func (p *Platform) ListInstalled() error {
 
 // ListAll lists all available platforms
 func (p *Platform) ListAll() error {
-	platforms, err := p.Client.GetPlatforms()
+	platforms, err := p.client.GetPlatforms()
 	if err != nil {
 		return err
 	}
@@ -85,7 +81,7 @@ func (p *Platform) Add(platforms []string) error {
 	}
 
 	for _, platform := range platforms {
-		if err := p.Client.InstallPlatform(platform); err != nil {
+		if err := p.client.InstallPlatform(platform); err != nil {
 			p.logger.WithError(err).Error()
 			return err
 		}
@@ -96,7 +92,7 @@ func (p *Platform) Add(platforms []string) error {
 
 // AddAll installs all platforms
 func (p *Platform) AddAll() error {
-	return p.Client.InstallAllPlatforms()
+	return p.client.InstallAllPlatforms()
 }
 
 // Remove uninstalls specified platforms
@@ -108,7 +104,7 @@ func (p *Platform) Remove(platforms []string) error {
 	}
 
 	for _, platform := range platforms {
-		if err := p.Client.UninstallPlatform(platform); err != nil {
+		if err := p.client.UninstallPlatform(platform); err != nil {
 			p.logger.WithError(err).Error()
 			return err
 		}

@@ -15,11 +15,11 @@ func getLibSearchCommand() *cobra.Command {
 		Aliases: []string{"find"},
 		Args:    cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			libCore, err := lib.New(logger)
+			libCore, err := lib.New(client, logger)
 			if err != nil {
 				return
 			}
-			defer libCore.Client.Connection.Close()
+
 			libCore.Search(args[0])
 		},
 	}
@@ -33,11 +33,11 @@ func getLibAddCommand() *cobra.Command {
 		Short: "Adds specified libraries to either project or global library directory",
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			libCore, err := lib.New(logger)
+			libCore, err := lib.New(client, logger)
 			if err != nil {
 				return
 			}
-			defer libCore.Client.Connection.Close()
+
 			libCore.Add(args)
 		},
 	}
@@ -51,11 +51,11 @@ func getLibRemoveCommand() *cobra.Command {
 		Short: "Removes specified libraries from project library directory",
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			libCore, err := lib.New(logger)
+			libCore, err := lib.New(client, logger)
 			if err != nil {
 				return
 			}
-			defer libCore.Client.Connection.Close()
+
 			libCore.Remove(args)
 		},
 	}
@@ -69,11 +69,11 @@ func getLibInstallCommand() *cobra.Command {
 		Short: "Installs all project level libraries specified in ardi.json",
 		Args:  cobra.NoArgs,
 		Run: func(cmd *cobra.Command, args []string) {
-			libCore, err := lib.New(logger)
+			libCore, err := lib.New(client, logger)
 			if err != nil {
 				return
 			}
-			defer libCore.Client.Connection.Close()
+
 			libCore.Install()
 		},
 	}

@@ -18,12 +18,7 @@ type Target struct {
 }
 
 // New returns new target
-func New(logger *log.Logger, fqbn string, onlyConnected bool) (*Target, error) {
-	client, err := rpc.NewClient(logger)
-	if err != nil {
-		return nil, err
-	}
-	defer client.Connection.Close()
+func New(client *rpc.Client, logger *log.Logger, fqbn string, onlyConnected bool) (*Target, error) {
 	board, err := getTargetBoard(client, logger, fqbn, onlyConnected)
 	if err != nil {
 		return nil, err
