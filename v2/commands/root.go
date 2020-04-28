@@ -73,11 +73,12 @@ func getRootCommand() *cobra.Command {
 			}
 
 			if !util.ArrayContains(noDaemon, cmdPath) {
-				go rpc.StartDaemon(dataDir)
+				go rpc.StartDaemon(dataDir, verbose)
 				if client, err = rpc.NewClient(logger); err != nil {
 					os.Exit(1)
 				}
 			}
+
 		},
 	}
 }

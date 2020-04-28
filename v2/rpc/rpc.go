@@ -57,16 +57,18 @@ func NewClient(logger *log.Logger) (*Client, error) {
 }
 
 //StartDaemon starts the arduino-cli grpc server locally
-func StartDaemon(dataConfigPath string) {
-	cli.SetArgs(
-		[]string{
-			"daemon",
-			"--port",
-			port,
-			"--config-file",
-			dataConfigPath,
-		},
-	)
+func StartDaemon(dataConfigPath string, verbose bool) {
+	args := []string{
+		"daemon",
+		"--port",
+		port,
+		"--config-file",
+		dataConfigPath,
+	}
+	if verbose {
+		args = append(args, "--verbose")
+	}
+	cli.SetArgs(args)
 	if err := cli.Execute(); err != nil {
 		fmt.Printf("Error starting daemon: %s", err.Error())
 	}

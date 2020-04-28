@@ -28,7 +28,7 @@ func GenDefaultDataConfig(dataDirPath string) types.DataConfig {
 			Port: "50051",
 		},
 		Directories: types.Directories{
-			Data:      paths.ArdiProjectDataDir,
+			Data:      dataDirPath,
 			Downloads: path.Join(dataDirPath, "staging"),
 			User:      path.Join(dataDirPath, "Arduino"),
 		},
