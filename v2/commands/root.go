@@ -44,6 +44,18 @@ func cmdIsHelp(cmd string) bool {
 	return strings.HasPrefix(cmd, "ardi help")
 }
 
+func cmdIsVersion(cmd string) bool {
+	return cmd == "ardi version"
+}
+
+func shouldShowProjectError(cmd string) bool {
+	return !global &&
+		!util.IsProjectDirectory() &&
+		!cmdIsProjectInit(cmd) &&
+		!cmdIsHelp(cmd) &&
+		!cmdIsVersion(cmd)
+}
+
 func getRootCommand() *cobra.Command {
 	return &cobra.Command{
 		Use:   "ardi",
@@ -56,11 +68,11 @@ func getRootCommand() *cobra.Command {
 			cmdPath := cmd.CommandPath()
 
 			if strings.HasPrefix(cmdPath, "ardi project") && global {
-				logger.Error("Cannot specifiy --global with project command")
+				logger.Error("Cannot specify --global with project command")
 				os.Exit(1)
 			}
 
-			if !global && !util.IsProjectDirectory() && !cmdIsProjectInit(cmdPath) && !cmdIsHelp(cmdPath) {
+			if shouldShowProjectError(cmdPath) {
 				logger.Error("Not an ardi project directory")
 				logger.Error("Try \"ardi project init\", or run with \"--global\"")
 				os.Exit(1)
