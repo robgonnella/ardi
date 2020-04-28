@@ -14,12 +14,6 @@ func getCleanCommand() *cobra.Command {
 		Short: "Delete all ardi global data",
 		Long:  cyan("\nRemoves all installed platforms and libraries from ~/.ardi"),
 		Run: func(cmd *cobra.Command, args []string) {
-			global := !util.IsProjectDirectory()
-			dataDir := paths.ArdiProjectDataDir
-			if global {
-				dataDir = paths.ArdiGlobalDataDir
-			}
-
 			logger.Infof("Cleaning ardi data directory: %s", dataDir)
 			if err := util.CleanDataDirectory(dataDir); err != nil {
 				logger.WithError(err).Errorf("Failed to clean ardi directory. You can manually clean all data by removing %s", dataDir)

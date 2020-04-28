@@ -46,10 +46,9 @@ func GenDefaultDataConfig(dataDirPath string) types.DataConfig {
 
 // IsProjectDirectory returns whether or not currect directory has been initialized as an ardi project
 func IsProjectDirectory() bool {
-	if _, err := os.Stat(paths.ArdiProjectBuildConfig); os.IsNotExist(err) {
-		return false
-	}
-	if _, err := os.Stat(paths.ArdiProjectDataConfig); os.IsNotExist(err) {
+	_, dirErr := os.Stat(paths.ArdiProjectDataDir)
+	_, buildErr := os.Stat(paths.ArdiProjectBuildConfig)
+	if os.IsNotExist(dirErr) && os.IsNotExist(buildErr) {
 		return false
 	}
 	return true

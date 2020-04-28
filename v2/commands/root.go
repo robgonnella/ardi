@@ -2,6 +2,7 @@ package commands
 
 import (
 	"os"
+	"strings"
 
 	"github.com/robgonnella/ardi/v2/paths"
 	"github.com/robgonnella/ardi/v2/rpc"
@@ -16,15 +17,12 @@ var noDaemon = []string{
 	"ardi version",
 	"ardi clean",
 	"ardi project init",
-}
-
-var noProjectCheck = []string{
-	"ardi project init",
-	"ardi version",
+	"ardi help",
 }
 
 var verbose bool
 var quiet bool
+var global bool
 var dataDir = paths.ArdiProjectDataDir
 var client *rpc.Client
 
@@ -38,19 +36,37 @@ func setLogger() {
 	}
 }
 
+func cmdIsProjectInit(cmd string) bool {
+	return cmd == "ardi project init"
+}
+
+func cmdIsHelp(cmd string) bool {
+	return strings.HasPrefix(cmd, "ardi help")
+}
+
 func getRootCommand() *cobra.Command {
 	return &cobra.Command{
 		Use:   "ardi",
-		Short: "Ardi uploads sketches and prints logs for a variety of arduino boards.",
-		Long: cyan("\nA light wrapper around arduino-cli that offers a quick way to upload\n" +
-			"sketches and watch logs from command line for a variety of arduino boards."),
+		Short: "Ardi manages builds, uploads sketches and prints logs for a variety of arduino boards.",
+		Long: cyan("\nA light wrapper around arduino-cli that offers a quick way to manage builds, " +
+			"upload sketches, and watch logs from command line for a variety of arduino boards."),
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			setLogger()
 			var err error
 			cmdPath := cmd.CommandPath()
-			dataDir := paths.ArdiProjectDataDir
 
-			if !util.IsProjectDirectory() {
+			if strings.HasPrefix(cmdPath, "ardi project") && global {
+				logger.Error("Cannot specifiy --global with project command")
+				os.Exit(1)
+			}
+
+			if !global && !util.IsProjectDirectory() && !cmdIsProjectInit(cmdPath) && !cmdIsHelp(cmdPath) {
+				logger.Error("Not an ardi project directory")
+				logger.Error("Try \"ardi project init\", or run with \"--global\"")
+				os.Exit(1)
+			}
+
+			if global {
 				dataDir = paths.ArdiGlobalDataDir
 				confPath := paths.ArdiGlobalDataConfig
 				util.InitDataDirectory(dataDir, confPath)
@@ -80,6 +96,7 @@ func Initialize(version string) *cobra.Command {
 	rootCmd.AddCommand(getProjectCommand())
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "Print all logs")
 	rootCmd.PersistentFlags().BoolVarP(&quiet, "quiet", "q", false, "Silence all logs")
+	rootCmd.PersistentFlags().BoolVarP(&global, "global", "g", false, "Use global data directory")
 
 	return rootCmd
 }
