@@ -7,11 +7,11 @@ Ardi is a command line build manager for arduino projects.
 
 Ardi is a build tool that allows you to completely manage your arduino project from command line!
 
-• Manage and store build configurations for projects with versioned dependencies
-• Run builds in CI Pipeline
-• Compile & upload sketches to connected boards
-• Watch log output from connected boards in terminal
-• Auto recompile / reupload on save
+- Manage and store build configurations for projects with versioned dependencies
+- Run builds in CI Pipeline
+- Compile & upload sketches to connected boards
+- Watch log output from connected boards in terminal
+- Auto recompile / reupload on save
 
 ### Options
 

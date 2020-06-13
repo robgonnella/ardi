@@ -61,9 +61,9 @@ func getRootCommand() *cobra.Command {
 		Use:   "ardi",
 		Short: "Ardi is a command line build manager for arduino projects.",
 		Long: "\nArdi is a build tool that allows you to completely manage your arduino project from command line!\n\n" +
-			"• Manage and store build configurations for projects with versioned dependencies\n• Run builds in CI Pipeline\n" +
-			"• Compile & upload sketches to connected boards\n• Watch log output from connected boards in terminal\n" +
-			"• Auto recompile / reupload on save",
+			"- Manage and store build configurations for projects with versioned dependencies\n- Run builds in CI Pipeline\n" +
+			"- Compile & upload sketches to connected boards\n- Watch log output from connected boards in terminal\n" +
+			"- Auto recompile / reupload on save",
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			setLogger()
 			var err error
