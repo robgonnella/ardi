@@ -60,8 +60,8 @@ func getRootCommand() *cobra.Command {
 	return &cobra.Command{
 		Use:   "ardi",
 		Short: "Ardi manages builds, uploads sketches and prints logs for a variety of arduino boards.",
-		Long: cyan("\nA light wrapper around arduino-cli that offers a quick way to manage builds, " +
-			"upload sketches, and watch logs from command line for a variety of arduino boards."),
+		Long: "\nA light wrapper around arduino-cli that offers a quick way to manage builds, " +
+			"upload sketches, and watch logs from command line for a variety of arduino boards.",
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			setLogger()
 			var err error
@@ -95,11 +95,11 @@ func getRootCommand() *cobra.Command {
 	}
 }
 
-// Initialize adds all ardi commands to root and returns root command
-func Initialize(version string) *cobra.Command {
+// GetRootCmd adds all ardi commands to root and returns root command
+func GetRootCmd() *cobra.Command {
 	rootCmd := getRootCommand()
 
-	rootCmd.AddCommand(getVersionCommand(version))
+	rootCmd.AddCommand(getVersionCommand())
 	rootCmd.AddCommand(getCleanCommand())
 	rootCmd.AddCommand(getGoCommand())
 	rootCmd.AddCommand(getCompileCommand())

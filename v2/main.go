@@ -22,9 +22,7 @@ import (
 	"github.com/robgonnella/ardi/v2/commands"
 )
 
-const version = "2.0.0-alpha.4"
-
 func main() {
-	rootCmd := commands.Initialize(version)
+	rootCmd := commands.GetRootCmd()
 	rootCmd.Execute()
 }

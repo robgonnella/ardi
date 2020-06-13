@@ -3,16 +3,18 @@ package commands
 import (
 	"fmt"
 
+	"github.com/robgonnella/ardi/v2/version"
+
 	"github.com/spf13/cobra"
 )
 
-func getVersionCommand(version string) *cobra.Command {
+func getVersionCommand() *cobra.Command {
 	return &cobra.Command{
 		Use:   "version",
-		Long:  cyan("\nPrints current version of ardi"),
+		Long:  "\nPrints current version of ardi",
 		Short: "Prints current version of ardi",
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Printf("ardi: v%s\n", version)
+			fmt.Printf("ardi: v%s\n", version.VERSION)
 		},
 	}
 }

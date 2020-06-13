@@ -8,7 +8,7 @@ import (
 func getBoardFQBNSCmd() *cobra.Command {
 	listCmd := &cobra.Command{
 		Use:     "fqbns",
-		Long:    cyan("\nList boards with associated fqbns"),
+		Long:    "\nList boards with associated fqbns",
 		Short:   "List boards with associated fqbns",
 		Aliases: []string{"fqbn"},
 		Run: func(cmd *cobra.Command, args []string) {
@@ -27,7 +27,7 @@ func getBoardFQBNSCmd() *cobra.Command {
 func getBoardPlatformsCmd() *cobra.Command {
 	listCmd := &cobra.Command{
 		Use:     "platforms",
-		Long:    cyan("\nList boards with their associated platform"),
+		Long:    "\nList boards with their associated platform",
 		Short:   "List boards with their associated platform",
 		Aliases: []string{"platform"},
 		Run: func(cmd *cobra.Command, args []string) {
@@ -46,7 +46,7 @@ func getBoardPlatformsCmd() *cobra.Command {
 func getBoardCommand() *cobra.Command {
 	boardCmd := &cobra.Command{
 		Use:   "board",
-		Long:  cyan("\nBoard related commands"),
+		Long:  "\nBoard related commands",
 		Short: "Board related commands",
 	}
 	boardCmd.AddCommand(getBoardPlatformsCmd())

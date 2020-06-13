@@ -10,7 +10,7 @@ func getPlatformListCmd() *cobra.Command {
 	var installed bool
 	listCmd := &cobra.Command{
 		Use:   "list",
-		Long:  cyan("\nList platforms"),
+		Long:  "\nList platforms",
 		Short: "List platforms",
 		Run: func(cmd *cobra.Command, args []string) {
 			platformCore, err := platform.New(client, logger)
@@ -34,7 +34,7 @@ func getPlatformAddCmd() *cobra.Command {
 	var all bool
 	addCmd := &cobra.Command{
 		Use:   "add",
-		Long:  cyan("\nInstall platforms"),
+		Long:  "\nInstall platforms",
 		Short: "Install platforms",
 		Run: func(cmd *cobra.Command, args []string) {
 			platformCore, err := platform.New(client, logger)
@@ -58,7 +58,7 @@ func getPlatformAddCmd() *cobra.Command {
 func getPlatformRemoveCmd() *cobra.Command {
 	removeCmd := &cobra.Command{
 		Use:   "remove",
-		Long:  cyan("\nRemove installed platforms"),
+		Long:  "\nRemove installed platforms",
 		Short: "Remove installed platforms",
 		Run: func(cmd *cobra.Command, args []string) {
 			platformCore, err := platform.New(client, logger)
@@ -76,7 +76,7 @@ func getPlatformRemoveCmd() *cobra.Command {
 func getPlatformCommand() *cobra.Command {
 	platCmd := &cobra.Command{
 		Use:     "platform",
-		Long:    cyan("\nPlatform related commands"),
+		Long:    "\nPlatform related commands",
 		Short:   "Platform related commands",
 		Aliases: []string{"platforms"},
 	}

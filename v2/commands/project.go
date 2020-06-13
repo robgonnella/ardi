@@ -13,9 +13,9 @@ func getProjectInitCommand() *cobra.Command {
 	initCmd := &cobra.Command{
 		Use:   "init",
 		Short: "Initialize directory as an ardi project",
-		Long: cyan("\nDownloads, installs, and updates specified platforms, or\n" +
+		Long: "\nDownloads, installs, and updates specified platforms, or\n" +
 			"all platforms if not specified, creates project data directory, and\n" +
-			"creates project level ardi.json"),
+			"creates project level ardi.json",
 		Aliases: []string{"update"},
 		Run: func(cmd *cobra.Command, args []string) {
 			project.Init(logger)
@@ -28,7 +28,7 @@ func getProjectInitCommand() *cobra.Command {
 func getProjectListPlatformCmd() *cobra.Command {
 	listCmd := &cobra.Command{
 		Use:     "platform",
-		Long:    cyan("\nAdd platform(s) to project"),
+		Long:    "\nAdd platform(s) to project",
 		Short:   "Add platform(s) to project",
 		Aliases: []string{"platforms"},
 		Run: func(cmd *cobra.Command, args []string) {
@@ -45,7 +45,7 @@ func getProjectListPlatformCmd() *cobra.Command {
 func getProjectListLibrariesCmd() *cobra.Command {
 	listCmd := &cobra.Command{
 		Use:     "libraries",
-		Long:    cyan("\nList all project libraries specified in ardi.json"),
+		Long:    "\nList all project libraries specified in ardi.json",
 		Short:   "List all project libraries specified in ardi.json",
 		Aliases: []string{"libs"},
 		Run: func(cmd *cobra.Command, args []string) {
@@ -62,7 +62,7 @@ func getProjectListLibrariesCmd() *cobra.Command {
 func getProjectListBuildsCmd() *cobra.Command {
 	listCmd := &cobra.Command{
 		Use:     "builds",
-		Long:    cyan("\nList all project builds specified in ardi.json"),
+		Long:    "\nList all project builds specified in ardi.json",
 		Short:   "List all project builds specified in ardi.json",
 		Aliases: []string{"build"},
 		Run: func(cmd *cobra.Command, args []string) {
@@ -79,7 +79,7 @@ func getProjectListBuildsCmd() *cobra.Command {
 func getProjectListCmd() *cobra.Command {
 	listCmd := &cobra.Command{
 		Use:   "list",
-		Long:  cyan("\nList project attributes saved in ardi.json"),
+		Long:  "\nList project attributes saved in ardi.json",
 		Short: "List project attributes saved in ardi.json",
 	}
 	listCmd.AddCommand(getProjectListPlatformCmd())
@@ -91,7 +91,7 @@ func getProjectListCmd() *cobra.Command {
 func getProjectAddPlatformCmd() *cobra.Command {
 	addCmd := &cobra.Command{
 		Use:     "platform",
-		Long:    cyan("\nAdd platform(s) to project"),
+		Long:    "\nAdd platform(s) to project",
 		Short:   "Add platform(s) to project",
 		Aliases: []string{"platforms"},
 		Run: func(cmd *cobra.Command, args []string) {
@@ -119,7 +119,7 @@ func getProjectAddBuildCmd() *cobra.Command {
 	var buildProps []string
 	addCmd := &cobra.Command{
 		Use:   "build",
-		Long:  cyan("\nAdd build config to project"),
+		Long:  "\nAdd build config to project",
 		Short: "Add build config to project",
 		Run: func(cmd *cobra.Command, args []string) {
 			projectCore, err := project.New(client, logger)
@@ -141,7 +141,7 @@ func getProjectAddBuildCmd() *cobra.Command {
 func getProjectAddLibCmd() *cobra.Command {
 	addCmd := &cobra.Command{
 		Use:   "lib",
-		Long:  cyan("\nAdd libraries to project"),
+		Long:  "\nAdd libraries to project",
 		Short: "Add libraries to project\\e[0m",
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
@@ -158,7 +158,7 @@ func getProjectAddLibCmd() *cobra.Command {
 func getProjectAddCmd() *cobra.Command {
 	addCmd := &cobra.Command{
 		Use:   "add",
-		Long:  cyan("\nAdd libraries and builds to project"),
+		Long:  "\nAdd libraries and builds to project",
 		Short: "Add libraries and builds to project",
 	}
 	addCmd.AddCommand(getProjectAddPlatformCmd())
@@ -170,7 +170,7 @@ func getProjectAddCmd() *cobra.Command {
 func getProjectRemovePlatformCmd() *cobra.Command {
 	removeCmd := &cobra.Command{
 		Use:     "platform",
-		Long:    cyan("\nRemove platform(s) from project"),
+		Long:    "\nRemove platform(s) from project",
 		Short:   "Remove platform(s) from project",
 		Aliases: []string{"platforms"},
 		Run: func(cmd *cobra.Command, args []string) {
@@ -188,7 +188,7 @@ func getProjectRemovePlatformCmd() *cobra.Command {
 func getProjectRemoveBuildCmd() *cobra.Command {
 	removeCmd := &cobra.Command{
 		Use:     "build",
-		Long:    cyan("\nRemove build config from project"),
+		Long:    "\nRemove build config from project",
 		Short:   "Remove build config from project",
 		Aliases: []string{"builds"},
 		Run: func(cmd *cobra.Command, args []string) {
@@ -205,7 +205,7 @@ func getProjectRemoveBuildCmd() *cobra.Command {
 func getProjectRemoveLibCmd() *cobra.Command {
 	removeCmd := &cobra.Command{
 		Use:   "lib",
-		Long:  cyan("\nRemove libraries from project"),
+		Long:  "\nRemove libraries from project",
 		Short: "Remove libraries from project",
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
@@ -223,7 +223,7 @@ func getProjectRemoveCmd() *cobra.Command {
 	removeCmd := &cobra.Command{
 		Use:   "remove",
 		Short: "Remove libraries and builds from project",
-		Long:  cyan("\nRemove libraries and builds from project"),
+		Long:  "\nRemove libraries and builds from project",
 	}
 	removeCmd.AddCommand(getProjectRemovePlatformCmd())
 	removeCmd.AddCommand(getProjectRemoveBuildCmd())
@@ -235,7 +235,7 @@ func getProjectBuildCmd() *cobra.Command {
 	buildCmd := &cobra.Command{
 		Use:   "build",
 		Short: "Compile builds specified in ardi.json",
-		Long:  cyan("\nCompile builds specified in ardi.json"),
+		Long:  "\nCompile builds specified in ardi.json",
 		Run: func(cmd *cobra.Command, args []string) {
 			projectCore, err := project.New(client, logger)
 			if err != nil {
@@ -255,7 +255,7 @@ func getProjectCommand() *cobra.Command {
 	projectCmd := &cobra.Command{
 		Use:   "project",
 		Short: "Project related commands",
-		Long:  cyan("\nProject related commands"),
+		Long:  "\nProject related commands",
 	}
 	projectCmd.AddCommand(getProjectInitCommand())
 	projectCmd.AddCommand(getProjectListCmd())
