@@ -11,8 +11,10 @@ import (
 func getCleanCommand() *cobra.Command {
 	return &cobra.Command{
 		Use:   "clean",
-		Short: "Delete all ardi global data",
-		Long:  "\nRemoves all installed platforms and libraries from ~/.ardi",
+		Short: "Delete project, or global, data directory",
+		Long: "\nRemoves all installed platforms and libraries from project " +
+			"data directory. If run with \"--global\" all data will be removed " +
+			"from ~/.ardi",
 		Run: func(cmd *cobra.Command, args []string) {
 			logger.Infof("Cleaning ardi data directory: %s", dataDir)
 			if err := util.CleanDataDirectory(dataDir); err != nil {

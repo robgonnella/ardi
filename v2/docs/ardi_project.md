@@ -1,11 +1,12 @@
 ## ardi project
 
-Project related commands
+Project manager
 
 ### Synopsis
 
 
-Project related commands
+Project manager allowing you to store versioned dependencies and build configurations for each project.
+See "ardi help project init" for more details
 
 ### Options
 
@@ -23,7 +24,7 @@ Project related commands
 
 ### SEE ALSO
 
-* [ardi](ardi.md)	 - Ardi manages builds, uploads sketches and prints logs for a variety of arduino boards.
+* [ardi](ardi.md)	 - Ardi is a command line build manager for arduino projects.
 * [ardi project add](ardi_project_add.md)	 - Add libraries and builds to project
 * [ardi project build](ardi_project_build.md)	 - Compile builds specified in ardi.json
 * [ardi project init](ardi_project_init.md)	 - Initialize directory as an ardi project

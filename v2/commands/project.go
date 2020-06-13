@@ -13,9 +13,10 @@ func getProjectInitCommand() *cobra.Command {
 	initCmd := &cobra.Command{
 		Use:   "init",
 		Short: "Initialize directory as an ardi project",
-		Long: "\nDownloads, installs, and updates specified platforms, or\n" +
-			"all platforms if not specified, creates project data directory, and\n" +
-			"creates project level ardi.json",
+		Long: "\nDownloads, installs, and updates specified platforms, or " +
+			"all platforms if run with no arguments. This command will generate a " +
+			"project level data directory for storing dependencies, and an " +
+			"ardi.json file for managing builds and dependencies.",
 		Aliases: []string{"update"},
 		Run: func(cmd *cobra.Command, args []string) {
 			project.Init(logger)
@@ -254,8 +255,10 @@ func getProjectBuildCmd() *cobra.Command {
 func getProjectCommand() *cobra.Command {
 	projectCmd := &cobra.Command{
 		Use:   "project",
-		Short: "Project related commands",
-		Long:  "\nProject related commands",
+		Short: "Project manager",
+		Long: "\nProject manager allowing you to store versioned dependencies " +
+			"and build configurations for each project.\n" +
+			"See \"ardi help project init\" for more details",
 	}
 	projectCmd.AddCommand(getProjectInitCommand())
 	projectCmd.AddCommand(getProjectListCmd())

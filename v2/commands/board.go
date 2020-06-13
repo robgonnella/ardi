@@ -45,9 +45,10 @@ func getBoardPlatformsCmd() *cobra.Command {
 
 func getBoardCommand() *cobra.Command {
 	boardCmd := &cobra.Command{
-		Use:   "board",
-		Long:  "\nBoard related commands",
-		Short: "Board related commands",
+		Use: "board",
+		Long: "\nBoard helper allowing you to see which boards belong to " +
+			"which platforms, and the FQBN associated with each board",
+		Short: "Board helper",
 	}
 	boardCmd.AddCommand(getBoardPlatformsCmd())
 	boardCmd.AddCommand(getBoardFQBNSCmd())

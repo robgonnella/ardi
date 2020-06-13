@@ -1,14 +1,11 @@
 ## ardi lib
 
-Library manager for ardi
+Library manager
 
 ### Synopsis
 
 
-Library manager for ardi allowing you to add and remove libraries
-either globally or at the project level. Each project can be
-configured with its own list of dependencies for consistent
-repeatable builds every time.
+Library manager allowing you to add and remove libraries either globally or at the project level. Each project can be configured with its own list of dependencies for consistent repeatable builds. See "ardi help project" form more info on project level management with ardi
 
 ### Options
 
@@ -26,7 +23,7 @@ repeatable builds every time.
 
 ### SEE ALSO
 
-* [ardi](ardi.md)	 - Ardi manages builds, uploads sketches and prints logs for a variety of arduino boards.
+* [ardi](ardi.md)	 - Ardi is a command line build manager for arduino projects.
 * [ardi lib add](ardi_lib_add.md)	 - Adds specified libraries to either project or global library directory
 * [ardi lib install](ardi_lib_install.md)	 - Installs all project level libraries specified in ardi.json
 * [ardi lib list](ardi_lib_list.md)	 - Lists installed libraries specified in ardi.json

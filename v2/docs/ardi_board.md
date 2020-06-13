@@ -1,11 +1,11 @@
 ## ardi board
 
-Board related commands
+Board helper
 
 ### Synopsis
 
 
-Board related commands
+Board helper allowing you to see which boards belong to which platforms, and the FQBN associated with each board
 
 ### Options
 
@@ -23,7 +23,7 @@ Board related commands
 
 ### SEE ALSO
 
-* [ardi](ardi.md)	 - Ardi manages builds, uploads sketches and prints logs for a variety of arduino boards.
+* [ardi](ardi.md)	 - Ardi is a command line build manager for arduino projects.
 * [ardi board fqbns](ardi_board_fqbns.md)	 - List boards with associated fqbns
 * [ardi board platforms](ardi_board_platforms.md)	 - List boards with their associated platform
 

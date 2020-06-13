@@ -1,11 +1,11 @@
 ## ardi platform
 
-Platform related commands
+Platform manager
 
 ### Synopsis
 
 
-Platform related commands
+Platform manager allowing addition and removal of specified platforms either globally or at the project level. Default is project level, use "--global" to manage global platforms. For project specific platform commands see "ardi help project platform".
 
 ### Options
 
@@ -23,7 +23,7 @@ Platform related commands
 
 ### SEE ALSO
 
-* [ardi](ardi.md)	 - Ardi manages builds, uploads sketches and prints logs for a variety of arduino boards.
+* [ardi](ardi.md)	 - Ardi is a command line build manager for arduino projects.
 * [ardi platform add](ardi_platform_add.md)	 - Install platforms
 * [ardi platform list](ardi_platform_list.md)	 - List platforms
 * [ardi platform remove](ardi_platform_remove.md)	 - Remove installed platforms

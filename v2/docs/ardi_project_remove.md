@@ -23,7 +23,7 @@ Remove libraries and builds from project
 
 ### SEE ALSO
 
-* [ardi project](ardi_project.md)	 - Project related commands
+* [ardi project](ardi_project.md)	 - Project manager
 * [ardi project remove build](ardi_project_remove_build.md)	 - Remove build config from project
 * [ardi project remove lib](ardi_project_remove_lib.md)	 - Remove libraries from project
 * [ardi project remove platform](ardi_project_remove_platform.md)	 - Remove platform(s) from project

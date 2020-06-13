@@ -59,9 +59,11 @@ func shouldShowProjectError(cmd string) bool {
 func getRootCommand() *cobra.Command {
 	return &cobra.Command{
 		Use:   "ardi",
-		Short: "Ardi manages builds, uploads sketches and prints logs for a variety of arduino boards.",
-		Long: "\nA light wrapper around arduino-cli that offers a quick way to manage builds, " +
-			"upload sketches, and watch logs from command line for a variety of arduino boards.",
+		Short: "Ardi is a command line build manager for arduino projects.",
+		Long: "\nArdi is a build tool that allows you to completely manage your arduino project from command line!\n\n" +
+			"• Manage and store build configurations for projects with versioned dependencies\n• Run builds in CI Pipeline\n" +
+			"• Compile & upload sketches to connected boards\n• Watch log output from connected boards in terminal\n" +
+			"• Auto recompile / reupload on save",
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			setLogger()
 			var err error

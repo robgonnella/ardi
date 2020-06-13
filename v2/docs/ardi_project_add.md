@@ -23,7 +23,7 @@ Add libraries and builds to project
 
 ### SEE ALSO
 
-* [ardi project](ardi_project.md)	 - Project related commands
+* [ardi project](ardi_project.md)	 - Project manager
 * [ardi project add build](ardi_project_add_build.md)	 - Add build config to project
 * [ardi project add lib](ardi_project_add_lib.md)	 - Add libraries to project\e[0m
 * [ardi project add platform](ardi_project_add_platform.md)	 - Add platform(s) to project

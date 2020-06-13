@@ -75,9 +75,12 @@ func getPlatformRemoveCmd() *cobra.Command {
 
 func getPlatformCommand() *cobra.Command {
 	platCmd := &cobra.Command{
-		Use:     "platform",
-		Long:    "\nPlatform related commands",
-		Short:   "Platform related commands",
+		Use: "platform",
+		Long: "\nPlatform manager allowing addition and removal of specified " +
+			"platforms either globally or at the project level. Default is " +
+			"project level, use \"--global\" to manage global platforms. For " +
+			"project specific platform commands see \"ardi help project platform\".",
+		Short:   "Platform manager",
 		Aliases: []string{"platforms"},
 	}
 	platCmd.AddCommand(getPlatformListCmd())

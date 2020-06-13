@@ -23,7 +23,7 @@ List project attributes saved in ardi.json
 
 ### SEE ALSO
 
-* [ardi project](ardi_project.md)	 - Project related commands
+* [ardi project](ardi_project.md)	 - Project manager
 * [ardi project list builds](ardi_project_list_builds.md)	 - List all project builds specified in ardi.json
 * [ardi project list libraries](ardi_project_list_libraries.md)	 - List all project libraries specified in ardi.json
 * [ardi project list platform](ardi_project_list_platform.md)	 - Add platform(s) to project

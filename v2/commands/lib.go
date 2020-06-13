@@ -100,11 +100,12 @@ func getLibListCommand() *cobra.Command {
 func getLibCommand() *cobra.Command {
 	var libCmd = &cobra.Command{
 		Use:   "lib",
-		Short: "Library manager for ardi",
-		Long: "\nLibrary manager for ardi allowing you to add and remove libraries\n" +
-			"either globally or at the project level. Each project can be\n" +
-			"configured with its own list of dependencies for consistent\n" +
-			"repeatable builds every time.",
+		Short: "Library manager",
+		Long: "\nLibrary manager allowing you to add and remove libraries " +
+			"either globally or at the project level. Each project can be " +
+			"configured with its own list of dependencies for consistent " +
+			"repeatable builds. See \"ardi help project\" form more " +
+			"info on project level management with ardi",
 	}
 	libCmd.AddCommand(getLibAddCommand())
 	libCmd.AddCommand(getLibRemoveCommand())
