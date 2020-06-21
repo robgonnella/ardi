@@ -18,8 +18,29 @@ import (
 var cli = arduino.ArduinoCli
 var port = "50051"
 
-// Client represents a client connection to arduino-cli grpc daemon
-type Client struct {
+// Client reprents our wrapper around the arduino-cli rpc client
+//go:generate mockgen -source=rpc.go -destination=mock_rpc/mock_rpc.go
+type Client interface {
+	UpdateIndexFiles() error
+	UpdateLibraryIndex() error
+	UpdatePlatformIndex() error
+	UpgradePlatform(platform string) error
+	InstallPlatform(platform string) error
+	UninstallPlatform(platform string) error
+	InstallAllPlatforms() error
+	GetInstalledPlatforms() ([]*rpc.Platform, error)
+	GetPlatforms() ([]*rpc.Platform, error)
+	ConnectedBoards() []*Board
+	AllBoards() []*Board
+	Upload(fqbn, sketchDir, device string) error
+	Compile(o CompileOpts) error
+	SearchLibraries(query string) ([]*rpc.SearchedLibrary, error)
+	InstallLibrary(name, version string) (string, error)
+	UninstallLibrary(name string) error
+}
+
+// ArdiClient represents a client connection to arduino-cli grpc daemon
+type ArdiClient struct {
 	connection *grpc.ClientConn
 	client     rpc.ArduinoCoreClient
 	instance   *rpc.Instance
@@ -34,7 +55,7 @@ type Board struct {
 }
 
 // NewClient return new RPC controller
-func NewClient(logger *log.Logger) (*Client, error) {
+func NewClient(logger *log.Logger) (Client, error) {
 	logger.Debug("Connecting to server")
 	conn, err := getServerConnection()
 	if err != nil {
@@ -48,7 +69,7 @@ func NewClient(logger *log.Logger) (*Client, error) {
 		return nil, err
 	}
 
-	return &Client{
+	return &ArdiClient{
 		connection: conn,
 		logger:     logger,
 		client:     client,
@@ -75,7 +96,7 @@ func StartDaemon(dataConfigPath string, verbose bool) {
 }
 
 // UpdateIndexFiles updates platform and library index files
-func (c *Client) UpdateIndexFiles() error {
+func (c *ArdiClient) UpdateIndexFiles() error {
 	if err := c.UpdatePlatformIndex(); err != nil {
 		return err
 	}
@@ -86,7 +107,7 @@ func (c *Client) UpdateIndexFiles() error {
 }
 
 // UpdateLibraryIndex updates library index file
-func (c *Client) UpdateLibraryIndex() error {
+func (c *ArdiClient) UpdateLibraryIndex() error {
 	c.logger.Debug("Updating library index...")
 
 	libIdxUpdateStream, err := c.client.UpdateLibrariesIndex(
@@ -121,7 +142,7 @@ func (c *Client) UpdateLibraryIndex() error {
 }
 
 // UpdatePlatformIndex updates platform index file
-func (c *Client) UpdatePlatformIndex() error {
+func (c *ArdiClient) UpdatePlatformIndex() error {
 	c.logger.Debug("Updating platform index...")
 
 	uiRespStream, err := c.client.UpdateIndex(
@@ -159,7 +180,7 @@ func (c *Client) UpdatePlatformIndex() error {
 }
 
 // UpgradePlatform upgrades a given platform
-func (c *Client) UpgradePlatform(platform string) error {
+func (c *ArdiClient) UpgradePlatform(platform string) error {
 	pkg, arch, _ := parsePlatform(platform)
 	c.logger.Debugf("Upgrading platform: %s:%s\n", pkg, arch)
 
@@ -208,7 +229,7 @@ func (c *Client) UpgradePlatform(platform string) error {
 }
 
 // InstallPlatform installs a given platform
-func (c *Client) InstallPlatform(platform string) error {
+func (c *ArdiClient) InstallPlatform(platform string) error {
 	if platform == "" {
 		err := errors.New("Must specify a platform to install")
 		c.logger.WithError(err).Error()
@@ -276,7 +297,7 @@ func (c *Client) InstallPlatform(platform string) error {
 }
 
 // UninstallPlatform installs a given platform
-func (c *Client) UninstallPlatform(platform string) error {
+func (c *ArdiClient) UninstallPlatform(platform string) error {
 	if platform == "" {
 		err := errors.New("Must specify a platform to install")
 		c.logger.WithError(err).Error()
@@ -325,7 +346,7 @@ func (c *Client) UninstallPlatform(platform string) error {
 }
 
 // InstallAllPlatforms installs and upgrades all platforms
-func (c *Client) InstallAllPlatforms() error {
+func (c *ArdiClient) InstallAllPlatforms() error {
 
 	searchResp, err := c.client.PlatformSearch(
 		context.Background(),
@@ -354,7 +375,7 @@ func (c *Client) InstallAllPlatforms() error {
 }
 
 // GetInstalledPlatforms lists all installed platforms
-func (c *Client) GetInstalledPlatforms() ([]*rpc.Platform, error) {
+func (c *ArdiClient) GetInstalledPlatforms() ([]*rpc.Platform, error) {
 	listResp, err := c.client.PlatformList(
 		context.Background(),
 		&rpc.PlatformListReq{
@@ -371,7 +392,7 @@ func (c *Client) GetInstalledPlatforms() ([]*rpc.Platform, error) {
 }
 
 // GetPlatforms returns specified platform or all platforms if unspecified
-func (c *Client) GetPlatforms() ([]*rpc.Platform, error) {
+func (c *ArdiClient) GetPlatforms() ([]*rpc.Platform, error) {
 	if err := c.UpdateIndexFiles(); err != nil {
 		return nil, err
 	}
@@ -392,7 +413,7 @@ func (c *Client) GetPlatforms() ([]*rpc.Platform, error) {
 }
 
 // ConnectedBoards returns a list of connected arduino boards
-func (c *Client) ConnectedBoards() []*Board {
+func (c *ArdiClient) ConnectedBoards() []*Board {
 	boardList := []*Board{}
 
 	boardListResp, err := c.client.BoardList(
@@ -422,7 +443,7 @@ func (c *Client) ConnectedBoards() []*Board {
 }
 
 // AllBoards returns a list of all supported boards
-func (c *Client) AllBoards() []*Board {
+func (c *ArdiClient) AllBoards() []*Board {
 	c.logger.Debug("Getting list of supported boards...")
 
 	boardList := []*Board{}
@@ -452,7 +473,7 @@ func (c *Client) AllBoards() []*Board {
 }
 
 // Upload a sketch to target board
-func (c *Client) Upload(fqbn, sketchDir, device string) error {
+func (c *ArdiClient) Upload(fqbn, sketchDir, device string) error {
 	uplRespStream, err := c.client.Upload(
 		context.Background(),
 		&rpc.UploadReq{
@@ -492,22 +513,32 @@ func (c *Client) Upload(fqbn, sketchDir, device string) error {
 	}
 }
 
+// CompileOpts represents the options passed to the compile command
+type CompileOpts struct {
+	FQBN       string
+	SketchDir  string
+	SketchPath string
+	ExportName string
+	BuildProps []string
+	ShowProps  bool
+}
+
 // Compile the specified sketch
-func (c *Client) Compile(fqbn, sketchDir, sketchPath, exportName string, buildProps []string, showProps bool) error {
+func (c *ArdiClient) Compile(opts CompileOpts) error {
 	exportFile := ""
-	if exportName != "" {
-		exportFile = path.Join(sketchDir, exportName)
+	if opts.ExportName != "" {
+		exportFile = path.Join(opts.SketchDir, opts.ExportName)
 	}
 
 	compRespStream, err := c.client.Compile(
 		context.Background(),
 		&rpc.CompileReq{
 			Instance:        c.instance,
-			Fqbn:            fqbn,
-			SketchPath:      sketchPath,
+			Fqbn:            opts.FQBN,
+			SketchPath:      opts.SketchPath,
 			ExportFile:      exportFile,
-			BuildProperties: buildProps,
-			ShowProperties:  showProps,
+			BuildProperties: opts.BuildProps,
+			ShowProperties:  opts.ShowProps,
 			Verbose:         true,
 		})
 
@@ -542,7 +573,7 @@ func (c *Client) Compile(fqbn, sketchDir, sketchPath, exportName string, buildPr
 }
 
 // SearchLibraries searches available libraries for download
-func (c *Client) SearchLibraries(query string) ([]*rpc.SearchedLibrary, error) {
+func (c *ArdiClient) SearchLibraries(query string) ([]*rpc.SearchedLibrary, error) {
 	searchResp, err := c.client.LibrarySearch(
 		context.Background(),
 		&rpc.LibrarySearchReq{
@@ -559,7 +590,7 @@ func (c *Client) SearchLibraries(query string) ([]*rpc.SearchedLibrary, error) {
 }
 
 // InstallLibrary installs specified version of a library
-func (c *Client) InstallLibrary(name, version string) (string, error) {
+func (c *ArdiClient) InstallLibrary(name, version string) (string, error) {
 	installRespStream, err := c.client.LibraryInstall(
 		context.Background(),
 		&rpc.LibraryInstallReq{
@@ -602,7 +633,7 @@ func (c *Client) InstallLibrary(name, version string) (string, error) {
 }
 
 // UninstallLibrary removes specified library
-func (c *Client) UninstallLibrary(name string) error {
+func (c *ArdiClient) UninstallLibrary(name string) error {
 	uninstallRespStream, err := c.client.LibraryUninstall(
 		context.Background(),
 		&rpc.LibraryUninstallReq{
@@ -640,7 +671,7 @@ func (c *Client) UninstallLibrary(name string) error {
 }
 
 // private methods
-func (c *Client) isVerbose() bool {
+func (c *ArdiClient) isVerbose() bool {
 	return c.logger.Level == log.DebugLevel
 }
 

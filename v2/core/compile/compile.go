@@ -11,11 +11,11 @@ import (
 // Compile represents core module for compile commands
 type Compile struct {
 	logger *log.Logger
-	client *rpc.Client
+	client rpc.Client
 }
 
 // New instance of core module for compile commands
-func New(client *rpc.Client, logger *log.Logger) *Compile {
+func New(client rpc.Client, logger *log.Logger) *Compile {
 	return &Compile{
 		logger: logger,
 		client: client,
@@ -41,11 +41,16 @@ func (c *Compile) Compile(sketchDir, fqbn string, buildProps []string, showProps
 		return err
 	}
 
-	boardFQBN := target.Board.FQBN
-	dir := project.Directory
-	sketch := project.Sketch
+	opts := rpc.CompileOpts{
+		FQBN:       target.Board.FQBN,
+		SketchDir:  project.Directory,
+		SketchPath: project.Sketch,
+		ExportName: "",
+		BuildProps: buildProps,
+		ShowProps:  showProps,
+	}
 
-	if err := c.client.Compile(boardFQBN, dir, sketch, "", buildProps, showProps); err != nil {
+	if err := c.client.Compile(opts); err != nil {
 		c.logger.Error("Failed to compile sketch")
 		return err
 	}

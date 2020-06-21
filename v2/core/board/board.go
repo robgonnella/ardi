@@ -14,12 +14,12 @@ import (
 
 // Board module for board commands
 type Board struct {
-	client *rpc.Client
+	client rpc.Client
 	logger *log.Logger
 }
 
 // New module instance for board commands
-func New(client *rpc.Client, logger *log.Logger) *Board {
+func New(client rpc.Client, logger *log.Logger) *Board {
 	return &Board{
 		logger: logger,
 		client: client,

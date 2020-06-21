@@ -18,7 +18,7 @@ type Target struct {
 }
 
 // New returns new target
-func New(client *rpc.Client, logger *log.Logger, fqbn string, onlyConnected bool) (*Target, error) {
+func New(client rpc.Client, logger *log.Logger, fqbn string, onlyConnected bool) (*Target, error) {
 	board, err := getTargetBoard(client, logger, fqbn, onlyConnected)
 	if err != nil {
 		return nil, err
@@ -26,7 +26,7 @@ func New(client *rpc.Client, logger *log.Logger, fqbn string, onlyConnected bool
 	return &Target{board}, nil
 }
 
-func getTargetBoard(client *rpc.Client, logger *log.Logger, fqbn string, onlyConnected bool) (*rpc.Board, error) {
+func getTargetBoard(client rpc.Client, logger *log.Logger, fqbn string, onlyConnected bool) (*rpc.Board, error) {
 	if fqbn != "" {
 		return &rpc.Board{FQBN: fqbn}, nil
 	}

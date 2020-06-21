@@ -27,14 +27,14 @@ type Project struct {
 	Sketch    string
 	Directory string
 	Baud      int
-	client    *rpc.Client
+	client    rpc.Client
 	ardiJSON  *ardijson.ArdiJSON
 	ardiYAML  *ardiyaml.ArdiYAML
 	logger    *log.Logger
 }
 
 // New returns new Project instance
-func New(client *rpc.Client, logger *log.Logger) (*Project, error) {
+func New(client rpc.Client, logger *log.Logger) (*Project, error) {
 	ardiJSON, err := ardijson.New(logger)
 	if err != nil {
 		logger.WithError(err).Error()
@@ -165,8 +165,17 @@ func (p *Project) BuildList(builds []string) error {
 		for prop, instruction := range build.Props {
 			buildProps = append(buildProps, fmt.Sprintf("%s=%s", prop, instruction))
 		}
+
 		p.logger.Infof("Building %s", build)
-		if err := p.client.Compile(build.FQBN, p.Directory, p.Sketch, name, buildProps, false); err != nil {
+		opts := rpc.CompileOpts{
+			FQBN:       build.FQBN,
+			SketchDir:  p.Directory,
+			SketchPath: p.Sketch,
+			ExportName: name,
+			BuildProps: buildProps,
+			ShowProps:  false,
+		}
+		if err := p.client.Compile(opts); err != nil {
 			p.logger.WithError(err).Errorf("Build failed for %s", build)
 			return err
 		}
@@ -189,8 +198,17 @@ func (p *Project) BuildAll() error {
 		for prop, instruction := range build.Props {
 			buildProps = append(buildProps, fmt.Sprintf("%s=%s", prop, instruction))
 		}
+
 		p.logger.Infof("Building %s", build.Path)
-		if err := p.client.Compile(build.FQBN, p.Directory, p.Sketch, name, buildProps, false); err != nil {
+		opts := rpc.CompileOpts{
+			FQBN:       build.FQBN,
+			SketchDir:  p.Directory,
+			SketchPath: p.Sketch,
+			ExportName: name,
+			BuildProps: buildProps,
+			ShowProps:  false,
+		}
+		if err := p.client.Compile(opts); err != nil {
 			p.logger.WithError(err).Errorf("Build faild for %s", name)
 			return err
 		}

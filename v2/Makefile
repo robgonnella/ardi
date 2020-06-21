@@ -1,6 +1,9 @@
 version = $(shell git rev-parse --short HEAD)
 all: build_osx build_linux build_arm5 build_arm6 build_arm7 build_arm8
 
+mock:
+	go generate ./...
+
 build:
 ifdef arm
 	GOOS=$(os) GOARCH=$(arch) GOARM=$(arm) go build -ldflags '-s -w' -o build/ardi_$(version)_$(os)_$(arch)$(arm)

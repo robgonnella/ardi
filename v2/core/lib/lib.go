@@ -17,11 +17,11 @@ import (
 type Lib struct {
 	ardiJSON *ardijson.ArdiJSON
 	logger   *log.Logger
-	client   *rpc.Client
+	client   rpc.Client
 }
 
 // New Lib instance
-func New(client *rpc.Client, logger *log.Logger) (*Lib, error) {
+func New(client rpc.Client, logger *log.Logger) (*Lib, error) {
 	if err := client.UpdateIndexFiles(); err != nil {
 		logger.WithError(err).Error("Failed to update index files")
 		return nil, err

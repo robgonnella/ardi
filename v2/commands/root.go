@@ -24,7 +24,7 @@ var verbose bool
 var quiet bool
 var global bool
 var dataDir = paths.ArdiProjectDataDir
-var client *rpc.Client
+var client rpc.Client
 
 func setLogger() {
 	if verbose {

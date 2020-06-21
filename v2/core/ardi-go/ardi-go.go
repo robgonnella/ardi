@@ -14,7 +14,7 @@ import (
 // ArdiGo represents core module for adi go commands
 type ArdiGo struct {
 	logger     *log.Logger
-	client     *rpc.Client
+	client     rpc.Client
 	target     *target.Target
 	project    *project.Project
 	buildProps []string
@@ -24,7 +24,7 @@ type ArdiGo struct {
 }
 
 // New returns new Project instance
-func New(client *rpc.Client, sketchDir string, buildProps []string, logger *log.Logger) (*ArdiGo, error) {
+func New(client rpc.Client, sketchDir string, buildProps []string, logger *log.Logger) (*ArdiGo, error) {
 	proj, err := project.New(client, logger)
 	if err != nil {
 		return nil, err
@@ -85,7 +85,15 @@ func (a *ArdiGo) Compile() error {
 	buildProps := a.buildProps
 
 	a.compiling = true
-	if err := a.client.Compile(fqbn, sketchDir, sketch, "", buildProps, false); err != nil {
+	opts := rpc.CompileOpts{
+		FQBN:       fqbn,
+		SketchDir:  sketchDir,
+		SketchPath: sketch,
+		ExportName: "",
+		BuildProps: buildProps,
+		ShowProps:  false,
+	}
+	if err := a.client.Compile(opts); err != nil {
 		a.logger.WithError(err).Error("Failed to compile sketch")
 		a.compiling = false
 		return err
