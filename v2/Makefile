@@ -1,39 +1,41 @@
-version = $(shell git rev-parse --short HEAD)
-all: build_osx build_linux build_arm5 build_arm6 build_arm7 build_arm8
+dest = build
+tag = $(shell git describe --tags $(shell git rev-list --tags --max-count=1))
+component = ardi_$(tag)
+component_path = $(dest)/$(component)
+objects = $(component_path)_darwin_amd64 \
+$(component_path)_linux_amd64 \
+$(component_path)_linux_arm_5 \
+$(component_path)_linux_arm_6 \
+$(component_path)_linux_arm_7 \
+$(component_path)_linux_arm64
+
+define get_goos
+$(word 3, $(subst _, ,$1))
+endef
+
+define get_goarch
+$(word 4, $(subst _, ,$1))
+endef
+
+define get_goarm
+$(word 5, $(subst _, ,$1))
+endef
+
+all: $(objects)
+
+$(objects): $(shell find . -type f -name "*.go")
+	$(eval goos=$(call get_goos, $(@)))
+	$(eval goarch=$(call get_goarch, $(@)))
+	$(eval goarm=$(call get_goarm, $(@)))
+	GOOS=$(goos) GOARCH=$(goarch) GOARM=$(goarm) go build -ldflags '-s -w' -o $(@)
 
 mock:
 	go generate ./...
 
-build:
-ifdef arm
-	GOOS=$(os) GOARCH=$(arch) GOARM=$(arm) go build -ldflags '-s -w' -o build/ardi_$(version)_$(os)_$(arch)$(arm)
-else
-	GOOS=$(os) GOARCH=$(arch) go build -ldflags '-s -w' -o build/ardi_$(version)_$(os)_$(arch)
-endif
+docs:
+	go run docs/gen.go
 
-build_osx:
-	os=darwin arch=amd64 $(MAKE) build
+clean:
+	rm -rf build
 
-build_linux:
-	os=linux arch=amd64 $(MAKE) build
-
-build_arm5:
-	os=linux arch=arm arm=5 $(MAKE) build
-
-build_arm6:
-	os=linux arch=arm arm=6 $(MAKE) build
-
-build_arm7:
-	os=linux arch=arm arm=7 $(MAKE) build
-
-build_arm8:
-	os=linux arch=arm64 $(MAKE) build
-
-.PHONY: all \
-build \
-build_osx \
-build_linux \
-build_arm5 \
-build_arm6 \
-build_arm7 \
-build_arm8
+.PHONY: all mock docs clean
