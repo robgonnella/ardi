@@ -19,7 +19,7 @@ var cli = arduino.ArduinoCli
 var port = "50051"
 
 // Client reprents our wrapper around the arduino-cli rpc client
-//go:generate mockgen -source=rpc.go -destination=mock_rpc/mock_rpc.go
+//go:generate mockgen -destination=../mocks/mock_rpc.go -package=mocks github.com/robgonnella/ardi/v2/rpc Client
 type Client interface {
 	UpdateIndexFiles() error
 	UpdateLibraryIndex() error

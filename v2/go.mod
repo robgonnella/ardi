@@ -7,7 +7,6 @@ require (
 	github.com/arduino/go-properties-orderedmap v1.1.0 // indirect
 	github.com/fatih/color v1.9.0 // indirect
 	github.com/fsnotify/fsnotify v1.4.9
-	github.com/golang/mock v1.3.1
 	github.com/golang/protobuf v1.4.0 // indirect
 	github.com/h2non/filetype v1.0.12 // indirect
 	github.com/juju/errors v0.0.0-20200330140219-3fe23663418f // indirect
