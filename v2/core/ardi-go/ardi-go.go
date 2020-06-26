@@ -34,7 +34,10 @@ func New(client rpc.Client, sketchDir string, buildProps []string, logger *log.L
 		return nil, err
 	}
 
-	target, err := target.New(client, logger, "", true)
+	connectedBoards := client.ConnectedBoards()
+	allBoards := client.AllBoards()
+
+	target, err := target.New(connectedBoards, allBoards, logger, "", true)
 	if err != nil {
 		return nil, err
 	}

@@ -18,21 +18,18 @@ type Target struct {
 }
 
 // New returns new target
-func New(client rpc.Client, logger *log.Logger, fqbn string, onlyConnected bool) (*Target, error) {
-	board, err := getTargetBoard(client, logger, fqbn, onlyConnected)
+func New(connectedBoards, allBoards []*rpc.Board, logger *log.Logger, fqbn string, onlyConnected bool) (*Target, error) {
+	board, err := getTargetBoard(connectedBoards, allBoards, logger, fqbn, onlyConnected)
 	if err != nil {
 		return nil, err
 	}
 	return &Target{board}, nil
 }
 
-func getTargetBoard(client rpc.Client, logger *log.Logger, fqbn string, onlyConnected bool) (*rpc.Board, error) {
+func getTargetBoard(connectedBoards, allBoards []*rpc.Board, logger *log.Logger, fqbn string, onlyConnected bool) (*rpc.Board, error) {
 	if fqbn != "" {
 		return &rpc.Board{FQBN: fqbn}, nil
 	}
-
-	connectedBoards := client.ConnectedBoards()
-	allBoards := client.AllBoards()
 
 	if len(connectedBoards) == 0 {
 		if onlyConnected {

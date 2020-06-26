@@ -2,7 +2,6 @@ package board
 
 import (
 	"fmt"
-	"os"
 	"sort"
 	"text/tabwriter"
 
@@ -54,11 +53,11 @@ func (b *Board) FQBNS(query string) error {
 		return boardList[i].GetName() < boardList[j].GetName()
 	})
 
-	w := tabwriter.NewWriter(os.Stdout, 0, 0, 8, ' ', 0)
+	w := tabwriter.NewWriter(b.logger.Out, 0, 0, 8, ' ', 0)
 	defer w.Flush()
-	fmt.Fprintln(w, "Board\tFQBN")
+	w.Write([]byte("Board\tFQBN\n"))
 	for _, board := range boardList {
-		fmt.Fprintf(w, "%s\t%s\n", board.GetName(), board.GetFqbn())
+		w.Write([]byte(fmt.Sprintf("%s\t%s\n", board.GetName(), board.GetFqbn())))
 	}
 	return nil
 }
@@ -94,11 +93,11 @@ func (b *Board) Platforms(query string) error {
 		return boardList[i].boardName < boardList[j].boardName
 	})
 
-	w := tabwriter.NewWriter(os.Stdout, 0, 0, 8, ' ', 0)
+	w := tabwriter.NewWriter(b.logger.Out, 0, 0, 8, ' ', 0)
 	defer w.Flush()
-	fmt.Fprintln(w, "Board\tPlatform")
+	w.Write([]byte("Board\tPlatform\n"))
 	for _, board := range boardList {
-		fmt.Fprintf(w, "%s\t%s\n", board.boardName, board.platform)
+		w.Write([]byte(fmt.Sprintf("%s\t%s\n", board.boardName, board.platform)))
 	}
 
 	return nil

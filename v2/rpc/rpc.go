@@ -702,7 +702,7 @@ func getRPCInstance(client rpc.ArduinoCoreClient, logger *log.Logger) (*rpc.Inst
 		&rpc.InitReq{},
 	)
 	if err != nil {
-		logger.Error("Error creating server instance: %s")
+		logger.Errorf("Error creating server instance: %s", err.Error())
 		return nil, err
 	}
 

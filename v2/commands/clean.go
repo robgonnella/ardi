@@ -25,7 +25,7 @@ func getCleanCommand() *cobra.Command {
 			if !global {
 				logger.Info("Cleaning ardi build config")
 				if err := os.RemoveAll(paths.ArdiProjectBuildConfig); err != nil {
-					logger.WithError(err).Error("Failed to remove %s", paths.ArdiProjectBuildConfig)
+					logger.WithError(err).Errorf("Failed to remove %s", paths.ArdiProjectBuildConfig)
 					return
 				}
 			}

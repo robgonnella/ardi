@@ -32,6 +32,9 @@ $(objects): $(shell find . -type f -name "*.go")
 mock:
 	go generate ./...
 
+test:
+	go test -v ./...
+
 docs:
 	go run docs/gen.go
 

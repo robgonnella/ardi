@@ -24,18 +24,16 @@ func New(client rpc.Client, logger *log.Logger) *Compile {
 
 // Compile a given project
 func (c *Compile) Compile(sketchDir, fqbn string, buildProps []string, showProps bool) error {
-	project, err := project.New(c.client, c.logger)
+	sketchDir, sketchFile, _, err := project.ProcessSketch(sketchDir, c.logger)
 	if err != nil {
 		c.logger.WithError(err).Error("Failed to compile")
 		return err
 	}
 
-	if err := project.ProcessSketch(sketchDir); err != nil {
-		c.logger.WithError(err).Error()
-		return err
-	}
+	connectedBoards := c.client.ConnectedBoards()
+	allBoards := c.client.AllBoards()
 
-	target, err := target.New(c.client, c.logger, fqbn, false)
+	target, err := target.New(connectedBoards, allBoards, c.logger, fqbn, false)
 	if err != nil {
 		c.logger.WithError(err).Error("Failed to compile")
 		return err
@@ -43,8 +41,8 @@ func (c *Compile) Compile(sketchDir, fqbn string, buildProps []string, showProps
 
 	opts := rpc.CompileOpts{
 		FQBN:       target.Board.FQBN,
-		SketchDir:  project.Directory,
-		SketchPath: project.Sketch,
+		SketchDir:  sketchDir,
+		SketchPath: sketchFile,
 		ExportName: "",
 		BuildProps: buildProps,
 		ShowProps:  showProps,

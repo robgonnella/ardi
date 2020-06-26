@@ -72,19 +72,19 @@ func Init(logger *log.Logger) error {
 	return nil
 }
 
-// ProcessSketch to find directory, filepath, and baud
-func (p *Project) ProcessSketch(sketchDir string) error {
+// ProcessSketch looks for .ino file in specified directory and parses
+func ProcessSketch(sketchDir string, logger *log.Logger) (string, string, int, error) {
 	if sketchDir == "" {
 		msg := "Must provide a sketch directory as an argument"
 		err := errors.New("Missing directory argument")
-		p.logger.WithError(err).Error(msg)
-		return err
+		logger.WithError(err).Error(msg)
+		return "", "", 0, err
 	}
 
 	stat, err := os.Stat(sketchDir)
 	if err != nil {
-		p.logger.WithError(err).Error()
-		return err
+		logger.WithError(err).Error()
+		return "", "", 0, err
 	}
 
 	mode := stat.Mode()
@@ -92,16 +92,26 @@ func (p *Project) ProcessSketch(sketchDir string) error {
 		sketchDir = path.Dir(sketchDir)
 	}
 
-	sketchFile, err := findSketch(sketchDir, p.logger)
+	sketchFile, err := findSketch(sketchDir, logger)
 	if err != nil {
-		return err
+		return "", "", 0, err
 	}
 
-	sketchBaud := parseSketchBaud(sketchFile, p.logger)
+	sketchBaud := parseSketchBaud(sketchFile, logger)
 	if sketchBaud != 0 {
 		fmt.Println("")
-		p.logger.WithField("detected baud", sketchBaud).Info("Detected baud rate from sketch file.")
+		logger.WithField("detected baud", sketchBaud).Info("Detected baud rate from sketch file.")
 		fmt.Println("")
+	}
+
+	return sketchDir, sketchFile, sketchBaud, nil
+}
+
+// ProcessSketch to find directory, filepath, and baud
+func (p *Project) ProcessSketch(sketchDir string) error {
+	sketchDir, sketchFile, sketchBaud, err := ProcessSketch(sketchDir, p.logger)
+	if err != nil {
+		return err
 	}
 
 	p.Sketch = sketchFile
