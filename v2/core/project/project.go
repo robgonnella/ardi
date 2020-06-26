@@ -27,14 +27,14 @@ type Project struct {
 	Sketch    string
 	Directory string
 	Baud      int
-	client    *rpc.Client
+	client    rpc.Client
 	ardiJSON  *ardijson.ArdiJSON
 	ardiYAML  *ardiyaml.ArdiYAML
 	logger    *log.Logger
 }
 
 // New returns new Project instance
-func New(client *rpc.Client, logger *log.Logger) (*Project, error) {
+func New(client rpc.Client, logger *log.Logger) (*Project, error) {
 	ardiJSON, err := ardijson.New(logger)
 	if err != nil {
 		logger.WithError(err).Error()
@@ -72,19 +72,19 @@ func Init(logger *log.Logger) error {
 	return nil
 }
 
-// ProcessSketch to find directory, filepath, and baud
-func (p *Project) ProcessSketch(sketchDir string) error {
+// ProcessSketch looks for .ino file in specified directory and parses
+func ProcessSketch(sketchDir string, logger *log.Logger) (string, string, int, error) {
 	if sketchDir == "" {
 		msg := "Must provide a sketch directory as an argument"
 		err := errors.New("Missing directory argument")
-		p.logger.WithError(err).Error(msg)
-		return err
+		logger.WithError(err).Error(msg)
+		return "", "", 0, err
 	}
 
 	stat, err := os.Stat(sketchDir)
 	if err != nil {
-		p.logger.WithError(err).Error()
-		return err
+		logger.WithError(err).Error()
+		return "", "", 0, err
 	}
 
 	mode := stat.Mode()
@@ -92,16 +92,26 @@ func (p *Project) ProcessSketch(sketchDir string) error {
 		sketchDir = path.Dir(sketchDir)
 	}
 
-	sketchFile, err := findSketch(sketchDir, p.logger)
+	sketchFile, err := findSketch(sketchDir, logger)
 	if err != nil {
-		return err
+		return "", "", 0, err
 	}
 
-	sketchBaud := parseSketchBaud(sketchFile, p.logger)
+	sketchBaud := parseSketchBaud(sketchFile, logger)
 	if sketchBaud != 0 {
 		fmt.Println("")
-		p.logger.WithField("detected baud", sketchBaud).Info("Detected baud rate from sketch file.")
+		logger.WithField("detected baud", sketchBaud).Info("Detected baud rate from sketch file.")
 		fmt.Println("")
+	}
+
+	return sketchDir, sketchFile, sketchBaud, nil
+}
+
+// ProcessSketch to find directory, filepath, and baud
+func (p *Project) ProcessSketch(sketchDir string) error {
+	sketchDir, sketchFile, sketchBaud, err := ProcessSketch(sketchDir, p.logger)
+	if err != nil {
+		return err
 	}
 
 	p.Sketch = sketchFile
@@ -165,8 +175,17 @@ func (p *Project) BuildList(builds []string) error {
 		for prop, instruction := range build.Props {
 			buildProps = append(buildProps, fmt.Sprintf("%s=%s", prop, instruction))
 		}
+
 		p.logger.Infof("Building %s", build)
-		if err := p.client.Compile(build.FQBN, p.Directory, p.Sketch, name, buildProps, false); err != nil {
+		opts := rpc.CompileOpts{
+			FQBN:       build.FQBN,
+			SketchDir:  p.Directory,
+			SketchPath: p.Sketch,
+			ExportName: name,
+			BuildProps: buildProps,
+			ShowProps:  false,
+		}
+		if err := p.client.Compile(opts); err != nil {
 			p.logger.WithError(err).Errorf("Build failed for %s", build)
 			return err
 		}
@@ -189,8 +208,17 @@ func (p *Project) BuildAll() error {
 		for prop, instruction := range build.Props {
 			buildProps = append(buildProps, fmt.Sprintf("%s=%s", prop, instruction))
 		}
+
 		p.logger.Infof("Building %s", build.Path)
-		if err := p.client.Compile(build.FQBN, p.Directory, p.Sketch, name, buildProps, false); err != nil {
+		opts := rpc.CompileOpts{
+			FQBN:       build.FQBN,
+			SketchDir:  p.Directory,
+			SketchPath: p.Sketch,
+			ExportName: name,
+			BuildProps: buildProps,
+			ShowProps:  false,
+		}
+		if err := p.client.Compile(opts); err != nil {
 			p.logger.WithError(err).Errorf("Build faild for %s", name)
 			return err
 		}

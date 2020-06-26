@@ -15,11 +15,11 @@ import (
 // Platform module for platform commands
 type Platform struct {
 	logger *log.Logger
-	client *rpc.Client
+	client rpc.Client
 }
 
 // New platform module instance
-func New(client *rpc.Client, logger *log.Logger) (*Platform, error) {
+func New(client rpc.Client, logger *log.Logger) (*Platform, error) {
 	if err := client.UpdateIndexFiles(); err != nil {
 		logger.WithError(err).Error("Failed to update index files")
 		return nil, err
