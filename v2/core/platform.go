@@ -1,4 +1,4 @@
-package platform
+package core
 
 import (
 	"errors"
@@ -12,26 +12,22 @@ import (
 	"github.com/robgonnella/ardi/v2/rpc"
 )
 
-// Platform module for platform commands
-type Platform struct {
+// PlatformCore module for platform commands
+type PlatformCore struct {
 	logger *log.Logger
 	client rpc.Client
 }
 
-// New platform module instance
-func New(client rpc.Client, logger *log.Logger) (*Platform, error) {
-	if err := client.UpdateIndexFiles(); err != nil {
-		logger.WithError(err).Error("Failed to update index files")
-		return nil, err
-	}
-	return &Platform{
+// NewPlatformCore platform module instance
+func NewPlatformCore(client rpc.Client, logger *log.Logger) *PlatformCore {
+	return &PlatformCore{
 		logger: logger,
 		client: client,
-	}, nil
+	}
 }
 
 // ListInstalled lists only installed platforms
-func (p *Platform) ListInstalled() error {
+func (p *PlatformCore) ListInstalled() error {
 	platforms, err := p.client.GetInstalledPlatforms()
 	if err != nil {
 		return err
@@ -52,7 +48,7 @@ func (p *Platform) ListInstalled() error {
 }
 
 // ListAll lists all available platforms
-func (p *Platform) ListAll() error {
+func (p *PlatformCore) ListAll() error {
 	platforms, err := p.client.GetPlatforms()
 	if err != nil {
 		return err
@@ -73,7 +69,7 @@ func (p *Platform) ListAll() error {
 }
 
 // Add installs specified platforms
-func (p *Platform) Add(platforms []string) error {
+func (p *PlatformCore) Add(platforms []string) error {
 	if len(platforms) == 0 {
 		err := errors.New("Empty platform list")
 		p.logger.WithError(err).Error()
@@ -91,12 +87,12 @@ func (p *Platform) Add(platforms []string) error {
 }
 
 // AddAll installs all platforms
-func (p *Platform) AddAll() error {
+func (p *PlatformCore) AddAll() error {
 	return p.client.InstallAllPlatforms()
 }
 
 // Remove uninstalls specified platforms
-func (p *Platform) Remove(platforms []string) error {
+func (p *PlatformCore) Remove(platforms []string) error {
 	if len(platforms) == 0 {
 		err := errors.New("Empty platform list")
 		p.logger.WithError(err).Error()

@@ -14,7 +14,9 @@ func getVersionCommand() *cobra.Command {
 		Long:  "\nPrints current version of ardi",
 		Short: "Prints current version of ardi",
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Printf("ardi: v%s\n", version.VERSION)
+			ardiVersion := version.VERSION
+			arduinoCliVersion := client.ClientVersion()
+			fmt.Printf("\nardi: v%s\narduino-cli: %s\n\n", ardiVersion, arduinoCliVersion)
 		},
 	}
 }

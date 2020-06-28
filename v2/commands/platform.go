@@ -1,7 +1,6 @@
 package commands
 
 import (
-	"github.com/robgonnella/ardi/v2/core/platform"
 	"github.com/spf13/cobra"
 )
 
@@ -13,15 +12,12 @@ func getPlatformListCmd() *cobra.Command {
 		Long:  "\nList platforms",
 		Short: "List platforms",
 		Run: func(cmd *cobra.Command, args []string) {
-			platformCore, err := platform.New(client, logger)
-			if err != nil {
-				return
-			}
 			if all || (!all && !installed) {
-				platformCore.ListAll()
+				ardiCore.Platform.ListAll()
 			}
+
 			if installed {
-				platformCore.ListInstalled()
+				ardiCore.Platform.ListInstalled()
 			}
 		},
 	}
@@ -37,17 +33,12 @@ func getPlatformAddCmd() *cobra.Command {
 		Long:  "\nInstall platforms",
 		Short: "Install platforms",
 		Run: func(cmd *cobra.Command, args []string) {
-			platformCore, err := platform.New(client, logger)
-			if err != nil {
-				return
-			}
-
 			if all {
-				platformCore.AddAll()
+				ardiCore.Platform.AddAll()
 				return
 			}
 
-			platformCore.Add(args)
+			ardiCore.Platform.Add(args)
 		},
 	}
 
@@ -61,12 +52,7 @@ func getPlatformRemoveCmd() *cobra.Command {
 		Long:  "\nRemove installed platforms",
 		Short: "Remove installed platforms",
 		Run: func(cmd *cobra.Command, args []string) {
-			platformCore, err := platform.New(client, logger)
-			if err != nil {
-				return
-			}
-
-			platformCore.Remove(args)
+			ardiCore.Platform.Remove(args)
 		},
 	}
 

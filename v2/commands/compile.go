@@ -1,7 +1,6 @@
 package commands
 
 import (
-	"github.com/robgonnella/ardi/v2/core/compile"
 	"github.com/spf13/cobra"
 )
 
@@ -20,9 +19,7 @@ func getCompileCommand() *cobra.Command {
 			if len(args) > 0 {
 				sketchDir = args[0]
 			}
-
-			compileCore := compile.New(client, logger)
-			compileCore.Compile(sketchDir, fqbn, buildProps, showProps)
+			ardiCore.Compiler.Compile(sketchDir, fqbn, buildProps, showProps)
 		},
 	}
 	compileCmd.Flags().StringVarP(&fqbn, "fqbn", "f", "", "Specify fully qualified board name")

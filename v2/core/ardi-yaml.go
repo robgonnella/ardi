@@ -1,4 +1,4 @@
-package ardiyaml
+package core
 
 import (
 	"io/ioutil"
@@ -16,8 +16,8 @@ type ArdiYAML struct {
 	logger *log.Logger
 }
 
-// New returns core yaml module for handling data config file
-func New(logger *log.Logger) (*ArdiYAML, error) {
+// NewArdiYAML returns core yaml module for handling data config file
+func NewArdiYAML(logger *log.Logger) (*ArdiYAML, error) {
 	config := types.DataConfig{}
 	dataConfig, err := ioutil.ReadFile(paths.ArdiProjectDataConfig)
 	if err != nil {

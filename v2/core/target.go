@@ -1,4 +1,4 @@
-package target
+package core
 
 import (
 	"errors"
@@ -17,8 +17,8 @@ type Target struct {
 	Board *rpc.Board
 }
 
-// New returns new target
-func New(connectedBoards, allBoards []*rpc.Board, logger *log.Logger, fqbn string, onlyConnected bool) (*Target, error) {
+// NewTarget returns new target
+func NewTarget(connectedBoards, allBoards []*rpc.Board, logger *log.Logger, fqbn string, onlyConnected bool) (*Target, error) {
 	board, err := getTargetBoard(connectedBoards, allBoards, logger, fqbn, onlyConnected)
 	if err != nil {
 		return nil, err
