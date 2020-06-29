@@ -3,7 +3,6 @@ package core
 import (
 	"errors"
 	"fmt"
-	"os"
 	"sort"
 	"text/tabwriter"
 
@@ -38,11 +37,11 @@ func (p *PlatformCore) ListInstalled() error {
 	})
 
 	p.logger.Info("------INSTALLED PLATFORMS------")
-	w := tabwriter.NewWriter(os.Stdout, 0, 0, 8, ' ', 0)
+	w := tabwriter.NewWriter(p.logger.Out, 0, 0, 8, ' ', 0)
 	defer w.Flush()
-	fmt.Fprintln(w, "Platform\tID\tInstalled")
+	w.Write([]byte("Platform\tID\tInstalled\n"))
 	for _, plat := range platforms {
-		fmt.Fprintf(w, "%s\t%s\t%s\n", plat.GetName(), plat.GetID(), plat.GetInstalled())
+		w.Write([]byte(fmt.Sprintf("%s\t%s\t%s\n", plat.GetName(), plat.GetID(), plat.GetInstalled())))
 	}
 	return nil
 }
@@ -59,11 +58,11 @@ func (p *PlatformCore) ListAll() error {
 	})
 
 	p.logger.Info("------AVAILABLE PLATFORMS------")
-	w := tabwriter.NewWriter(os.Stdout, 0, 0, 8, ' ', 0)
+	w := tabwriter.NewWriter(p.logger.Out, 0, 0, 8, ' ', 0)
 	defer w.Flush()
-	fmt.Fprintln(w, "Platform\tID\tLatest")
+	w.Write([]byte("Platform\tID\tLatest\n"))
 	for _, plat := range platforms {
-		fmt.Fprintf(w, "%s\t%s\t%s\n", plat.GetName(), plat.GetID(), plat.GetLatest())
+		w.Write([]byte(fmt.Sprintf("%s\t%s\t%s\n", plat.GetName(), plat.GetID(), plat.GetLatest())))
 	}
 	return nil
 }

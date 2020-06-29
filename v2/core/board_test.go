@@ -19,8 +19,8 @@ func TestBoardCore(t *testing.T) {
 		env.ArdiCore.Board.FQBNS("")
 
 		for _, b := range boards {
-			assert.Contains(t, env.Stdout.String(), b.GetName())
-			assert.Contains(t, env.Stdout.String(), b.GetFqbn())
+			assert.Contains(st, env.Stdout.String(), b.GetName())
+			assert.Contains(st, env.Stdout.String(), b.GetFqbn())
 		}
 	})
 
@@ -34,8 +34,8 @@ func TestBoardCore(t *testing.T) {
 		env.ArdiCore.Board.Platforms("")
 
 		for _, b := range boards {
-			assert.Contains(t, env.Stdout.String(), b.GetName())
-			assert.Contains(t, env.Stdout.String(), platform.GetID())
+			assert.Contains(st, env.Stdout.String(), b.GetName())
+			assert.Contains(st, env.Stdout.String(), platform.GetID())
 		}
 	})
 }

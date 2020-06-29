@@ -14,7 +14,7 @@ func TestCompileCore(t *testing.T) {
 	testutil.RunTest("errors when compiling directory with no sketch", t, func(st *testing.T, env testutil.TestEnv) {
 		defer env.Ctrl.Finish()
 		err := env.ArdiCore.Compiler.Compile(".", "some-fqbn", []string{}, false)
-		assert.Error(t, err)
+		assert.Error(st, err)
 	})
 
 	testutil.RunTest("succeeds when compiling directory with .ino file", t, func(st *testing.T, env testutil.TestEnv) {
@@ -38,6 +38,6 @@ func TestCompileCore(t *testing.T) {
 		env.Client.EXPECT().Compile(compileOpts).Times(1)
 
 		err := env.ArdiCore.Compiler.Compile(env.BlinkProjDir, expectedFqbn, expectedBuildProps, expectedShowProps)
-		assert.NoError(t, err)
+		assert.NoError(st, err)
 	})
 }
