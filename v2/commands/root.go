@@ -60,6 +60,8 @@ func getRootCommand() *cobra.Command {
 			"- Compile & upload sketches to connected boards\n- Watch log output from connected boards in terminal\n" +
 			"- Auto recompile / reupload on save",
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
+			ctx := cmd.Context()
+
 			setLogger()
 			cmdPath := cmd.CommandPath()
 
@@ -83,7 +85,7 @@ func getRootCommand() *cobra.Command {
 			go rpc.StartDaemon(port, dataDir, verbose)
 
 			var err error
-			client, err = rpc.NewClient(port, logger)
+			client, err = rpc.NewClient(ctx, port, logger)
 			if err != nil {
 				logger.WithError(err).Error("Failed to start ardi client")
 				os.Exit(1)
@@ -96,6 +98,13 @@ func getRootCommand() *cobra.Command {
 			}
 
 			ardiCore = core.NewArdiCore(client, logger)
+
+			if util.IsProjectDirectory() {
+				if err := ardiCore.Project.SetConfigHelpers(); err != nil {
+					logger.WithError(err).Error("Failed to initialize ardi project core")
+					os.Exit(1)
+				}
+			}
 		},
 	}
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "Print all logs")

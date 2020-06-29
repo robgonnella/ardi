@@ -48,6 +48,19 @@ func getLibRemoveCommand() *cobra.Command {
 	return removeCmd
 }
 
+func getLibListCommand() *cobra.Command {
+	listCmd := &cobra.Command{
+		Use: "list",
+		Long: "\nLists all installed libraries. Use \"--global\" to list " +
+			"globally installed libraries",
+		Short: "Lists all installed libraries",
+		Run: func(cmd *cobra.Command, args []string) {
+			ardiCore.Lib.ListInstalled()
+		},
+	}
+	return listCmd
+}
+
 func getLibCommand() *cobra.Command {
 	var libCmd = &cobra.Command{
 		Use:   "lib",
@@ -61,6 +74,7 @@ func getLibCommand() *cobra.Command {
 	libCmd.AddCommand(getLibAddCommand())
 	libCmd.AddCommand(getLibRemoveCommand())
 	libCmd.AddCommand(getLibSearchCommand())
+	libCmd.AddCommand(getLibListCommand())
 
 	return libCmd
 }

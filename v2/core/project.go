@@ -208,6 +208,15 @@ func (p *ProjectCore) BuildAll() error {
 	return nil
 }
 
+// GetLibraries returns list of libraries specified in ardi.json
+func (p *ProjectCore) GetLibraries() []string {
+	libs := []string{}
+	for name, vers := range p.ardiJSON.Config.Libraries {
+		libs = append(libs, fmt.Sprintf("%s@%s", name, vers))
+	}
+	return libs
+}
+
 // private methods
 func (p *ProjectCore) isQuiet() bool {
 	return p.logger.Level == log.InfoLevel

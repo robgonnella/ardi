@@ -1,7 +1,6 @@
 package commands
 
 import (
-	"os"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -44,7 +43,10 @@ func getProjectListLibrariesCmd() *cobra.Command {
 		Short:   "List all project libraries specified in ardi.json",
 		Aliases: []string{"libs"},
 		Run: func(cmd *cobra.Command, args []string) {
+			logger.Info("Libraries specified in ardi.json")
 			ardiCore.Project.ListLibraries()
+			logger.Info("Installed libraries")
+			ardiCore.Lib.ListInstalled()
 		},
 	}
 	return listCmd
@@ -229,6 +231,25 @@ func getProjectBuildCmd() *cobra.Command {
 	return buildCmd
 }
 
+func getProjectInstallCmd() *cobra.Command {
+	installCmd := &cobra.Command{
+		Use:   "install",
+		Short: "Install all libraries specified in ardi.json",
+		Long:  "\nInstall all libraries specified in ardi.json",
+		Run: func(cmd *cobra.Command, args []string) {
+			for _, l := range ardiCore.Project.GetLibraries() {
+				lib, vers, err := ardiCore.Lib.Add(l)
+				if err != nil {
+					logger.WithError(err).Errorf("Failed to install %s", l)
+				} else {
+					logger.Infof("Installed: %s@%s", lib, vers)
+				}
+			}
+		},
+	}
+	return installCmd
+}
+
 func getProjectCommand() *cobra.Command {
 	projectCmd := &cobra.Command{
 		Use:   "project",
@@ -236,18 +257,13 @@ func getProjectCommand() *cobra.Command {
 		Long: "\nProject manager allowing you to store versioned dependencies " +
 			"and build configurations for each project.\n" +
 			"See \"ardi help project init\" for more details",
-		PreRun: func(cmd *cobra.Command, args []string) {
-			if err := ardiCore.Project.SetConfigHelpers(); err != nil {
-				logger.WithError(err).Error("Failed to initialize ardi project core")
-				os.Exit(1)
-			}
-		},
 	}
 	projectCmd.AddCommand(getProjectInitCommand())
 	projectCmd.AddCommand(getProjectListCmd())
 	projectCmd.AddCommand(getProjectAddCmd())
 	projectCmd.AddCommand(getProjectRemoveCmd())
 	projectCmd.AddCommand(getProjectBuildCmd())
+	projectCmd.AddCommand(getProjectInstallCmd())
 
 	return projectCmd
 }

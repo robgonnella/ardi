@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/arduino/arduino-cli/rpc/commands"
 	"github.com/robgonnella/ardi/v2/testutil"
 	"github.com/stretchr/testify/assert"
 )
@@ -45,5 +46,52 @@ func TestLibCore(t *testing.T) {
 
 		err = env.ArdiCore.Lib.Remove(libName)
 		assert.NoError(t, err)
+	})
+
+	testutil.RunTest("prints library searches to stdout", t, func(st *testing.T, env testutil.TestEnv) {
+		defer env.Ctrl.Finish()
+
+		searchQuery := "wifi101"
+
+		latest := commands.LibraryRelease{Version: "1.2.1"}
+
+		libReleaseMap := map[string]*commands.LibraryRelease{
+			"1.2.1": &latest,
+		}
+
+		lib := commands.SearchedLibrary{
+			Name:     "WIFI101",
+			Latest:   &latest,
+			Releases: libReleaseMap,
+		}
+
+		searchedLibs := []*commands.SearchedLibrary{&lib}
+
+		env.Client.EXPECT().SearchLibraries(searchQuery).Times(1).Return(searchedLibs, nil)
+
+		err := env.ArdiCore.Lib.Search(searchQuery)
+		assert.NoError(t, err)
+
+		assert.Contains(t, env.Stdout.String(), lib.Name)
+	})
+
+	testutil.RunTest("prints installed libraries to stdout", t, func(st *testing.T, env testutil.TestEnv) {
+		defer env.Ctrl.Finish()
+
+		installedLib := commands.InstalledLibrary{
+			Library: &commands.Library{
+				Name:     "My favorite library",
+				Version:  "1.2.2",
+				Sentence: "This is my favoritest library",
+			},
+		}
+
+		env.Client.EXPECT().GetInstalledLibs().Times(1).Return([]*commands.InstalledLibrary{&installedLib}, nil)
+		env.ArdiCore.Lib.ListInstalled()
+
+		stdout := env.Stdout.String()
+		assert.Contains(t, stdout, installedLib.Library.Name)
+		assert.Contains(t, stdout, installedLib.Library.Version)
+		assert.Contains(t, stdout, installedLib.Library.Sentence)
 	})
 }
