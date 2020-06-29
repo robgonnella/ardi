@@ -21,9 +21,9 @@ func TestLibCore(t *testing.T) {
 		env.Client.EXPECT().InstallLibrary(lib, version).Times(1).Return(installedVersion, nil)
 
 		returnedLib, returnedVers, err := env.ArdiCore.Lib.Add(library)
-		assert.NoError(t, err)
-		assert.Equal(t, returnedLib, lib)
-		assert.Equal(t, returnedVers, installedVersion)
+		assert.NoError(st, err)
+		assert.Equal(st, returnedLib, lib)
+		assert.Equal(st, returnedVers, installedVersion)
 	})
 
 	testutil.RunTest("uninstalls library", t, func(st *testing.T, env testutil.TestEnv) {
@@ -38,14 +38,14 @@ func TestLibCore(t *testing.T) {
 		env.Client.EXPECT().InstallLibrary(libName, version).Times(1).Return(installedVersion, nil)
 
 		returnedLib, returnedVers, err := env.ArdiCore.Lib.Add(libWithVers)
-		assert.NoError(t, err)
-		assert.Equal(t, returnedLib, libName)
-		assert.Equal(t, returnedVers, installedVersion)
+		assert.NoError(st, err)
+		assert.Equal(st, returnedLib, libName)
+		assert.Equal(st, returnedVers, installedVersion)
 
 		env.Client.EXPECT().UninstallLibrary(libName).Times(1).Return(nil)
 
 		err = env.ArdiCore.Lib.Remove(libName)
-		assert.NoError(t, err)
+		assert.NoError(st, err)
 	})
 
 	testutil.RunTest("prints library searches to stdout", t, func(st *testing.T, env testutil.TestEnv) {
@@ -70,9 +70,9 @@ func TestLibCore(t *testing.T) {
 		env.Client.EXPECT().SearchLibraries(searchQuery).Times(1).Return(searchedLibs, nil)
 
 		err := env.ArdiCore.Lib.Search(searchQuery)
-		assert.NoError(t, err)
+		assert.NoError(st, err)
 
-		assert.Contains(t, env.Stdout.String(), lib.Name)
+		assert.Contains(st, env.Stdout.String(), lib.Name)
 	})
 
 	testutil.RunTest("prints installed libraries to stdout", t, func(st *testing.T, env testutil.TestEnv) {
@@ -90,8 +90,8 @@ func TestLibCore(t *testing.T) {
 		env.ArdiCore.Lib.ListInstalled()
 
 		stdout := env.Stdout.String()
-		assert.Contains(t, stdout, installedLib.Library.Name)
-		assert.Contains(t, stdout, installedLib.Library.Version)
-		assert.Contains(t, stdout, installedLib.Library.Sentence)
+		assert.Contains(st, stdout, installedLib.Library.Name)
+		assert.Contains(st, stdout, installedLib.Library.Version)
+		assert.Contains(st, stdout, installedLib.Library.Sentence)
 	})
 }
