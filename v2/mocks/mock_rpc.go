@@ -48,6 +48,20 @@ func (mr *MockClientMockRecorder) AllBoards() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AllBoards", reflect.TypeOf((*MockClient)(nil).AllBoards))
 }
 
+// ClientVersion mocks base method
+func (m *MockClient) ClientVersion() string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ClientVersion")
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// ClientVersion indicates an expected call of ClientVersion
+func (mr *MockClientMockRecorder) ClientVersion() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ClientVersion", reflect.TypeOf((*MockClient)(nil).ClientVersion))
+}
+
 // Compile mocks base method
 func (m *MockClient) Compile(arg0 rpc.CompileOpts) error {
 	m.ctrl.T.Helper()

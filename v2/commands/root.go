@@ -4,6 +4,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/robgonnella/ardi/v2/core"
 	"github.com/robgonnella/ardi/v2/paths"
 	"github.com/robgonnella/ardi/v2/rpc"
 	"github.com/robgonnella/ardi/v2/util"
@@ -12,19 +13,13 @@ import (
 )
 
 var logger = log.New()
-
-var noDaemon = []string{
-	"ardi version",
-	"ardi clean",
-	"ardi project init",
-	"ardi help",
-}
-
+var port string
+var client rpc.Client
+var ardiCore *core.ArdiCore
 var verbose bool
 var quiet bool
 var global bool
 var dataDir = paths.ArdiProjectDataDir
-var client rpc.Client
 
 func setLogger() {
 	if verbose {
@@ -57,7 +52,7 @@ func shouldShowProjectError(cmd string) bool {
 }
 
 func getRootCommand() *cobra.Command {
-	return &cobra.Command{
+	rootCmd := &cobra.Command{
 		Use:   "ardi",
 		Short: "Ardi is a command line build manager for arduino projects.",
 		Long: "\nArdi is a build tool that allows you to completely manage your arduino project from command line!\n\n" +
@@ -66,7 +61,6 @@ func getRootCommand() *cobra.Command {
 			"- Auto recompile / reupload on save",
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			setLogger()
-			var err error
 			cmdPath := cmd.CommandPath()
 
 			if strings.HasPrefix(cmdPath, "ardi project") && global {
@@ -83,24 +77,37 @@ func getRootCommand() *cobra.Command {
 			if global {
 				dataDir = paths.ArdiGlobalDataDir
 				confPath := paths.ArdiGlobalDataConfig
-				util.InitDataDirectory(dataDir, confPath)
+				util.InitDataDirectory(port, dataDir, confPath)
 			}
 
-			if !util.ArrayContains(noDaemon, cmdPath) {
-				go rpc.StartDaemon(dataDir, verbose)
-				if client, err = rpc.NewClient(logger); err != nil {
-					os.Exit(1)
+			go rpc.StartDaemon(port, dataDir, verbose)
+
+			var err error
+			client, err = rpc.NewClient(port, logger)
+			if err != nil {
+				logger.WithError(err).Error("Failed to start ardi client")
+				os.Exit(1)
+			}
+
+			if strings.Contains(cmdPath, "lib") || strings.Contains(cmdPath, "platform") {
+				if err := client.UpdateIndexFiles(); err != nil {
+					logger.WithError(err).Error("Failed to update index files")
 				}
 			}
 
+			ardiCore = core.NewArdiCore(client, logger)
 		},
 	}
+	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "Print all logs")
+	rootCmd.PersistentFlags().BoolVarP(&quiet, "quiet", "q", false, "Silence all logs")
+	rootCmd.PersistentFlags().BoolVarP(&global, "global", "g", false, "Use global data directory")
+	rootCmd.PersistentFlags().StringVar(&port, "port", "50051", "Set port for cli daemon")
+	return rootCmd
 }
 
 // GetRootCmd adds all ardi commands to root and returns root command
 func GetRootCmd() *cobra.Command {
 	rootCmd := getRootCommand()
-
 	rootCmd.AddCommand(getVersionCommand())
 	rootCmd.AddCommand(getCleanCommand())
 	rootCmd.AddCommand(getGoCommand())
@@ -109,9 +116,6 @@ func GetRootCmd() *cobra.Command {
 	rootCmd.AddCommand(getPlatformCommand())
 	rootCmd.AddCommand(getBoardCommand())
 	rootCmd.AddCommand(getProjectCommand())
-	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "Print all logs")
-	rootCmd.PersistentFlags().BoolVarP(&quiet, "quiet", "q", false, "Silence all logs")
-	rootCmd.PersistentFlags().BoolVarP(&global, "global", "g", false, "Use global data directory")
 
 	return rootCmd
 }

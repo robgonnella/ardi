@@ -1,23 +1,21 @@
-## ardi compile
+## ardi watch
 
-Compile specified sketch
+Compile, upload, and watch
 
 ### Synopsis
 
 
-Compile sketches for a specified board. You must provide the board FQBN, if left unspecified, a list of available choices will be be printed.
+Compile and upload code to an arduino board. Simply pass the directory containing the .ino file as the first argument. Ardi will automatically watch your sketch file for changes and auto re-compile & re-upload for you. Baud will be automatically be detected from sketch file.
 
 ```
-ardi compile [sketch] [flags]
+ardi watch [sketch] [flags]
 ```
 
 ### Options
 
 ```
   -p, --build-prop stringArray   Specify build property to compiler
-  -f, --fqbn string              Specify fully qualified board name
-  -h, --help                     help for compile
-  -s, --show-props               Show all build properties (does not compile)
+  -h, --help                     help for watch
 ```
 
 ### Options inherited from parent commands

@@ -1,30 +1,29 @@
-package compile
+package core
 
 import (
 	log "github.com/sirupsen/logrus"
 
-	"github.com/robgonnella/ardi/v2/core/project"
-	"github.com/robgonnella/ardi/v2/core/target"
 	"github.com/robgonnella/ardi/v2/rpc"
+	"github.com/robgonnella/ardi/v2/util"
 )
 
-// Compile represents core module for compile commands
-type Compile struct {
+// CompileCore represents core module for compile commands
+type CompileCore struct {
 	logger *log.Logger
 	client rpc.Client
 }
 
-// New instance of core module for compile commands
-func New(client rpc.Client, logger *log.Logger) *Compile {
-	return &Compile{
+// NewCompileCore instance of core module for compile commands
+func NewCompileCore(client rpc.Client, logger *log.Logger) *CompileCore {
+	return &CompileCore{
 		logger: logger,
 		client: client,
 	}
 }
 
 // Compile a given project
-func (c *Compile) Compile(sketchDir, fqbn string, buildProps []string, showProps bool) error {
-	sketchDir, sketchFile, _, err := project.ProcessSketch(sketchDir, c.logger)
+func (c *CompileCore) Compile(sketchDir, fqbn string, buildProps []string, showProps bool) error {
+	sketchDir, sketchFile, _, err := util.ProcessSketch(sketchDir, c.logger)
 	if err != nil {
 		c.logger.WithError(err).Error("Failed to compile")
 		return err
@@ -33,7 +32,7 @@ func (c *Compile) Compile(sketchDir, fqbn string, buildProps []string, showProps
 	connectedBoards := c.client.ConnectedBoards()
 	allBoards := c.client.AllBoards()
 
-	target, err := target.New(connectedBoards, allBoards, c.logger, fqbn, false)
+	target, err := NewTarget(connectedBoards, allBoards, c.logger, fqbn, false)
 	if err != nil {
 		c.logger.WithError(err).Error("Failed to compile")
 		return err

@@ -1,4 +1,4 @@
-package serial
+package core
 
 import (
 	"fmt"
@@ -7,17 +7,17 @@ import (
 	"github.com/tarm/serial"
 )
 
-// Port represents our serial port wrapper
-type Port struct {
+// SerialCore represents our serial port wrapper
+type SerialCore struct {
 	stream *serial.Port
 	name   string
 	baud   int
 	logger *log.Logger
 }
 
-// New returns instance of serial port wrapper
-func New(name string, baud int, logger *log.Logger) *Port {
-	return &Port{
+// NewSerialCore returns instance of serial port wrapper
+func NewSerialCore(name string, baud int, logger *log.Logger) *SerialCore {
+	return &SerialCore{
 		name:   name,
 		baud:   baud,
 		logger: logger,
@@ -25,7 +25,7 @@ func New(name string, baud int, logger *log.Logger) *Port {
 }
 
 // Watch connects to a serial port and prints any logs received.
-func (p *Port) Watch() {
+func (p SerialCore) Watch() {
 	logFields := log.Fields{"baud": p.baud, "name": p.name}
 
 	p.Stop()
@@ -55,7 +55,7 @@ func (p *Port) Watch() {
 }
 
 // Stop printing serial port logs
-func (p *Port) Stop() {
+func (p SerialCore) Stop() {
 	if p.stream != nil {
 		logWithField := p.logger.WithField("name", p.name)
 		logWithField.Info("Closing serial port connection")
@@ -73,6 +73,6 @@ func (p *Port) Stop() {
 }
 
 // IsStreaming returns whether or not we are currently printing logs from port
-func (p *Port) IsStreaming() bool {
+func (p SerialCore) IsStreaming() bool {
 	return p.stream != nil
 }

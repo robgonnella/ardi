@@ -1,4 +1,4 @@
-package ardijson
+package core
 
 import (
 	"encoding/json"
@@ -17,8 +17,8 @@ type ArdiJSON struct {
 	logger *log.Logger
 }
 
-// New returns core json module for handling ardi.json config
-func New(logger *log.Logger) (*ArdiJSON, error) {
+// NewArdiJSON returns core json module for handling ardi.json config
+func NewArdiJSON(logger *log.Logger) (*ArdiJSON, error) {
 	config := types.ArdiConfig{}
 	buildConfig, err := ioutil.ReadFile(paths.ArdiProjectBuildConfig)
 	if err != nil {

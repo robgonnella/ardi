@@ -1,7 +1,6 @@
 package commands
 
 import (
-	"github.com/robgonnella/ardi/v2/core/board"
 	"github.com/spf13/cobra"
 )
 
@@ -16,9 +15,7 @@ func getBoardFQBNSCmd() *cobra.Command {
 			if len(args) > 0 {
 				query = args[0]
 			}
-
-			boardCore := board.New(client, logger)
-			boardCore.FQBNS(query)
+			ardiCore.Board.FQBNS(query)
 		},
 	}
 	return listCmd
@@ -35,9 +32,7 @@ func getBoardPlatformsCmd() *cobra.Command {
 			if len(args) > 0 {
 				query = args[0]
 			}
-
-			boardCore := board.New(client, logger)
-			boardCore.Platforms(query)
+			ardiCore.Board.Platforms(query)
 		},
 	}
 	return listCmd

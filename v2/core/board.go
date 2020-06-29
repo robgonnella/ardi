@@ -1,4 +1,4 @@
-package board
+package core
 
 import (
 	"fmt"
@@ -11,22 +11,22 @@ import (
 	"github.com/robgonnella/ardi/v2/rpc"
 )
 
-// Board module for board commands
-type Board struct {
+// BoardCore module for board commands
+type BoardCore struct {
 	client rpc.Client
 	logger *log.Logger
 }
 
-// New module instance for board commands
-func New(client rpc.Client, logger *log.Logger) *Board {
-	return &Board{
+// NewBoardCore module instance for board commands
+func NewBoardCore(client rpc.Client, logger *log.Logger) *BoardCore {
+	return &BoardCore{
 		logger: logger,
 		client: client,
 	}
 }
 
 // FQBNS lists all available boards with associated fqbns
-func (b *Board) FQBNS(query string) error {
+func (b *BoardCore) FQBNS(query string) error {
 	platforms, err := b.client.GetPlatforms()
 
 	if err != nil {
@@ -63,7 +63,7 @@ func (b *Board) FQBNS(query string) error {
 }
 
 // Platforms lists all available boards with associated platorms
-func (b *Board) Platforms(query string) error {
+func (b *BoardCore) Platforms(query string) error {
 	platforms, err := b.client.GetPlatforms()
 
 	if err != nil {

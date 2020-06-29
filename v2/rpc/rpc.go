@@ -15,9 +15,6 @@ import (
 	"google.golang.org/grpc"
 )
 
-var cli = arduino.ArduinoCli
-var port = "50051"
-
 // Client reprents our wrapper around the arduino-cli rpc client
 //go:generate mockgen -destination=../mocks/mock_rpc.go -package=mocks github.com/robgonnella/ardi/v2/rpc Client
 type Client interface {
@@ -37,6 +34,7 @@ type Client interface {
 	SearchLibraries(query string) ([]*rpc.SearchedLibrary, error)
 	InstallLibrary(name, version string) (string, error)
 	UninstallLibrary(name string) error
+	ClientVersion() string
 }
 
 // ArdiClient represents a client connection to arduino-cli grpc daemon
@@ -55,9 +53,9 @@ type Board struct {
 }
 
 // NewClient return new RPC controller
-func NewClient(logger *log.Logger) (Client, error) {
+func NewClient(port string, logger *log.Logger) (Client, error) {
 	logger.Debug("Connecting to server")
-	conn, err := getServerConnection()
+	conn, err := getServerConnection(port)
 	if err != nil {
 		logger.WithError(err).Error("error connecting to arduino-cli rpc server")
 		return nil, err
@@ -78,7 +76,9 @@ func NewClient(logger *log.Logger) (Client, error) {
 }
 
 //StartDaemon starts the arduino-cli grpc server locally
-func StartDaemon(dataConfigPath string, verbose bool) {
+func StartDaemon(port string, dataConfigPath string, verbose bool) {
+	var cli = arduino.ArduinoCli
+
 	args := []string{
 		"daemon",
 		"--port",
@@ -670,6 +670,19 @@ func (c *ArdiClient) UninstallLibrary(name string) error {
 	}
 }
 
+// ClientVersion returns version of arduino-cli
+func (c *ArdiClient) ClientVersion() string {
+	ctx := context.Background()
+	req := &rpc.VersionReq{}
+	resp, err := c.client.Version(ctx, req)
+	if err != nil {
+		c.logger.WithError(err).Error("Failed to get arduino-cli version")
+		return ""
+	}
+
+	return resp.GetVersion()
+}
+
 // private methods
 func (c *ArdiClient) isVerbose() bool {
 	return c.logger.Level == log.DebugLevel
@@ -740,7 +753,7 @@ func getRPCInstance(client rpc.ArduinoCoreClient, logger *log.Logger) (*rpc.Inst
 	}
 }
 
-func getServerConnection() (*grpc.ClientConn, error) {
+func getServerConnection(port string) (*grpc.ClientConn, error) {
 	backgroundCtx := context.Background()
 	ctx, cancel := context.WithTimeout(backgroundCtx, 2*time.Second)
 	defer cancel()
