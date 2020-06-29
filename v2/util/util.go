@@ -57,7 +57,7 @@ func GenDefaultDataConfig(port, dataDirPath string) types.DataConfig {
 func IsProjectDirectory() bool {
 	_, dirErr := os.Stat(paths.ArdiProjectDataDir)
 	_, buildErr := os.Stat(paths.ArdiProjectBuildConfig)
-	if os.IsNotExist(dirErr) && os.IsNotExist(buildErr) {
+	if os.IsNotExist(dirErr) || os.IsNotExist(buildErr) {
 		return false
 	}
 	return true

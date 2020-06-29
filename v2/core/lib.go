@@ -2,7 +2,6 @@ package core
 
 import (
 	"fmt"
-	"os"
 	"sort"
 	"strings"
 	"text/tabwriter"
@@ -37,10 +36,10 @@ func (l *LibCore) Search(searchArg string) error {
 		return libraries[i].GetName() < libraries[j].GetName()
 	})
 
-	w := tabwriter.NewWriter(os.Stdout, 0, 0, 8, ' ', 0)
+	w := tabwriter.NewWriter(l.logger.Out, 0, 0, 8, ' ', 0)
 	defer w.Flush()
 
-	fmt.Fprintln(w, "Library\tLatest\tOther Releases")
+	w.Write([]byte("Library\tLatest\tOther Releases\n"))
 	for _, lib := range libraries {
 		releases := []string{}
 		for _, rel := range lib.GetReleases() {
@@ -58,7 +57,7 @@ func (l *LibCore) Search(searchArg string) error {
 			releases = releases[:4]
 			releases = append(releases, "...")
 		}
-		fmt.Fprintf(w, "%s\t%s\t%s\n", lib.GetName(), lib.GetLatest().GetVersion(), strings.Join(releases, ", "))
+		w.Write([]byte(fmt.Sprintf("%s\t%s\t%s\n", lib.GetName(), lib.GetLatest().GetVersion(), strings.Join(releases, ", "))))
 	}
 	return nil
 }
@@ -91,4 +90,26 @@ func (l *LibCore) Remove(library string) error {
 	}
 
 	return nil
+}
+
+// ListInstalled lists all installed libraries
+func (l *LibCore) ListInstalled() {
+	libs, err := l.client.GetInstalledLibs()
+	if err != nil {
+		l.logger.WithError(err).Error("Failed to list installed libraries")
+		return
+	}
+
+	w := tabwriter.NewWriter(l.logger.Out, 0, 0, 8, ' ', 0)
+	defer w.Flush()
+
+	w.Write([]byte("Library\tVersion\tDescription\n"))
+	for _, l := range libs {
+		library := l.GetLibrary()
+		name := library.GetName()
+		version := library.Version
+		desc := library.GetSentence()
+		fields := fmt.Sprintf("%s\t%s\t%s\n", name, version, desc)
+		w.Write([]byte(fields))
+	}
 }

@@ -34,11 +34,13 @@ type Client interface {
 	SearchLibraries(query string) ([]*rpc.SearchedLibrary, error)
 	InstallLibrary(name, version string) (string, error)
 	UninstallLibrary(name string) error
+	GetInstalledLibs() ([]*rpc.InstalledLibrary, error)
 	ClientVersion() string
 }
 
 // ArdiClient represents a client connection to arduino-cli grpc daemon
 type ArdiClient struct {
+	ctx        context.Context
 	connection *grpc.ClientConn
 	client     rpc.ArduinoCoreClient
 	instance   *rpc.Instance
@@ -53,21 +55,23 @@ type Board struct {
 }
 
 // NewClient return new RPC controller
-func NewClient(port string, logger *log.Logger) (Client, error) {
+func NewClient(ctx context.Context, port string, logger *log.Logger) (Client, error) {
 	logger.Debug("Connecting to server")
-	conn, err := getServerConnection(port)
+
+	conn, err := getServerConnection(ctx, port)
 	if err != nil {
 		logger.WithError(err).Error("error connecting to arduino-cli rpc server")
 		return nil, err
 	}
 
 	client := rpc.NewArduinoCoreClient(conn)
-	instance, err := getRPCInstance(client, logger)
+	instance, err := getRPCInstance(ctx, client, logger)
 	if err != nil {
 		return nil, err
 	}
 
 	return &ArdiClient{
+		ctx:        ctx,
 		connection: conn,
 		logger:     logger,
 		client:     client,
@@ -111,7 +115,7 @@ func (c *ArdiClient) UpdateLibraryIndex() error {
 	c.logger.Debug("Updating library index...")
 
 	libIdxUpdateStream, err := c.client.UpdateLibrariesIndex(
-		context.Background(),
+		c.ctx,
 		&rpc.UpdateLibrariesIndexReq{
 			Instance: c.instance,
 		},
@@ -146,7 +150,7 @@ func (c *ArdiClient) UpdatePlatformIndex() error {
 	c.logger.Debug("Updating platform index...")
 
 	uiRespStream, err := c.client.UpdateIndex(
-		context.Background(),
+		c.ctx,
 		&rpc.UpdateIndexReq{
 			Instance: c.instance,
 		},
@@ -185,7 +189,7 @@ func (c *ArdiClient) UpgradePlatform(platform string) error {
 	c.logger.Debugf("Upgrading platform: %s:%s\n", pkg, arch)
 
 	upgradeRespStream, err := c.client.PlatformUpgrade(
-		context.Background(),
+		c.ctx,
 		&rpc.PlatformUpgradeReq{
 			Instance:        c.instance,
 			PlatformPackage: pkg,
@@ -241,7 +245,7 @@ func (c *ArdiClient) InstallPlatform(platform string) error {
 	c.logger.Infof("Installing platform: %s:%s\n", pkg, arch)
 
 	installRespStream, err := c.client.PlatformInstall(
-		context.Background(),
+		c.ctx,
 		&rpc.PlatformInstallReq{
 			Instance:        c.instance,
 			PlatformPackage: pkg,
@@ -309,7 +313,7 @@ func (c *ArdiClient) UninstallPlatform(platform string) error {
 	c.logger.Infof("Uninstalling platform: %s:%s\n", pkg, arch)
 
 	uninstallRespStream, err := c.client.PlatformUninstall(
-		context.Background(),
+		c.ctx,
 		&rpc.PlatformUninstallReq{
 			Instance:        c.instance,
 			PlatformPackage: pkg,
@@ -349,7 +353,7 @@ func (c *ArdiClient) UninstallPlatform(platform string) error {
 func (c *ArdiClient) InstallAllPlatforms() error {
 
 	searchResp, err := c.client.PlatformSearch(
-		context.Background(),
+		c.ctx,
 		&rpc.PlatformSearchReq{
 			Instance: c.instance,
 		},
@@ -377,7 +381,7 @@ func (c *ArdiClient) InstallAllPlatforms() error {
 // GetInstalledPlatforms lists all installed platforms
 func (c *ArdiClient) GetInstalledPlatforms() ([]*rpc.Platform, error) {
 	listResp, err := c.client.PlatformList(
-		context.Background(),
+		c.ctx,
 		&rpc.PlatformListReq{
 			Instance: c.instance,
 		},
@@ -398,7 +402,7 @@ func (c *ArdiClient) GetPlatforms() ([]*rpc.Platform, error) {
 	}
 
 	searchResp, err := c.client.PlatformSearch(
-		context.Background(),
+		c.ctx,
 		&rpc.PlatformSearchReq{
 			Instance: c.instance,
 		},
@@ -417,7 +421,7 @@ func (c *ArdiClient) ConnectedBoards() []*Board {
 	boardList := []*Board{}
 
 	boardListResp, err := c.client.BoardList(
-		context.Background(),
+		c.ctx,
 		&rpc.BoardListReq{
 			Instance: c.instance,
 		},
@@ -449,7 +453,7 @@ func (c *ArdiClient) AllBoards() []*Board {
 	boardList := []*Board{}
 
 	listResp, err := c.client.PlatformList(
-		context.Background(),
+		c.ctx,
 		&rpc.PlatformListReq{
 			Instance: c.instance,
 		},
@@ -475,7 +479,7 @@ func (c *ArdiClient) AllBoards() []*Board {
 // Upload a sketch to target board
 func (c *ArdiClient) Upload(fqbn, sketchDir, device string) error {
 	uplRespStream, err := c.client.Upload(
-		context.Background(),
+		c.ctx,
 		&rpc.UploadReq{
 			Instance:   c.instance,
 			Fqbn:       fqbn,
@@ -531,7 +535,7 @@ func (c *ArdiClient) Compile(opts CompileOpts) error {
 	}
 
 	compRespStream, err := c.client.Compile(
-		context.Background(),
+		c.ctx,
 		&rpc.CompileReq{
 			Instance:        c.instance,
 			Fqbn:            opts.FQBN,
@@ -575,7 +579,7 @@ func (c *ArdiClient) Compile(opts CompileOpts) error {
 // SearchLibraries searches available libraries for download
 func (c *ArdiClient) SearchLibraries(query string) ([]*rpc.SearchedLibrary, error) {
 	searchResp, err := c.client.LibrarySearch(
-		context.Background(),
+		c.ctx,
 		&rpc.LibrarySearchReq{
 			Instance: c.instance,
 			Query:    query,
@@ -592,7 +596,7 @@ func (c *ArdiClient) SearchLibraries(query string) ([]*rpc.SearchedLibrary, erro
 // InstallLibrary installs specified version of a library
 func (c *ArdiClient) InstallLibrary(name, version string) (string, error) {
 	installRespStream, err := c.client.LibraryInstall(
-		context.Background(),
+		c.ctx,
 		&rpc.LibraryInstallReq{
 			Instance: c.instance,
 			Name:     name,
@@ -635,7 +639,7 @@ func (c *ArdiClient) InstallLibrary(name, version string) (string, error) {
 // UninstallLibrary removes specified library
 func (c *ArdiClient) UninstallLibrary(name string) error {
 	uninstallRespStream, err := c.client.LibraryUninstall(
-		context.Background(),
+		c.ctx,
 		&rpc.LibraryUninstallReq{
 			Instance: c.instance,
 			// Assume spaces in name were intended to be underscore. This indicates
@@ -670,9 +674,25 @@ func (c *ArdiClient) UninstallLibrary(name string) error {
 	}
 }
 
+// GetInstalledLibs returns a list of installed libraries
+func (c *ArdiClient) GetInstalledLibs() ([]*rpc.InstalledLibrary, error) {
+	resp, err := c.client.LibraryList(
+		c.ctx,
+		&rpc.LibraryListReq{
+			Instance: c.instance,
+		},
+	)
+	if err != nil {
+		c.logger.WithError(err).Error("Failed to get installed libraries")
+		return nil, err
+	}
+
+	return resp.GetInstalledLibrary(), nil
+}
+
 // ClientVersion returns version of arduino-cli
 func (c *ArdiClient) ClientVersion() string {
-	ctx := context.Background()
+	ctx := c.ctx
 	req := &rpc.VersionReq{}
 	resp, err := c.client.Version(ctx, req)
 	if err != nil {
@@ -709,11 +729,8 @@ func parsePlatform(platform string) (string, string, string) {
 	return platform, arch, version
 }
 
-func getRPCInstance(client rpc.ArduinoCoreClient, logger *log.Logger) (*rpc.Instance, error) {
-	initRespStream, err := client.Init(
-		context.Background(),
-		&rpc.InitReq{},
-	)
+func getRPCInstance(ctx context.Context, client rpc.ArduinoCoreClient, logger *log.Logger) (*rpc.Instance, error) {
+	initRespStream, err := client.Init(ctx, &rpc.InitReq{})
 	if err != nil {
 		logger.Errorf("Error creating server instance: %s", err.Error())
 		return nil, err
@@ -753,13 +770,12 @@ func getRPCInstance(client rpc.ArduinoCoreClient, logger *log.Logger) (*rpc.Inst
 	}
 }
 
-func getServerConnection(port string) (*grpc.ClientConn, error) {
-	backgroundCtx := context.Background()
-	ctx, cancel := context.WithTimeout(backgroundCtx, 2*time.Second)
+func getServerConnection(ctx context.Context, port string) (*grpc.ClientConn, error) {
+	ctxWithTimeout, cancel := context.WithTimeout(ctx, 2*time.Second)
 	defer cancel()
 	addr := fmt.Sprintf("localhost:%s", port)
 	// Establish a connection with the gRPC server, started with the command: arduino-cli daemon
-	conn, err := grpc.DialContext(ctx, addr, grpc.WithInsecure(), grpc.WithBlock())
+	conn, err := grpc.DialContext(ctxWithTimeout, addr, grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {
 		return nil, err
 	}

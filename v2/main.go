@@ -24,10 +24,13 @@ Ardi should work for all boards and platforms supported by arduino-cli.
 package main
 
 import (
+	"context"
+
 	"github.com/robgonnella/ardi/v2/commands"
 )
 
 func main() {
+	ctx := context.Background()
 	rootCmd := commands.GetRootCmd()
-	rootCmd.Execute()
+	rootCmd.ExecuteContext(ctx)
 }

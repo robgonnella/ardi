@@ -90,6 +90,21 @@ func (mr *MockClientMockRecorder) ConnectedBoards() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ConnectedBoards", reflect.TypeOf((*MockClient)(nil).ConnectedBoards))
 }
 
+// GetInstalledLibs mocks base method
+func (m *MockClient) GetInstalledLibs() ([]*commands.InstalledLibrary, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetInstalledLibs")
+	ret0, _ := ret[0].([]*commands.InstalledLibrary)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetInstalledLibs indicates an expected call of GetInstalledLibs
+func (mr *MockClientMockRecorder) GetInstalledLibs() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetInstalledLibs", reflect.TypeOf((*MockClient)(nil).GetInstalledLibs))
+}
+
 // GetInstalledPlatforms mocks base method
 func (m *MockClient) GetInstalledPlatforms() ([]*commands.Platform, error) {
 	m.ctrl.T.Helper()
