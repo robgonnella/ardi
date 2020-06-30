@@ -2,7 +2,6 @@ package core
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"strings"
 
@@ -66,7 +65,7 @@ func (a *ArdiJSON) RemoveBuild(build string) error {
 
 // ListBuilds lists build specifications in ardi.json
 func (a *ArdiJSON) ListBuilds(builds []string) {
-	fmt.Println("")
+	a.logger.Println("")
 	if len(builds) > 0 {
 		for _, name := range builds {
 			if b, ok := a.Config.Builds[name]; ok {
@@ -97,11 +96,11 @@ func (a *ArdiJSON) RemoveLibrary(name string) error {
 
 // ListLibraries lists installed libraries
 func (a *ArdiJSON) ListLibraries() {
-	fmt.Println("")
+	a.logger.Println("")
 	for library, version := range a.Config.Libraries {
-		fmt.Printf("%s: %s\n", library, version)
+		a.logger.Printf("%s: %s\n", library, version)
 	}
-	fmt.Println("")
+	a.logger.Println("")
 }
 
 func (a *ArdiJSON) write() error {

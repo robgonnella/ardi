@@ -114,9 +114,9 @@ func ProcessSketch(sketchDir string, logger *log.Logger) (string, string, int, e
 
 	sketchBaud := parseSketchBaud(sketchFile, logger)
 	if sketchBaud != 0 {
-		fmt.Println("")
+		logger.Infoln("")
 		logger.WithField("detected baud", sketchBaud).Info("Detected baud rate from sketch file.")
-		fmt.Println("")
+		logger.Infoln("")
 	}
 
 	return sketchDir, sketchFile, sketchBaud, nil

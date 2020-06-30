@@ -38,7 +38,7 @@ func getTargetBoard(connectedBoards, allBoards []*rpc.Board, logger *log.Logger,
 			return nil, err
 		}
 		printFQBNs(allBoards)
-		fmt.Printf("\nYou must supply fqbn to compile. You can find a list of board fqbns for installed platforms above.\n\n")
+		logger.Errorf("You must supply fqbn to compile. You can find a list of board fqbns for installed platforms above.")
 		return nil, errors.New("Must provide board fqbn")
 	}
 
@@ -48,7 +48,7 @@ func getTargetBoard(connectedBoards, allBoards []*rpc.Board, logger *log.Logger,
 
 	if len(connectedBoards) > 1 {
 		printFQBNs(connectedBoards)
-		fmt.Printf("\nYou must supply fqbn to compile. You can find a list of board fqbns for connected boards above.\n\n")
+		logger.Errorf("You must supply fqbn to compile. You can find a list of board fqbns for connected boards above.")
 		return nil, errors.New("Must provide board fqbn")
 	}
 

@@ -1,8 +1,6 @@
 package commands
 
 import (
-	"fmt"
-
 	"github.com/robgonnella/ardi/v2/version"
 
 	"github.com/spf13/cobra"
@@ -16,7 +14,10 @@ func getVersionCommand() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			ardiVersion := version.VERSION
 			arduinoCliVersion := client.ClientVersion()
-			fmt.Printf("\nardi: v%s\narduino-cli: %s\n\n", ardiVersion, arduinoCliVersion)
+			logger.Infoln("")
+			logger.Infof("ardi: v%s", ardiVersion)
+			logger.Infof("arduino-cli: %s", arduinoCliVersion)
+			logger.Infoln("")
 		},
 	}
 }
