@@ -17,8 +17,8 @@ import (
 )
 
 func cleanCoreDir() {
-	os.RemoveAll("../core/.ardi")
-	os.Remove("../core/ardi.json")
+	os.RemoveAll(".ardi")
+	os.Remove("ardi.json")
 }
 
 // TestEnv represents our test environment
@@ -82,8 +82,6 @@ func RunTest(name string, t *testing.T, f func(t *testing.T, env TestEnv)) {
 			ArdiCore:     ardiCore,
 			Stdout:       &b,
 			BlinkProjDir: path.Join(here, "../test_projects/blink"),
-			PixieProjDir: path.Join(here, "../test_projects/pixie"),
-			EmptyProjDIr: path.Join(here, "../test_projects/empty"),
 		}
 
 		f(st, env)

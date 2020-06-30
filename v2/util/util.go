@@ -163,7 +163,7 @@ func findSketch(directory string, logger *log.Logger) (string, error) {
 }
 
 func parseSketchBaud(sketch string, logger *log.Logger) int {
-	var baud int
+	var baud = 9600
 	rgx := regexp.MustCompile(`Serial\.begin\((\d+)\);`)
 	file, err := os.Open(sketch)
 	if err != nil {
@@ -185,7 +185,7 @@ func parseSketchBaud(sketch string, logger *log.Logger) int {
 				// set baud to 0 and let script continue with either default
 				// value or value specified from command-line.
 				logger.WithError(err).Info("Failed to parse baud rate from sketch")
-				baud = 0
+				baud = 9600
 			}
 			break
 		}

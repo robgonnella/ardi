@@ -92,11 +92,6 @@ func (p *ProjectCore) ProcessSketch(sketchDir string) error {
 	return nil
 }
 
-// ListBuilds specified in ardi.json
-func (p *ProjectCore) ListBuilds(builds []string) {
-	p.ardiJSON.ListBuilds(builds)
-}
-
 // AddLibrary adds a library to ardi.json
 func (p *ProjectCore) AddLibrary(name, version string) error {
 	return p.ardiJSON.AddLibrary(name, version)
@@ -112,13 +107,22 @@ func (p *ProjectCore) ListLibraries() {
 	p.ardiJSON.ListLibraries()
 }
 
+// GetLibraries returns map of libraries specified in ardi.json
+func (p *ProjectCore) GetLibraries() map[string]string {
+	return p.ardiJSON.Config.Libraries
+}
+
 // AddBuild to ardi.json build specifications
 func (p *ProjectCore) AddBuild(name, platform, boardURL, path, fqbn string, buildProps []string) {
 	if platform != "" {
-		p.client.InstallPlatform(platform)
+		if err := p.client.InstallPlatform(platform); err != nil {
+			p.logger.WithError(err).Errorf("Failed to install platform: %s", platform)
+		}
 	}
 	if boardURL != "" {
-		p.ardiYAML.AddBoardURL(boardURL)
+		if err := p.ardiYAML.AddBoardURL(boardURL); err != nil {
+			p.logger.WithError(err).Errorf("Failed to add board url: %s", boardURL)
+		}
 	}
 	p.ardiJSON.AddBuild(name, platform, boardURL, path, fqbn, buildProps)
 }
@@ -128,6 +132,16 @@ func (p *ProjectCore) RemoveBuild(builds []string) {
 	for _, build := range builds {
 		p.ardiJSON.RemoveBuild(build)
 	}
+}
+
+// GetBuilds returns map of builds stored in ardi.json
+func (p *ProjectCore) GetBuilds() map[string]types.ArdiBuildJSON {
+	return p.ardiJSON.Config.Builds
+}
+
+// ListBuilds specified in ardi.json
+func (p *ProjectCore) ListBuilds(builds []string) {
+	p.ardiJSON.ListBuilds(builds)
 }
 
 // BuildList builds only the build-names specified by the user
@@ -206,15 +220,6 @@ func (p *ProjectCore) BuildAll() error {
 		}
 	}
 	return nil
-}
-
-// GetLibraries returns list of libraries specified in ardi.json
-func (p *ProjectCore) GetLibraries() []string {
-	libs := []string{}
-	for name, vers := range p.ardiJSON.Config.Libraries {
-		libs = append(libs, fmt.Sprintf("%s@%s", name, vers))
-	}
-	return libs
 }
 
 // private methods
