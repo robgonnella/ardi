@@ -22,6 +22,11 @@ var global bool
 var dataDir = paths.ArdiProjectDataDir
 
 func setLogger() {
+	logger.Formatter = &log.TextFormatter{
+		DisableTimestamp:       true,
+		DisableLevelTruncation: true,
+		PadLevelText:           true,
+	}
 	if verbose {
 		logger.SetLevel(log.DebugLevel)
 	} else if quiet {
