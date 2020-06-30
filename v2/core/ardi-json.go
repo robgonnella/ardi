@@ -53,7 +53,7 @@ func (a *ArdiJSON) AddBuild(name, platform, boardURL, path, fqbn string, buildPr
 	}
 
 	a.logger.Infof("Addding build: %s", name)
-	printBuild(name, newBuild)
+	a.printBuild(name, newBuild)
 	a.Config.Builds[name] = newBuild
 	return a.write()
 }
@@ -70,12 +70,12 @@ func (a *ArdiJSON) ListBuilds(builds []string) {
 	if len(builds) > 0 {
 		for _, name := range builds {
 			if b, ok := a.Config.Builds[name]; ok {
-				printBuild(name, b)
+				a.printBuild(name, b)
 			}
 		}
 	}
 	for name, build := range a.Config.Builds {
-		printBuild(name, build)
+		a.printBuild(name, build)
 	}
 }
 
@@ -117,17 +117,17 @@ func (a *ArdiJSON) write() error {
 	return nil
 }
 
-// private helpers
-func printBuild(name string, b types.ArdiBuildJSON) {
-	fmt.Println("")
-	fmt.Printf("%s:\n", name)
-	fmt.Printf("\tPlatform: %s\n", b.Platform)
-	fmt.Printf("\tBoard URL: %s\n", b.BoardURL)
-	fmt.Printf("\tPath: %s\n", b.Path)
-	fmt.Printf("\tFQBN: %s\n", b.FQBN)
-	fmt.Printf("\tProps:\n")
+// private
+func (a *ArdiJSON) printBuild(name string, b types.ArdiBuildJSON) {
+	a.logger.Println("")
+	a.logger.Printf("%s:\n", name)
+	a.logger.Printf("  Platform: %s\n", b.Platform)
+	a.logger.Printf("  Board URL: %s\n", b.BoardURL)
+	a.logger.Printf("  Path: %s\n", b.Path)
+	a.logger.Printf("  FQBN: %s\n", b.FQBN)
+	a.logger.Printf("  Props:\n")
 	for prop, instruction := range b.Props {
-		fmt.Printf("\t\t%s: %s\n", prop, instruction)
+		a.logger.Printf("    %s: %s\n", prop, instruction)
 	}
-	fmt.Println("")
+	a.logger.Println("")
 }
