@@ -1,6 +1,7 @@
 package core_test
 
 import (
+	"errors"
 	"path"
 	"testing"
 
@@ -39,5 +40,32 @@ func TestCompileCore(t *testing.T) {
 
 		err := env.ArdiCore.Compiler.Compile(env.BlinkProjDir, expectedFqbn, expectedBuildProps, expectedShowProps)
 		assert.NoError(st, err)
+	})
+
+	testutil.RunTest("returns compile error", t, func(st *testing.T, env testutil.TestEnv) {
+		defer env.Ctrl.Finish()
+		errString := "dummy error"
+		dummyErr := errors.New(errString)
+
+		expectedFqbn := "some-fqbb"
+		expectedSketch := path.Join(env.BlinkProjDir, "blink.ino")
+		expectedBuildProps := []string{"build.extra_flags='-DSOME_OPTION'"}
+		expectedShowProps := false
+
+		compileOpts := rpc.CompileOpts{
+			FQBN:       expectedFqbn,
+			SketchDir:  env.BlinkProjDir,
+			SketchPath: expectedSketch,
+			BuildProps: expectedBuildProps,
+			ShowProps:  expectedShowProps,
+		}
+
+		env.Client.EXPECT().ConnectedBoards().Times(1).Return([]*rpc.Board{})
+		env.Client.EXPECT().AllBoards().Times(1).Return([]*rpc.Board{})
+		env.Client.EXPECT().Compile(compileOpts).Times(1).Return(dummyErr)
+
+		err := env.ArdiCore.Compiler.Compile(env.BlinkProjDir, expectedFqbn, expectedBuildProps, expectedShowProps)
+		assert.Error(st, err)
+		assert.EqualError(st, err, errString)
 	})
 }

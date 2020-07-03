@@ -1,6 +1,7 @@
 package core_test
 
 import (
+	"errors"
 	"fmt"
 	"testing"
 
@@ -26,26 +27,40 @@ func TestLibCore(t *testing.T) {
 		assert.Equal(st, returnedVers, installedVersion)
 	})
 
-	testutil.RunTest("uninstalls library", t, func(st *testing.T, env testutil.TestEnv) {
+	testutil.RunTest("returns install error", t, func(st *testing.T, env testutil.TestEnv) {
 		defer env.Ctrl.Finish()
 
-		libName := "Adafruit_Pixie"
+		errString := "dummy error"
+		dummyErr := errors.New(errString)
+
+		lib := "Adafruit_Pixie"
 		version := "1.0.0"
-		libWithVers := fmt.Sprintf("%s@%s", libName, version)
+		library := fmt.Sprintf("%s@%s", lib, version)
 
-		installedVersion := "1.0.0-alpha.2"
+		env.Client.EXPECT().InstallLibrary(lib, version).Times(1).Return("", dummyErr)
 
-		env.Client.EXPECT().InstallLibrary(libName, version).Times(1).Return(installedVersion, nil)
+		_, _, err := env.ArdiCore.Lib.Add(library)
+		assert.Error(st, err)
+		assert.EqualError(st, err, errString)
+	})
 
-		returnedLib, returnedVers, err := env.ArdiCore.Lib.Add(libWithVers)
-		assert.NoError(st, err)
-		assert.Equal(st, returnedLib, libName)
-		assert.Equal(st, returnedVers, installedVersion)
-
+	testutil.RunTest("uninstalls library", t, func(st *testing.T, env testutil.TestEnv) {
+		defer env.Ctrl.Finish()
+		libName := "Adafruit_Pixie"
 		env.Client.EXPECT().UninstallLibrary(libName).Times(1).Return(nil)
-
-		err = env.ArdiCore.Lib.Remove(libName)
+		err := env.ArdiCore.Lib.Remove(libName)
 		assert.NoError(st, err)
+	})
+
+	testutil.RunTest("returns uninstall error", t, func(st *testing.T, env testutil.TestEnv) {
+		defer env.Ctrl.Finish()
+		errString := "dummy error"
+		dummyErr := errors.New(errString)
+		libName := "Adafruit_Pixie"
+		env.Client.EXPECT().UninstallLibrary(libName).Times(1).Return(dummyErr)
+		err := env.ArdiCore.Lib.Remove(libName)
+		assert.Error(st, err)
+		assert.EqualError(st, err, errString)
 	})
 
 	testutil.RunTest("prints library searches to stdout", t, func(st *testing.T, env testutil.TestEnv) {

@@ -214,7 +214,7 @@ func getProjectRemoveLibCmd() *cobra.Command {
 					return
 				}
 				if err := ardiCore.Lib.Remove(l); err != nil {
-					logger.WithError(err).Error("Failed to remove library from ardi.json: %s", l)
+					logger.WithError(err).Errorf("Failed to remove library from ardi.json: %s", l)
 					return
 				}
 			}

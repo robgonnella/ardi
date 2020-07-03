@@ -17,8 +17,11 @@ import (
 )
 
 func cleanCoreDir() {
-	os.RemoveAll(".ardi")
-	os.Remove("ardi.json")
+	here, _ := filepath.Abs(".")
+	dataDir := path.Join(here, "../core/.ardi")
+	jsonFile := path.Join(here, "../core/ardi.json")
+	os.RemoveAll(dataDir)
+	os.Remove(jsonFile)
 }
 
 // TestEnv represents our test environment
@@ -63,11 +66,12 @@ func GenerateCmdPlatform(name string, boards []*commands.Board) *commands.Platfo
 // RunTest runs an ardi unit test
 func RunTest(name string, t *testing.T, f func(t *testing.T, env TestEnv)) {
 	t.Run(name, func(st *testing.T) {
-		cleanCoreDir()
 		ctrl := gomock.NewController(t)
 		client := mocks.NewMockClient(ctrl)
 		logger := log.New()
 		here, _ := filepath.Abs(".")
+
+		cleanCoreDir()
 
 		var b bytes.Buffer
 		logger.SetOutput(&b)

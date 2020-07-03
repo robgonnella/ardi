@@ -195,4 +195,48 @@ func TestProjectCore(t *testing.T) {
 		err = env.ArdiCore.Project.BuildAll()
 		assert.NoError(st, err)
 	})
+
+	testutil.RunTest("builds project by name", t, func(st *testing.T, env testutil.TestEnv) {
+		defer env.Ctrl.Finish()
+		err := env.ArdiCore.Project.Init("2222")
+		assert.NoError(st, err)
+		err = env.ArdiCore.Project.SetConfigHelpers()
+		assert.NoError(st, err)
+
+		buildName := "blink"
+		platform := "arduino-platform"
+		boardURL := "https://some-board-url.com"
+		sketchDir := env.BlinkProjDir
+		fqbn := "testboardfqbb"
+		buildProp := "some_build_prop"
+		buildPropVal := "DTest"
+		buildProps := []string{fmt.Sprintf("%s=%s", buildProp, buildPropVal)}
+
+		env.Client.EXPECT().InstallPlatform(platform).Times(1).Return(nil)
+		env.ArdiCore.Project.AddBuild(buildName, platform, boardURL, sketchDir, fqbn, buildProps)
+
+		compileOpts := rpc.CompileOpts{
+			SketchDir:  sketchDir,
+			SketchPath: path.Join(sketchDir, "blink.ino"),
+			FQBN:       fqbn,
+			BuildProps: buildProps,
+			ShowProps:  false,
+			ExportName: buildName,
+		}
+
+		env.Client.EXPECT().InstallPlatform(platform).Times(1).Return(nil)
+		env.Client.EXPECT().Compile(compileOpts).Times(1).Return(nil)
+		err = env.ArdiCore.Project.Build(buildName)
+		assert.NoError(st, err)
+	})
+
+	testutil.RunTest("errors if build doesn't exist", t, func(st *testing.T, env testutil.TestEnv) {
+		defer env.Ctrl.Finish()
+		err := env.ArdiCore.Project.Init("2222")
+		assert.NoError(st, err)
+		err = env.ArdiCore.Project.SetConfigHelpers()
+		assert.NoError(st, err)
+		err = env.ArdiCore.Project.Build("noop")
+		assert.Error(st, err)
+	})
 }

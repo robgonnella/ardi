@@ -32,6 +32,9 @@ $(objects): $(shell find . -type f -name "*.go")
 mock:
 	go generate ./...
 
+unit-test:
+	go test -v github.com/robgonnella/ardi/v2/core
+
 test:
 	go test -v -cover ./...
 

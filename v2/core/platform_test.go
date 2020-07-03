@@ -1,6 +1,7 @@
 package core_test
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/arduino/arduino-cli/rpc/commands"
@@ -67,6 +68,26 @@ func TestPlatformCore(t *testing.T) {
 		}
 	})
 
+	testutil.RunTest("returns 'platform add' error", t, func(st *testing.T, env testutil.TestEnv) {
+		defer env.Ctrl.Finish()
+		errString := "dummy error"
+		dummyErr := errors.New(errString)
+
+		testPlatform1 := "test-platform1"
+		testPlatform2 := "test-platform2"
+
+		env.Client.EXPECT().InstallPlatform(testPlatform1).Times(1).Return(dummyErr)
+		env.Client.EXPECT().InstallPlatform(testPlatform2).Times(1).Return(dummyErr)
+
+		platforms := []string{testPlatform1, testPlatform2}
+
+		for _, p := range platforms {
+			err := env.ArdiCore.Platform.Add(p)
+			assert.Error(st, err)
+			assert.EqualError(st, err, errString)
+		}
+	})
+
 	testutil.RunTest("removes a platforms", t, func(st *testing.T, env testutil.TestEnv) {
 		defer env.Ctrl.Finish()
 		testPlatform1 := "test-platform1"
@@ -83,9 +104,38 @@ func TestPlatformCore(t *testing.T) {
 		}
 	})
 
+	testutil.RunTest("returns platform remove error", t, func(st *testing.T, env testutil.TestEnv) {
+		defer env.Ctrl.Finish()
+		errString := "dummy error"
+		dummyErr := errors.New(errString)
+
+		testPlatform1 := "test-platform1"
+		testPlatform2 := "test-platform2"
+
+		env.Client.EXPECT().UninstallPlatform(testPlatform1).Times(1).Return(dummyErr)
+		env.Client.EXPECT().UninstallPlatform(testPlatform2).Times(1).Return(dummyErr)
+
+		platforms := []string{testPlatform1, testPlatform2}
+
+		for _, p := range platforms {
+			err := env.ArdiCore.Platform.Remove(p)
+			assert.Error(st, err)
+			assert.EqualError(st, err, errString)
+		}
+	})
+
 	testutil.RunTest("adds all available platforms", t, func(st *testing.T, env testutil.TestEnv) {
 		env.Client.EXPECT().InstallAllPlatforms().Times(1).Return(nil)
 		err := env.ArdiCore.Platform.AddAll()
 		assert.NoError(st, err)
+	})
+
+	testutil.RunTest("returns platform 'install all' error", t, func(st *testing.T, env testutil.TestEnv) {
+		errString := "dummy error"
+		dummyErr := errors.New(errString)
+		env.Client.EXPECT().InstallAllPlatforms().Times(1).Return(dummyErr)
+		err := env.ArdiCore.Platform.AddAll()
+		assert.Error(st, err)
+		assert.EqualError(st, err, errString)
 	})
 }

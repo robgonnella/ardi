@@ -68,7 +68,7 @@ func getPlatformRemoveCmd() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			for _, p := range args {
 				if err := ardiCore.Platform.Remove(p); err != nil {
-					logger.WithError(err).Error("Failed to remove arduino platform %s", p)
+					logger.WithError(err).Errorf("Failed to remove arduino platform %s", p)
 				}
 			}
 		},
