@@ -15,7 +15,9 @@ func getBoardFQBNSCmd() *cobra.Command {
 			if len(args) > 0 {
 				query = args[0]
 			}
-			ardiCore.Board.FQBNS(query)
+			if err := ardiCore.Board.FQBNS(query); err != nil {
+				logger.WithError(err).Error("Failed to print board fqbns")
+			}
 		},
 	}
 	return listCmd
@@ -32,7 +34,9 @@ func getBoardPlatformsCmd() *cobra.Command {
 			if len(args) > 0 {
 				query = args[0]
 			}
-			ardiCore.Board.Platforms(query)
+			if err := ardiCore.Board.Platforms(query); err != nil {
+				logger.WithError(err).Error("Failed to print board platforms")
+			}
 		},
 	}
 	return listCmd

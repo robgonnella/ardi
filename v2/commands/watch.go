@@ -11,10 +11,12 @@ func process(sketchDir string, buildProps []string) {
 	}
 
 	if err := ardiCore.Watch.Compile(); err != nil {
+		logger.WithError(err).Error("Failed to compile")
 		return
 	}
 
 	if err := ardiCore.Watch.Upload(); err != nil {
+		logger.WithError(err).Error("Failed to upload")
 		return
 	}
 

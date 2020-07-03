@@ -56,6 +56,54 @@ func shouldShowProjectError(cmd string) bool {
 		!cmdIsVersion(cmd)
 }
 
+func preRun(cmd *cobra.Command, args []string) {
+	ctx := cmd.Context()
+
+	setLogger()
+	cmdPath := cmd.CommandPath()
+
+	if strings.HasPrefix(cmdPath, "ardi project") && global {
+		logger.Error("Cannot specify --global with project command")
+		os.Exit(1)
+	}
+
+	if shouldShowProjectError(cmdPath) {
+		logger.Error("Not an ardi project directory")
+		logger.Error("Try 'ardi project init', or run with '--global'")
+		os.Exit(1)
+	}
+
+	if global {
+		dataDir = paths.ArdiGlobalDataDir
+		confPath := paths.ArdiGlobalDataConfig
+		util.InitDataDirectory(port, dataDir, confPath)
+	}
+
+	go rpc.StartDaemon(port, dataDir, verbose)
+
+	var err error
+	client, err = rpc.NewClient(ctx, port, logger)
+	if err != nil {
+		logger.WithError(err).Error("Failed to start ardi client")
+		os.Exit(1)
+	}
+
+	if strings.Contains(cmdPath, "lib") || strings.Contains(cmdPath, "platform") {
+		if err := client.UpdateIndexFiles(); err != nil {
+			logger.WithError(err).Error("Failed to update index files")
+		}
+	}
+
+	ardiCore = core.NewArdiCore(client, logger)
+
+	if util.IsProjectDirectory() {
+		if err := ardiCore.Project.SetConfigHelpers(); err != nil {
+			logger.WithError(err).Error("Failed to initialize ardi project core")
+			os.Exit(1)
+		}
+	}
+}
+
 func getRootCommand() *cobra.Command {
 	rootCmd := &cobra.Command{
 		Use:   "ardi",
@@ -64,53 +112,7 @@ func getRootCommand() *cobra.Command {
 			"- Manage and store build configurations for projects with versioned dependencies\n- Run builds in CI Pipeline\n" +
 			"- Compile & upload sketches to connected boards\n- Watch log output from connected boards in terminal\n" +
 			"- Auto recompile / reupload on save",
-		PersistentPreRun: func(cmd *cobra.Command, args []string) {
-			ctx := cmd.Context()
-
-			setLogger()
-			cmdPath := cmd.CommandPath()
-
-			if strings.HasPrefix(cmdPath, "ardi project") && global {
-				logger.Error("Cannot specify --global with project command")
-				os.Exit(1)
-			}
-
-			if shouldShowProjectError(cmdPath) {
-				logger.Error("Not an ardi project directory")
-				logger.Error("Try \"ardi project init\", or run with \"--global\"")
-				os.Exit(1)
-			}
-
-			if global {
-				dataDir = paths.ArdiGlobalDataDir
-				confPath := paths.ArdiGlobalDataConfig
-				util.InitDataDirectory(port, dataDir, confPath)
-			}
-
-			go rpc.StartDaemon(port, dataDir, verbose)
-
-			var err error
-			client, err = rpc.NewClient(ctx, port, logger)
-			if err != nil {
-				logger.WithError(err).Error("Failed to start ardi client")
-				os.Exit(1)
-			}
-
-			if strings.Contains(cmdPath, "lib") || strings.Contains(cmdPath, "platform") {
-				if err := client.UpdateIndexFiles(); err != nil {
-					logger.WithError(err).Error("Failed to update index files")
-				}
-			}
-
-			ardiCore = core.NewArdiCore(client, logger)
-
-			if util.IsProjectDirectory() {
-				if err := ardiCore.Project.SetConfigHelpers(); err != nil {
-					logger.WithError(err).Error("Failed to initialize ardi project core")
-					os.Exit(1)
-				}
-			}
-		},
+		PersistentPreRun: preRun,
 	}
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "Print all logs")
 	rootCmd.PersistentFlags().BoolVarP(&quiet, "quiet", "q", false, "Silence all logs")

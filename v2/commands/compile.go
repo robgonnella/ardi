@@ -19,7 +19,9 @@ func getCompileCommand() *cobra.Command {
 			if len(args) > 0 {
 				sketchDir = args[0]
 			}
-			ardiCore.Compiler.Compile(sketchDir, fqbn, buildProps, showProps)
+			if err := ardiCore.Compiler.Compile(sketchDir, fqbn, buildProps, showProps); err != nil {
+				logger.WithError(err).Errorf("Failed to compile %s", sketchDir)
+			}
 		},
 	}
 	compileCmd.Flags().StringVarP(&fqbn, "fqbn", "f", "", "Specify fully qualified board name")

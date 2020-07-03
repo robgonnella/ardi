@@ -68,18 +68,13 @@ func (p *PlatformCore) ListAll() error {
 }
 
 // Add installs specified platforms
-func (p *PlatformCore) Add(platforms []string) error {
-	if len(platforms) == 0 {
-		err := errors.New("Empty platform list")
-		p.logger.WithError(err).Error()
-		return err
+func (p *PlatformCore) Add(platform string) error {
+	if platform == "" {
+		return errors.New("Empty platform list")
 	}
 
-	for _, platform := range platforms {
-		if err := p.client.InstallPlatform(platform); err != nil {
-			p.logger.WithError(err).Error()
-			return err
-		}
+	if err := p.client.InstallPlatform(platform); err != nil {
+		return err
 	}
 
 	return nil
@@ -91,18 +86,13 @@ func (p *PlatformCore) AddAll() error {
 }
 
 // Remove uninstalls specified platforms
-func (p *PlatformCore) Remove(platforms []string) error {
-	if len(platforms) == 0 {
-		err := errors.New("Empty platform list")
-		p.logger.WithError(err).Error()
-		return err
+func (p *PlatformCore) Remove(platform string) error {
+	if platform == "" {
+		return errors.New("Empty platform list")
 	}
 
-	for _, platform := range platforms {
-		if err := p.client.UninstallPlatform(platform); err != nil {
-			p.logger.WithError(err).Error()
-			return err
-		}
+	if err := p.client.UninstallPlatform(platform); err != nil {
+		return err
 	}
 
 	return nil

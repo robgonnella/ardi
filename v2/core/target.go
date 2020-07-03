@@ -3,7 +3,6 @@ package core
 import (
 	"errors"
 	"fmt"
-	"os"
 	"sort"
 	"text/tabwriter"
 
@@ -18,28 +17,28 @@ type Target struct {
 }
 
 // NewTarget returns new target
-func NewTarget(connectedBoards, allBoards []*rpc.Board, logger *log.Logger, fqbn string, onlyConnected bool) (*Target, error) {
-	board, err := getTargetBoard(connectedBoards, allBoards, logger, fqbn, onlyConnected)
+func NewTarget(connectedBoards, allBoards []*rpc.Board, fqbn string, onlyConnected bool, logger *log.Logger) (*Target, error) {
+	board, err := getTargetBoard(connectedBoards, allBoards, fqbn, onlyConnected, logger)
 	if err != nil {
 		return nil, err
 	}
 	return &Target{board}, nil
 }
 
-func getTargetBoard(connectedBoards, allBoards []*rpc.Board, logger *log.Logger, fqbn string, onlyConnected bool) (*rpc.Board, error) {
+func getTargetBoard(connectedBoards, allBoards []*rpc.Board, fqbn string, onlyConnected bool, logger *log.Logger) (*rpc.Board, error) {
 	if fqbn != "" {
 		return &rpc.Board{FQBN: fqbn}, nil
 	}
 
+	fqbnErr := errors.New("you must specify a board fqbn to compile - you can find a list of board fqbns for installed platforms above")
+
 	if len(connectedBoards) == 0 {
 		if onlyConnected {
 			err := errors.New("No connected boards detected")
-			logger.WithError(err).Error()
 			return nil, err
 		}
-		printFQBNs(allBoards)
-		logger.Errorf("You must supply fqbn to compile. You can find a list of board fqbns for installed platforms above.")
-		return nil, errors.New("Must provide board fqbn")
+		printFQBNs(allBoards, logger)
+		return nil, fqbnErr
 	}
 
 	if len(connectedBoards) == 1 {
@@ -47,28 +46,27 @@ func getTargetBoard(connectedBoards, allBoards []*rpc.Board, logger *log.Logger,
 	}
 
 	if len(connectedBoards) > 1 {
-		printFQBNs(connectedBoards)
-		logger.Errorf("You must supply fqbn to compile. You can find a list of board fqbns for connected boards above.")
-		return nil, errors.New("Must provide board fqbn")
+		printFQBNs(connectedBoards, logger)
+		return nil, fqbnErr
 	}
 
 	return nil, errors.New("Error parsing target")
 }
 
 // private helpers
-func printFQBNs(boardList []*rpc.Board) {
+func printFQBNs(boardList []*rpc.Board, logger *log.Logger) {
 	sort.Slice(boardList, func(i, j int) bool {
 		return boardList[i].Name < boardList[j].Name
 	})
 
-	printBoardsWithIndices(boardList)
+	printBoardsWithIndices(boardList, logger)
 }
 
-func printBoardsWithIndices(boards []*rpc.Board) {
-	w := tabwriter.NewWriter(os.Stdout, 0, 0, 8, ' ', 0)
+func printBoardsWithIndices(boards []*rpc.Board, logger *log.Logger) {
+	w := tabwriter.NewWriter(logger.Out, 0, 0, 8, ' ', 0)
 	defer w.Flush()
-	fmt.Fprintln(w, "No.\tName\tFQBN")
+	w.Write([]byte("No.\tName\tFQBN\n"))
 	for i, b := range boards {
-		fmt.Fprintf(w, "%d\t%s\t%s\n", i, b.Name, b.FQBN)
+		w.Write([]byte(fmt.Sprintf("%d\t%s\t%s\n", i, b.Name, b.FQBN)))
 	}
 }

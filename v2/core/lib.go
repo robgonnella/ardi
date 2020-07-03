@@ -75,10 +75,10 @@ func (l *LibCore) Add(lib string) (string, string, error) {
 
 	installedVersion, err := l.client.InstallLibrary(library, version)
 	if err != nil {
-		l.logger.WithError(err).Errorf("Failed to install %s", library)
 		return "", "", err
 	}
 
+	l.logger.Infof("Installed library: %s %s", library, installedVersion)
 	return library, installedVersion, nil
 }
 
@@ -93,11 +93,10 @@ func (l *LibCore) Remove(library string) error {
 }
 
 // ListInstalled lists all installed libraries
-func (l *LibCore) ListInstalled() {
+func (l *LibCore) ListInstalled() error {
 	libs, err := l.client.GetInstalledLibs()
 	if err != nil {
-		l.logger.WithError(err).Error("Failed to list installed libraries")
-		return
+		return err
 	}
 
 	w := tabwriter.NewWriter(l.logger.Out, 0, 0, 8, ' ', 0)
@@ -112,4 +111,6 @@ func (l *LibCore) ListInstalled() {
 		fields := fmt.Sprintf("%s\t%s\t%s\n", name, version, desc)
 		w.Write([]byte(fields))
 	}
+
+	return nil
 }

@@ -13,11 +13,15 @@ func getPlatformListCmd() *cobra.Command {
 		Short: "List platforms",
 		Run: func(cmd *cobra.Command, args []string) {
 			if all || (!all && !installed) {
-				ardiCore.Platform.ListAll()
+				if err := ardiCore.Platform.ListAll(); err != nil {
+					logger.WithError(err).Error("Failed to list arduino platforms")
+				}
 			}
 
 			if installed {
-				ardiCore.Platform.ListInstalled()
+				if err := ardiCore.Platform.ListInstalled(); err != nil {
+					logger.WithError(err).Error("Failed to list installed arduino platforms")
+				}
 			}
 		},
 	}
@@ -34,11 +38,20 @@ func getPlatformAddCmd() *cobra.Command {
 		Short: "Install platforms",
 		Run: func(cmd *cobra.Command, args []string) {
 			if all {
-				ardiCore.Platform.AddAll()
+				if err := ardiCore.Platform.AddAll(); err != nil {
+					logger.WithError(err).Error("Failed to install arduino platforms")
+				}
 				return
 			}
-
-			ardiCore.Platform.Add(args)
+			if len(args) == 0 {
+				logger.Error("No platforms specified")
+				return
+			}
+			for _, p := range args {
+				if err := ardiCore.Platform.Add(p); err != nil {
+					logger.WithError(err).Error("Failed to install arduino platforms")
+				}
+			}
 		},
 	}
 
@@ -51,8 +64,13 @@ func getPlatformRemoveCmd() *cobra.Command {
 		Use:   "remove",
 		Long:  "\nRemove installed platforms",
 		Short: "Remove installed platforms",
+		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			ardiCore.Platform.Remove(args)
+			for _, p := range args {
+				if err := ardiCore.Platform.Remove(p); err != nil {
+					logger.WithError(err).Error("Failed to remove arduino platform %s", p)
+				}
+			}
 		},
 	}
 

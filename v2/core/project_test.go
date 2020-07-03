@@ -158,7 +158,7 @@ func TestProjectCore(t *testing.T) {
 		assert.Contains(st, builds[buildName].Props, buildProp)
 		assert.Equal(st, builds[buildName].Props[buildProp], buildPropVal)
 
-		env.ArdiCore.Project.RemoveBuild([]string{buildName})
+		env.ArdiCore.Project.RemoveBuild(buildName)
 		builds = env.ArdiCore.Project.GetBuilds()
 		assert.NotContains(st, builds, buildName)
 	})

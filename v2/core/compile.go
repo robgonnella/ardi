@@ -25,16 +25,14 @@ func NewCompileCore(client rpc.Client, logger *log.Logger) *CompileCore {
 func (c *CompileCore) Compile(sketchDir, fqbn string, buildProps []string, showProps bool) error {
 	sketchDir, sketchFile, _, err := util.ProcessSketch(sketchDir, c.logger)
 	if err != nil {
-		c.logger.WithError(err).Error("Failed to compile")
 		return err
 	}
 
 	connectedBoards := c.client.ConnectedBoards()
 	allBoards := c.client.AllBoards()
 
-	target, err := NewTarget(connectedBoards, allBoards, c.logger, fqbn, false)
+	target, err := NewTarget(connectedBoards, allBoards, fqbn, false, c.logger)
 	if err != nil {
-		c.logger.WithError(err).Error("Failed to compile")
 		return err
 	}
 
@@ -48,7 +46,6 @@ func (c *CompileCore) Compile(sketchDir, fqbn string, buildProps []string, showP
 	}
 
 	if err := c.client.Compile(opts); err != nil {
-		c.logger.Error("Failed to compile sketch")
 		return err
 	}
 

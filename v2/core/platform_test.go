@@ -59,8 +59,12 @@ func TestPlatformCore(t *testing.T) {
 		env.Client.EXPECT().InstallPlatform(testPlatform1).Times(1).Return(nil)
 		env.Client.EXPECT().InstallPlatform(testPlatform2).Times(1).Return(nil)
 
-		err := env.ArdiCore.Platform.Add([]string{testPlatform1, testPlatform2})
-		assert.NoError(st, err)
+		platforms := []string{testPlatform1, testPlatform2}
+
+		for _, p := range platforms {
+			err := env.ArdiCore.Platform.Add(p)
+			assert.NoError(st, err)
+		}
 	})
 
 	testutil.RunTest("removes a platforms", t, func(st *testing.T, env testutil.TestEnv) {
@@ -71,8 +75,12 @@ func TestPlatformCore(t *testing.T) {
 		env.Client.EXPECT().UninstallPlatform(testPlatform1).Times(1).Return(nil)
 		env.Client.EXPECT().UninstallPlatform(testPlatform2).Times(1).Return(nil)
 
-		err := env.ArdiCore.Platform.Remove([]string{testPlatform1, testPlatform2})
-		assert.NoError(st, err)
+		platforms := []string{testPlatform1, testPlatform2}
+
+		for _, p := range platforms {
+			err := env.ArdiCore.Platform.Remove(p)
+			assert.NoError(st, err)
+		}
 	})
 
 	testutil.RunTest("adds all available platforms", t, func(st *testing.T, env testutil.TestEnv) {

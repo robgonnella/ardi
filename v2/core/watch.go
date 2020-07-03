@@ -46,7 +46,7 @@ func (w *WatchCore) Init(port, dir string, props []string) error {
 	allBoards := w.client.AllBoards()
 
 	if w.target == nil {
-		target, err := NewTarget(connectedBoards, allBoards, w.logger, "", true)
+		target, err := NewTarget(connectedBoards, allBoards, "", true, w.logger)
 		if err != nil {
 			return err
 		}

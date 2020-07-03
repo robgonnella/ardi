@@ -1,6 +1,7 @@
 package core
 
 import (
+	"errors"
 	"fmt"
 	"sort"
 	"text/tabwriter"
@@ -30,7 +31,6 @@ func (b *BoardCore) FQBNS(query string) error {
 	platforms, err := b.client.GetPlatforms()
 
 	if err != nil {
-		b.logger.WithError(err).Error("Platform search error")
 		return err
 	}
 
@@ -45,8 +45,8 @@ func (b *BoardCore) FQBNS(query string) error {
 	}
 
 	if len(boardList) == 0 {
-		b.logger.Info("You must install platforms with \"ardi platform add\" or \"ardi project add platform\" first")
-		return nil
+		err := errors.New("you must install platforms with 'ardi platform add' or 'ardi project add platform' first")
+		return err
 	}
 
 	sort.Slice(boardList, func(i, j int) bool {
@@ -67,7 +67,6 @@ func (b *BoardCore) Platforms(query string) error {
 	platforms, err := b.client.GetPlatforms()
 
 	if err != nil {
-		b.logger.WithError(err).Error("Platform search error")
 		return err
 	}
 

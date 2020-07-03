@@ -1,8 +1,6 @@
 package commands
 
 import (
-	"strings"
-
 	"github.com/spf13/cobra"
 )
 
@@ -16,7 +14,9 @@ func getProjectInitCommand() *cobra.Command {
 			"ardi.json file for managing builds and dependencies.",
 		Aliases: []string{"update"},
 		Run: func(cmd *cobra.Command, args []string) {
-			ardiCore.Project.Init(port)
+			if err := ardiCore.Project.Init(port); err != nil {
+				logger.WithError(err).Error("Failed to initialize ardi project")
+			}
 		},
 	}
 
@@ -25,12 +25,13 @@ func getProjectInitCommand() *cobra.Command {
 
 func getProjectListPlatformCmd() *cobra.Command {
 	listCmd := &cobra.Command{
-		Use:     "platform",
-		Long:    "\nAdd platform(s) to project",
-		Short:   "Add platform(s) to project",
-		Aliases: []string{"platforms"},
+		Use:   "platforms",
+		Long:  "\nList all installed platforms for this project",
+		Short: "List all installed platforms for this project",
 		Run: func(cmd *cobra.Command, args []string) {
-			ardiCore.Platform.ListInstalled()
+			if err := ardiCore.Platform.ListInstalled(); err != nil {
+				logger.WithError(err).Error("Failed to list installed arduino platforms")
+			}
 		},
 	}
 	return listCmd
@@ -46,7 +47,9 @@ func getProjectListLibrariesCmd() *cobra.Command {
 			logger.Info("Libraries specified in ardi.json")
 			ardiCore.Project.ListLibraries()
 			logger.Info("Installed libraries")
-			ardiCore.Lib.ListInstalled()
+			if err := ardiCore.Lib.ListInstalled(); err != nil {
+				logger.WithError(err).Error("Failed to list installed arduino libraries")
+			}
 		},
 	}
 	return listCmd
@@ -78,20 +81,28 @@ func getProjectListCmd() *cobra.Command {
 }
 
 func getProjectAddPlatformCmd() *cobra.Command {
+	var all bool
 	addCmd := &cobra.Command{
 		Use:     "platform",
 		Long:    "\nAdd platform(s) to project",
 		Short:   "Add platform(s) to project",
 		Aliases: []string{"platforms"},
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) == 0 || strings.ToLower(args[0]) == "all" {
-				ardiCore.Platform.AddAll()
+			if len(args) == 0 || all {
+				if err := ardiCore.Platform.AddAll(); err != nil {
+					logger.WithError(err).Error("Failed to add arduino platforms")
+				}
 				return
 			}
 
-			ardiCore.Platform.Add(args)
+			for _, p := range args {
+				if err := ardiCore.Platform.Add(p); err != nil {
+					logger.WithError(err).Errorf("Failed to add arduino platform %s", p)
+				}
+			}
 		},
 	}
+	addCmd.Flags().BoolVarP(&all, "all", "a", false, "Add all available platforms")
 	return addCmd
 }
 
@@ -129,7 +140,7 @@ func getProjectAddLibCmd() *cobra.Command {
 			for _, l := range args {
 				name, vers, err := ardiCore.Lib.Add(l)
 				if err != nil {
-					logger.WithError(err).Error("Failed to install all libraries")
+					logger.WithError(err).Errorf("Failed to install library %s", l)
 					return
 				}
 				if err := ardiCore.Project.AddLibrary(name, vers); err != nil {
@@ -160,8 +171,13 @@ func getProjectRemovePlatformCmd() *cobra.Command {
 		Long:    "\nRemove platform(s) from project",
 		Short:   "Remove platform(s) from project",
 		Aliases: []string{"platforms"},
+		Args:    cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			ardiCore.Platform.Remove(args)
+			for _, p := range args {
+				if err := ardiCore.Platform.Remove(p); err != nil {
+					logger.WithError(err).Errorf("Failed to remove arduino platform %s", p)
+				}
+			}
 		},
 	}
 	return removeCmd
@@ -173,8 +189,13 @@ func getProjectRemoveBuildCmd() *cobra.Command {
 		Long:    "\nRemove build config from project",
 		Short:   "Remove build config from project",
 		Aliases: []string{"builds"},
+		Args:    cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			ardiCore.Project.RemoveBuild(args)
+			for _, b := range args {
+				if err := ardiCore.Project.RemoveBuild(b); err != nil {
+					logger.WithError(err).Errorf("Failed to remove build %s", b)
+				}
+			}
 		},
 	}
 	return removeCmd
@@ -221,11 +242,17 @@ func getProjectBuildCmd() *cobra.Command {
 		Long:  "\nCompile builds specified in ardi.json",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) == 0 {
-				ardiCore.Project.BuildAll()
+				if err := ardiCore.Project.BuildAll(); err != nil {
+					logger.WithError(err).Error("Failed to build projects")
+				}
 				return
 			}
 
-			ardiCore.Project.BuildList(args)
+			for _, b := range args {
+				if err := ardiCore.Project.Build(b); err != nil {
+					logger.WithError(err).Errorf("Failed to build project: %s", b)
+				}
+			}
 		},
 	}
 	return buildCmd
@@ -238,11 +265,9 @@ func getProjectInstallCmd() *cobra.Command {
 		Long:  "\nInstall all libraries specified in ardi.json",
 		Run: func(cmd *cobra.Command, args []string) {
 			for _, l := range ardiCore.Project.GetLibraries() {
-				lib, vers, err := ardiCore.Lib.Add(l)
+				_, _, err := ardiCore.Lib.Add(l)
 				if err != nil {
 					logger.WithError(err).Errorf("Failed to install %s", l)
-				} else {
-					logger.Infof("Installed: %s@%s", lib, vers)
 				}
 			}
 		},

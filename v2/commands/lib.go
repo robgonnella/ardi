@@ -12,7 +12,9 @@ func getLibSearchCommand() *cobra.Command {
 		Aliases: []string{"find"},
 		Args:    cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			ardiCore.Lib.Search(args[0])
+			if err := ardiCore.Lib.Search(args[0]); err != nil {
+				logger.WithError(err).Error("Failed to find arduino libraries")
+			}
 		},
 	}
 	return initCmd
@@ -26,7 +28,9 @@ func getLibAddCommand() *cobra.Command {
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			for _, l := range args {
-				ardiCore.Lib.Add(l)
+				if _, _, err := ardiCore.Lib.Add(l); err != nil {
+					logger.WithError(err).Errorf("Failed to add library %s", l)
+				}
 			}
 		},
 	}
@@ -41,7 +45,9 @@ func getLibRemoveCommand() *cobra.Command {
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			for _, l := range args {
-				ardiCore.Lib.Remove(l)
+				if err := ardiCore.Lib.Remove(l); err != nil {
+					logger.WithError(err).Errorf("Failed to remove library %s", l)
+				}
 			}
 		},
 	}
@@ -55,7 +61,9 @@ func getLibListCommand() *cobra.Command {
 			"globally installed libraries",
 		Short: "Lists all installed libraries",
 		Run: func(cmd *cobra.Command, args []string) {
-			ardiCore.Lib.ListInstalled()
+			if err := ardiCore.Lib.ListInstalled(); err != nil {
+				logger.WithError(err).Error("Failed to list installed libraries")
+			}
 		},
 	}
 	return listCmd

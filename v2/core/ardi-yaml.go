@@ -21,11 +21,9 @@ func NewArdiYAML(logger *log.Logger) (*ArdiYAML, error) {
 	config := types.DataConfig{}
 	dataConfig, err := ioutil.ReadFile(paths.ArdiProjectDataConfig)
 	if err != nil {
-		logger.WithError(err).Error("Failed to read data config file")
 		return nil, err
 	}
 	if err := yaml.Unmarshal(dataConfig, &config); err != nil {
-		logger.WithError(err).Error("Failed to parse data file")
 		return nil, err
 	}
 	return &ArdiYAML{

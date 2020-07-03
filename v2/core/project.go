@@ -40,14 +40,12 @@ func (p *ProjectCore) Init(port string) error {
 	confPath := paths.ArdiProjectDataConfig
 
 	if err := util.InitDataDirectory(port, dataDir, confPath); err != nil {
-		p.logger.WithError(err).Error()
 		return err
 	}
 
 	p.logger.Info("data directory initialized")
 
 	if err := initializeArdiJSON(); err != nil {
-		p.logger.WithError(err).Error()
 		return err
 	}
 
@@ -61,7 +59,6 @@ func (p *ProjectCore) SetConfigHelpers() error {
 	if p.ardiJSON == nil {
 		ardiJSON, err := NewArdiJSON(p.logger)
 		if err != nil {
-			p.logger.WithError(err).Error()
 			return err
 		}
 		p.ardiJSON = ardiJSON
@@ -70,7 +67,6 @@ func (p *ProjectCore) SetConfigHelpers() error {
 	if p.ardiYAML == nil {
 		ardiYAML, err := NewArdiYAML(p.logger)
 		if err != nil {
-			p.logger.WithError(err).Error()
 			return err
 		}
 		p.ardiYAML = ardiYAML
@@ -116,22 +112,20 @@ func (p *ProjectCore) GetLibraries() map[string]string {
 func (p *ProjectCore) AddBuild(name, platform, boardURL, path, fqbn string, buildProps []string) {
 	if platform != "" {
 		if err := p.client.InstallPlatform(platform); err != nil {
-			p.logger.WithError(err).Errorf("Failed to install platform: %s", platform)
+			p.logger.WithError(err).Warnf("Failed to install platform: %s", platform)
 		}
 	}
 	if boardURL != "" {
 		if err := p.ardiYAML.AddBoardURL(boardURL); err != nil {
-			p.logger.WithError(err).Errorf("Failed to add board url: %s", boardURL)
+			p.logger.WithError(err).Warnf("Failed to add board url: %s", boardURL)
 		}
 	}
 	p.ardiJSON.AddBuild(name, platform, boardURL, path, fqbn, buildProps)
 }
 
-// RemoveBuild removes specified build(s) from project
-func (p *ProjectCore) RemoveBuild(builds []string) {
-	for _, build := range builds {
-		p.ardiJSON.RemoveBuild(build)
-	}
+// RemoveBuild removes specified build from project
+func (p *ProjectCore) RemoveBuild(build string) error {
+	return p.ardiJSON.RemoveBuild(build)
 }
 
 // GetBuilds returns map of builds stored in ardi.json
@@ -144,60 +138,60 @@ func (p *ProjectCore) ListBuilds(builds []string) {
 	p.ardiJSON.ListBuilds(builds)
 }
 
-// BuildList builds only the build-names specified by the user
-func (p *ProjectCore) BuildList(builds []string) error {
-	if len(builds) == 0 {
-		err := errors.New("Empty build list")
-		p.logger.WithError(err).Error("Cannot build")
+// Build builds only the build name specified by the user
+func (p *ProjectCore) Build(buildName string) error {
+	if buildName == "" {
+		return errors.New("Empty build list")
+	}
+
+	build, ok := p.ardiJSON.Config.Builds[buildName]
+
+	if !ok {
+		return fmt.Errorf("No build specification for %s", buildName)
+	}
+	if err := p.ProcessSketch(build.Path); err != nil {
 		return err
 	}
-	for _, name := range builds {
-		build, ok := p.ardiJSON.Config.Builds[name]
-		if !ok {
-			p.logger.Warnf("No build specification for %s", name)
-			continue
-		}
-		if err := p.ProcessSketch(build.Path); err != nil {
-			p.logger.WithError(err).Error()
-			return err
-		}
-		if build.Platform != "" {
-			p.client.InstallPlatform(build.Platform)
-		}
-		if build.BoardURL != "" {
-			p.ardiYAML.AddBoardURL(build.BoardURL)
-		}
-		buildProps := []string{}
-		for prop, instruction := range build.Props {
-			buildProps = append(buildProps, fmt.Sprintf("%s=%s", prop, instruction))
-		}
-
-		p.logger.Infof("Building %s", build)
-		opts := rpc.CompileOpts{
-			FQBN:       build.FQBN,
-			SketchDir:  p.Directory,
-			SketchPath: p.Sketch,
-			ExportName: name,
-			BuildProps: buildProps,
-			ShowProps:  false,
-		}
-		if err := p.client.Compile(opts); err != nil {
-			p.logger.WithError(err).Errorf("Build failed for %s", build)
-			return err
+	if build.Platform != "" {
+		if err := p.client.InstallPlatform(build.Platform); err != nil {
+			p.logger.WithError(err).Warnf("Failed to install platform: %s", build.Platform)
 		}
 	}
+	if build.BoardURL != "" {
+		if err := p.ardiYAML.AddBoardURL(build.BoardURL); err != nil {
+			p.logger.WithError(err).Warnf("Failed to add board url: %s", build.BoardURL)
+		}
+	}
+
+	buildProps := []string{}
+	for prop, instruction := range build.Props {
+		buildProps = append(buildProps, fmt.Sprintf("%s=%s", prop, instruction))
+	}
+
+	p.logger.Infof("Building %s", buildName)
+	opts := rpc.CompileOpts{
+		FQBN:       build.FQBN,
+		SketchDir:  p.Directory,
+		SketchPath: p.Sketch,
+		ExportName: buildName,
+		BuildProps: buildProps,
+		ShowProps:  false,
+	}
+	if err := p.client.Compile(opts); err != nil {
+		return err
+	}
+
 	return nil
 }
 
 // BuildAll builds all builds specified in config
 func (p *ProjectCore) BuildAll() error {
 	if len(p.ardiJSON.Config.Builds) == 0 {
-		p.logger.Warn("No builds defined. Use \"ardi project add build\" to define a build.")
+		p.logger.Warn("No builds defined. Use 'ardi project add build' to define a build.")
 		return nil
 	}
-	for name, build := range p.ardiJSON.Config.Builds {
+	for buildName, build := range p.ardiJSON.Config.Builds {
 		if err := p.ProcessSketch(build.Path); err != nil {
-			p.logger.WithError(err).Error()
 			return err
 		}
 		buildProps := []string{}
@@ -210,12 +204,11 @@ func (p *ProjectCore) BuildAll() error {
 			FQBN:       build.FQBN,
 			SketchDir:  p.Directory,
 			SketchPath: p.Sketch,
-			ExportName: name,
+			ExportName: buildName,
 			BuildProps: buildProps,
 			ShowProps:  false,
 		}
 		if err := p.client.Compile(opts); err != nil {
-			p.logger.WithError(err).Errorf("Build faild for %s", name)
 			return err
 		}
 	}

@@ -34,7 +34,7 @@ func (p SerialCore) Watch() {
 	config := &serial.Config{Name: p.name, Baud: p.baud}
 	stream, err := serial.OpenPort(config)
 	if err != nil {
-		p.logger.WithError(err).WithFields(logFields).Error("Failed to read from device")
+		p.logger.WithError(err).WithFields(logFields).Warn("Failed to read from device")
 		return
 	}
 
@@ -47,7 +47,7 @@ func (p SerialCore) Watch() {
 		var buf = make([]byte, 128)
 		n, err := stream.Read(buf)
 		if err != nil {
-			p.logger.WithError(err).WithFields(logFields).Error("Failed to read from serial port")
+			p.logger.WithError(err).WithFields(logFields).Warn("Failed to read from serial port")
 			return
 		}
 		fmt.Printf("%s", buf[:n])
@@ -61,11 +61,11 @@ func (p SerialCore) Stop() {
 		logWithField.Info("Closing serial port connection")
 
 		if err := p.stream.Close(); err != nil {
-			logWithField.WithError(err).Error("Failed to close serial port connection")
+			logWithField.WithError(err).Warn("Failed to close serial port connection")
 		}
 
 		if err := p.stream.Flush(); err != nil {
-			logWithField.WithError(err).Error("Failed to flush serial port connection")
+			logWithField.WithError(err).Warn("Failed to flush serial port connection")
 		}
 
 		p.stream = nil
