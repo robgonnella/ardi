@@ -15,7 +15,6 @@ require (
 	github.com/mitchellh/mapstructure v1.3.2 // indirect
 	github.com/pelletier/go-toml v1.8.0 // indirect
 	github.com/segmentio/fasthash v1.0.2 // indirect
-	github.com/segmentio/stats/v4 v4.5.3
 	github.com/sirupsen/logrus v1.6.0
 	github.com/spf13/afero v1.3.1 // indirect
 	github.com/spf13/cast v1.3.1 // indirect
