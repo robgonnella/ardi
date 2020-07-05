@@ -12,101 +12,134 @@ import (
 
 // @todo: check that list is actually sorted
 func TestProjectCore(t *testing.T) {
-	testutil.RunTest("init creates ardi.json", t, func(st *testing.T, env testutil.TestEnv) {
+	testutil.RunUnitTest("init creates ardi.json", t, func(env testutil.UnitTestEnv) {
 		defer env.Ctrl.Finish()
 		err := env.ArdiCore.Project.Init("2222")
-		assert.NoError(st, err)
-		assert.FileExists(st, "ardi.json")
+		assert.NoError(env.T, err)
+		assert.FileExists(env.T, "ardi.json")
 	})
 
-	testutil.RunTest("init creates .ardi directory", t, func(st *testing.T, env testutil.TestEnv) {
+	testutil.RunUnitTest("init creates .ardi directory", t, func(env testutil.UnitTestEnv) {
 		defer env.Ctrl.Finish()
 		err := env.ArdiCore.Project.Init("2222")
-		assert.NoError(st, err)
-		assert.DirExists(st, ".ardi")
-		assert.FileExists(st, ".ardi/arduino-cli.yaml")
+		assert.NoError(env.T, err)
+		assert.DirExists(env.T, ".ardi")
+		assert.FileExists(env.T, ".ardi/arduino-cli.yaml")
 	})
 
-	testutil.RunTest("adds library to ardi.json", t, func(st *testing.T, env testutil.TestEnv) {
+	testutil.RunUnitTest("adds library to ardi.json", t, func(env testutil.UnitTestEnv) {
 		defer env.Ctrl.Finish()
 		err := env.ArdiCore.Project.Init("2222")
-		assert.NoError(st, err)
+		assert.NoError(env.T, err)
 		err = env.ArdiCore.Project.SetConfigHelpers()
-		assert.NoError(st, err)
+		assert.NoError(env.T, err)
 
 		lib := "some-lib"
 		vers := "1.0.0"
 
 		err = env.ArdiCore.Project.AddLibrary(lib, vers)
-		assert.NoError(st, err)
+		assert.NoError(env.T, err)
 
 		libs := env.ArdiCore.Project.GetLibraries()
-		assert.Contains(st, libs, lib)
-		assert.Equal(st, libs[lib], vers)
+		assert.Contains(env.T, libs, lib)
+		assert.Equal(env.T, libs[lib], vers)
 	})
 
-	testutil.RunTest("processes sketch", t, func(st *testing.T, env testutil.TestEnv) {
+	testutil.RunUnitTest("processes sketch", t, func(env testutil.UnitTestEnv) {
 		defer env.Ctrl.Finish()
 		err := env.ArdiCore.Project.Init("2222")
-		assert.NoError(st, err)
+		assert.NoError(env.T, err)
 		err = env.ArdiCore.Project.SetConfigHelpers()
-		assert.NoError(st, err)
+		assert.NoError(env.T, err)
 
 		err = env.ArdiCore.Project.ProcessSketch(env.BlinkProjDir)
-		assert.NoError(st, err)
+		assert.NoError(env.T, err)
 
-		assert.NotEmpty(st, env.ArdiCore.Project.Directory)
-		assert.NotEmpty(st, env.ArdiCore.Project.Sketch)
-		assert.Equal(st, env.ArdiCore.Project.Baud, 9600)
+		assert.NotEmpty(env.T, env.ArdiCore.Project.Directory)
+		assert.NotEmpty(env.T, env.ArdiCore.Project.Sketch)
+		assert.Equal(env.T, env.ArdiCore.Project.Baud, 9600)
 	})
 
-	testutil.RunTest("removes library from ardi.json", t, func(st *testing.T, env testutil.TestEnv) {
+	testutil.RunUnitTest("removes library from ardi.json", t, func(env testutil.UnitTestEnv) {
 		defer env.Ctrl.Finish()
 		err := env.ArdiCore.Project.Init("2222")
-		assert.NoError(st, err)
+		assert.NoError(env.T, err)
 		err = env.ArdiCore.Project.SetConfigHelpers()
-		assert.NoError(st, err)
+		assert.NoError(env.T, err)
 
 		lib := "some-lib"
 		vers := "1.0.0"
 
 		err = env.ArdiCore.Project.AddLibrary(lib, vers)
-		assert.NoError(st, err)
+		assert.NoError(env.T, err)
 
 		libs := env.ArdiCore.Project.GetLibraries()
-		assert.Contains(st, libs, lib)
+		assert.Contains(env.T, libs, lib)
 
 		err = env.ArdiCore.Project.RemoveLibrary(lib)
-		assert.NoError(st, err)
+		assert.NoError(env.T, err)
 
 		libs = env.ArdiCore.Project.GetLibraries()
-		assert.NotContains(st, libs, lib)
+		assert.NotContains(env.T, libs, lib)
 	})
 
-	testutil.RunTest("lists libraries in ardi.json", t, func(st *testing.T, env testutil.TestEnv) {
+	testutil.RunUnitTest("lists libraries in ardi.json", t, func(env testutil.UnitTestEnv) {
 		defer env.Ctrl.Finish()
 		err := env.ArdiCore.Project.Init("2222")
-		assert.NoError(st, err)
+		assert.NoError(env.T, err)
 		err = env.ArdiCore.Project.SetConfigHelpers()
-		assert.NoError(st, err)
+		assert.NoError(env.T, err)
 
 		lib := "some-lib"
 		vers := "1.0.0"
 
 		err = env.ArdiCore.Project.AddLibrary(lib, vers)
-		assert.NoError(st, err)
+		assert.NoError(env.T, err)
 
 		libs := env.ArdiCore.Project.GetLibraries()
-		assert.Contains(st, libs, lib)
-		assert.Equal(st, libs[lib], vers)
+		assert.Contains(env.T, libs, lib)
+		assert.Equal(env.T, libs[lib], vers)
 	})
 
-	testutil.RunTest("adds build to ardi.json", t, func(st *testing.T, env testutil.TestEnv) {
+	testutil.RunUnitTest("adds build to ardi.json", t, func(env testutil.UnitTestEnv) {
+		defer env.Ctrl.Finish()
+		port := "2222"
+		buildName := "blink"
+		platform := "arduino-platform"
+		boardURL := "https://some-board-url.com"
+		path := env.BlinkProjDir
+		fqbn := "testboardfqbb"
+		buildProp := "some_build_prop"
+		buildPropVal := "DTest"
+		buildProps := []string{fmt.Sprintf("%s=%s", buildProp, buildPropVal)}
+
+		err := env.ArdiCore.Project.Init(port)
+		assert.NoError(env.T, err)
+		err = env.ArdiCore.Project.SetConfigHelpers()
+		assert.NoError(env.T, err)
+
+		env.Client.EXPECT().InstallPlatform(platform).Times(1).Return(nil)
+		env.ArdiCore.Project.AddBuild(buildName, platform, boardURL, path, fqbn, buildProps)
+		builds := env.ArdiCore.Project.GetBuilds()
+		dataConfig := env.ArdiCore.Project.GetDataConfig()
+
+		assert.Contains(env.T, builds, buildName)
+		assert.Equal(env.T, builds[buildName].Platform, platform)
+		assert.Equal(env.T, builds[buildName].BoardURL, boardURL)
+		assert.Equal(env.T, builds[buildName].Path, path)
+		assert.Equal(env.T, builds[buildName].FQBN, fqbn)
+		assert.Contains(env.T, builds[buildName].Props, buildProp)
+		assert.Equal(env.T, builds[buildName].Props[buildProp], buildPropVal)
+		assert.Contains(env.T, dataConfig.BoardManager.AdditionalUrls, boardURL)
+		assert.Equal(env.T, dataConfig.Daemon.Port, port)
+	})
+
+	testutil.RunUnitTest("removes build from ardi.json", t, func(env testutil.UnitTestEnv) {
 		defer env.Ctrl.Finish()
 		err := env.ArdiCore.Project.Init("2222")
-		assert.NoError(st, err)
+		assert.NoError(env.T, err)
 		err = env.ArdiCore.Project.SetConfigHelpers()
-		assert.NoError(st, err)
+		assert.NoError(env.T, err)
 
 		buildName := "blink"
 		platform := "arduino-platform"
@@ -121,54 +154,25 @@ func TestProjectCore(t *testing.T) {
 		env.ArdiCore.Project.AddBuild(buildName, platform, boardURL, path, fqbn, buildProps)
 		builds := env.ArdiCore.Project.GetBuilds()
 
-		assert.Contains(st, builds, buildName)
-		assert.Equal(st, builds[buildName].Platform, platform)
-		assert.Equal(st, builds[buildName].BoardURL, boardURL)
-		assert.Equal(st, builds[buildName].Path, path)
-		assert.Equal(st, builds[buildName].FQBN, fqbn)
-		assert.Contains(st, builds[buildName].Props, buildProp)
-		assert.Equal(st, builds[buildName].Props[buildProp], buildPropVal)
-	})
-
-	testutil.RunTest("removes build from ardi.json", t, func(st *testing.T, env testutil.TestEnv) {
-		defer env.Ctrl.Finish()
-		err := env.ArdiCore.Project.Init("2222")
-		assert.NoError(st, err)
-		err = env.ArdiCore.Project.SetConfigHelpers()
-		assert.NoError(st, err)
-
-		buildName := "blink"
-		platform := "arduino-platform"
-		boardURL := "https://some-board-url.com"
-		path := env.BlinkProjDir
-		fqbn := "testboardfqbb"
-		buildProp := "some_build_prop"
-		buildPropVal := "DTest"
-		buildProps := []string{fmt.Sprintf("%s=%s", buildProp, buildPropVal)}
-
-		env.Client.EXPECT().InstallPlatform(platform).Times(1).Return(nil)
-		env.ArdiCore.Project.AddBuild(buildName, platform, boardURL, path, fqbn, buildProps)
-		builds := env.ArdiCore.Project.GetBuilds()
-
-		assert.Contains(st, builds, buildName)
-		assert.Equal(st, builds[buildName].Platform, platform)
-		assert.Equal(st, builds[buildName].BoardURL, boardURL)
-		assert.Equal(st, builds[buildName].Path, path)
-		assert.Equal(st, builds[buildName].FQBN, fqbn)
-		assert.Contains(st, builds[buildName].Props, buildProp)
-		assert.Equal(st, builds[buildName].Props[buildProp], buildPropVal)
+		assert.Contains(env.T, builds, buildName)
+		assert.Equal(env.T, builds[buildName].Platform, platform)
+		assert.Equal(env.T, builds[buildName].BoardURL, boardURL)
+		assert.Equal(env.T, builds[buildName].Path, path)
+		assert.Equal(env.T, builds[buildName].FQBN, fqbn)
+		assert.Contains(env.T, builds[buildName].Props, buildProp)
+		assert.Equal(env.T, builds[buildName].Props[buildProp], buildPropVal)
 
 		env.ArdiCore.Project.RemoveBuild(buildName)
 		builds = env.ArdiCore.Project.GetBuilds()
-		assert.NotContains(st, builds, buildName)
+		assert.NotContains(env.T, builds, buildName)
 	})
 
-	testutil.RunTest("builds project specified ardi.json", t, func(st *testing.T, env testutil.TestEnv) {
+	testutil.RunUnitTest("builds project specified ardi.json", t, func(env testutil.UnitTestEnv) {
 		defer env.Ctrl.Finish()
 		err := env.ArdiCore.Project.Init("2222")
-		assert.NoError(st, err)
+		assert.NoError(env.T, err)
 		err = env.ArdiCore.Project.SetConfigHelpers()
-		assert.NoError(st, err)
+		assert.NoError(env.T, err)
 
 		buildName := "blink"
 		platform := "arduino-platform"
@@ -193,15 +197,15 @@ func TestProjectCore(t *testing.T) {
 
 		env.Client.EXPECT().Compile(compileOpts).Times(1).Return(nil)
 		err = env.ArdiCore.Project.BuildAll()
-		assert.NoError(st, err)
+		assert.NoError(env.T, err)
 	})
 
-	testutil.RunTest("builds project by name", t, func(st *testing.T, env testutil.TestEnv) {
+	testutil.RunUnitTest("builds project by name", t, func(env testutil.UnitTestEnv) {
 		defer env.Ctrl.Finish()
 		err := env.ArdiCore.Project.Init("2222")
-		assert.NoError(st, err)
+		assert.NoError(env.T, err)
 		err = env.ArdiCore.Project.SetConfigHelpers()
-		assert.NoError(st, err)
+		assert.NoError(env.T, err)
 
 		buildName := "blink"
 		platform := "arduino-platform"
@@ -227,16 +231,16 @@ func TestProjectCore(t *testing.T) {
 		env.Client.EXPECT().InstallPlatform(platform).Times(1).Return(nil)
 		env.Client.EXPECT().Compile(compileOpts).Times(1).Return(nil)
 		err = env.ArdiCore.Project.Build(buildName)
-		assert.NoError(st, err)
+		assert.NoError(env.T, err)
 	})
 
-	testutil.RunTest("errors if build doesn't exist", t, func(st *testing.T, env testutil.TestEnv) {
+	testutil.RunUnitTest("errors if build doesn't exist", t, func(env testutil.UnitTestEnv) {
 		defer env.Ctrl.Finish()
 		err := env.ArdiCore.Project.Init("2222")
-		assert.NoError(st, err)
+		assert.NoError(env.T, err)
 		err = env.ArdiCore.Project.SetConfigHelpers()
-		assert.NoError(st, err)
+		assert.NoError(env.T, err)
 		err = env.ArdiCore.Project.Build("noop")
-		assert.Error(st, err)
+		assert.Error(env.T, err)
 	})
 }

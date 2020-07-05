@@ -2,16 +2,19 @@ package testutil
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"os"
 	"path"
 	"path/filepath"
 	"testing"
 
-	"github.com/arduino/arduino-cli/rpc/commands"
+	rpccommands "github.com/arduino/arduino-cli/rpc/commands"
 	"github.com/golang/mock/gomock"
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
 
+	"github.com/robgonnella/ardi/v2/commands"
 	"github.com/robgonnella/ardi/v2/core"
 	"github.com/robgonnella/ardi/v2/mocks"
 )
@@ -24,8 +27,9 @@ func cleanCoreDir() {
 	os.Remove(jsonFile)
 }
 
-// TestEnv represents our test environment
-type TestEnv struct {
+// UnitTestEnv represents our unit test environment
+type UnitTestEnv struct {
+	T            *testing.T
 	Ctrl         *gomock.Controller
 	Logger       *log.Logger
 	Client       *mocks.MockClient
@@ -37,16 +41,16 @@ type TestEnv struct {
 }
 
 // GenerateCmdBoard returns a single rpc Board
-func GenerateCmdBoard(name, fqbn string) *commands.Board {
+func GenerateCmdBoard(name, fqbn string) *rpccommands.Board {
 	if fqbn == "" {
 		fqbn = fmt.Sprintf("%s-fqbn", name)
 	}
-	return &commands.Board{Name: name, Fqbn: fqbn}
+	return &rpccommands.Board{Name: name, Fqbn: fqbn}
 }
 
 // GenerateCmdBoards generate a list of boards
-func GenerateCmdBoards(n int) []*commands.Board {
-	var boards []*commands.Board
+func GenerateCmdBoards(n int) []*rpccommands.Board {
+	var boards []*rpccommands.Board
 	for i := 0; i < n; i++ {
 		name := fmt.Sprintf("test-board-%02d", i)
 		b := GenerateCmdBoard(name, "")
@@ -56,15 +60,15 @@ func GenerateCmdBoards(n int) []*commands.Board {
 }
 
 // GenerateCmdPlatform generates a single named platform
-func GenerateCmdPlatform(name string, boards []*commands.Board) *commands.Platform {
-	return &commands.Platform{
+func GenerateCmdPlatform(name string, boards []*rpccommands.Board) *rpccommands.Platform {
+	return &rpccommands.Platform{
 		ID:     name,
 		Boards: boards,
 	}
 }
 
-// RunTest runs an ardi unit test
-func RunTest(name string, t *testing.T, f func(t *testing.T, env TestEnv)) {
+// RunUnitTest runs an ardi unit test
+func RunUnitTest(name string, t *testing.T, f func(env UnitTestEnv)) {
 	t.Run(name, func(st *testing.T) {
 		ctrl := gomock.NewController(t)
 		client := mocks.NewMockClient(ctrl)
@@ -79,7 +83,8 @@ func RunTest(name string, t *testing.T, f func(t *testing.T, env TestEnv)) {
 
 		ardiCore := core.NewArdiCore(client, logger)
 
-		env := TestEnv{
+		env := UnitTestEnv{
+			T:            st,
 			Ctrl:         ctrl,
 			Logger:       logger,
 			Client:       client,
@@ -88,7 +93,41 @@ func RunTest(name string, t *testing.T, f func(t *testing.T, env TestEnv)) {
 			BlinkProjDir: path.Join(here, "../test_projects/blink"),
 		}
 
-		f(st, env)
+		f(env)
 		cleanCoreDir()
+	})
+}
+
+// IntegrationTestEnv represents our integration test environment
+type IntegrationTestEnv struct {
+	Ctx     context.Context
+	T       *testing.T
+	Logger  *log.Logger
+	RootCmd *cobra.Command
+	SetArgs func(a []string)
+	Stdout  *bytes.Buffer
+}
+
+// RunIntegrationTest runs an ardi integration test
+func RunIntegrationTest(name string, t *testing.T, f func(env IntegrationTestEnv)) {
+	t.Run(name, func(st *testing.T) {
+		ctx := context.Background()
+		var b bytes.Buffer
+		logger := log.New()
+		logger.Out = &b
+		logger.SetLevel(log.DebugLevel)
+
+		rootCmd := commands.GetRootCmd(logger)
+		rootCmd.SetOut(logger.Out)
+
+		env := IntegrationTestEnv{
+			Ctx:     ctx,
+			T:       st,
+			Logger:  logger,
+			RootCmd: rootCmd,
+			Stdout:  &b,
+		}
+
+		f(env)
 	})
 }

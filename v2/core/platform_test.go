@@ -11,7 +11,7 @@ import (
 
 // @todo: check that list is actually sorted
 func TestPlatformCore(t *testing.T) {
-	testutil.RunTest("prints sorted list of all installed platforms to stdout", t, func(st *testing.T, env testutil.TestEnv) {
+	testutil.RunUnitTest("prints sorted list of all installed platforms to stdout", t, func(env testutil.UnitTestEnv) {
 		defer env.Ctrl.Finish()
 		platform1 := commands.Platform{
 			Name: "test-platform-1",
@@ -25,14 +25,14 @@ func TestPlatformCore(t *testing.T) {
 		env.Client.EXPECT().GetInstalledPlatforms().Times(1).Return(platforms, nil)
 
 		err := env.ArdiCore.Platform.ListInstalled()
-		assert.NoError(st, err)
+		assert.NoError(env.T, err)
 
-		assert.Contains(st, env.Stdout.String(), platform1.Name)
-		assert.Contains(st, env.Stdout.String(), platform2.Name)
+		assert.Contains(env.T, env.Stdout.String(), platform1.Name)
+		assert.Contains(env.T, env.Stdout.String(), platform2.Name)
 	})
 
 	// @todo: check that list is actually sorted
-	testutil.RunTest("prints sorted list of all available platforms to stdout", t, func(st *testing.T, env testutil.TestEnv) {
+	testutil.RunUnitTest("prints sorted list of all available platforms to stdout", t, func(env testutil.UnitTestEnv) {
 		defer env.Ctrl.Finish()
 		platform1 := commands.Platform{
 			Name: "test-platform-1",
@@ -46,13 +46,13 @@ func TestPlatformCore(t *testing.T) {
 		env.Client.EXPECT().GetPlatforms().Times(1).Return(platforms, nil)
 
 		err := env.ArdiCore.Platform.ListAll()
-		assert.NoError(st, err)
+		assert.NoError(env.T, err)
 
-		assert.Contains(st, env.Stdout.String(), platform1.Name)
-		assert.Contains(st, env.Stdout.String(), platform2.Name)
+		assert.Contains(env.T, env.Stdout.String(), platform1.Name)
+		assert.Contains(env.T, env.Stdout.String(), platform2.Name)
 	})
 
-	testutil.RunTest("adds platforms", t, func(st *testing.T, env testutil.TestEnv) {
+	testutil.RunUnitTest("adds platforms", t, func(env testutil.UnitTestEnv) {
 		defer env.Ctrl.Finish()
 		testPlatform1 := "test-platform1"
 		testPlatform2 := "test-platform2"
@@ -64,11 +64,11 @@ func TestPlatformCore(t *testing.T) {
 
 		for _, p := range platforms {
 			err := env.ArdiCore.Platform.Add(p)
-			assert.NoError(st, err)
+			assert.NoError(env.T, err)
 		}
 	})
 
-	testutil.RunTest("returns 'platform add' error", t, func(st *testing.T, env testutil.TestEnv) {
+	testutil.RunUnitTest("returns 'platform add' error", t, func(env testutil.UnitTestEnv) {
 		defer env.Ctrl.Finish()
 		errString := "dummy error"
 		dummyErr := errors.New(errString)
@@ -83,12 +83,12 @@ func TestPlatformCore(t *testing.T) {
 
 		for _, p := range platforms {
 			err := env.ArdiCore.Platform.Add(p)
-			assert.Error(st, err)
-			assert.EqualError(st, err, errString)
+			assert.Error(env.T, err)
+			assert.EqualError(env.T, err, errString)
 		}
 	})
 
-	testutil.RunTest("removes a platforms", t, func(st *testing.T, env testutil.TestEnv) {
+	testutil.RunUnitTest("removes a platforms", t, func(env testutil.UnitTestEnv) {
 		defer env.Ctrl.Finish()
 		testPlatform1 := "test-platform1"
 		testPlatform2 := "test-platform2"
@@ -100,11 +100,11 @@ func TestPlatformCore(t *testing.T) {
 
 		for _, p := range platforms {
 			err := env.ArdiCore.Platform.Remove(p)
-			assert.NoError(st, err)
+			assert.NoError(env.T, err)
 		}
 	})
 
-	testutil.RunTest("returns platform remove error", t, func(st *testing.T, env testutil.TestEnv) {
+	testutil.RunUnitTest("returns platform remove error", t, func(env testutil.UnitTestEnv) {
 		defer env.Ctrl.Finish()
 		errString := "dummy error"
 		dummyErr := errors.New(errString)
@@ -119,23 +119,23 @@ func TestPlatformCore(t *testing.T) {
 
 		for _, p := range platforms {
 			err := env.ArdiCore.Platform.Remove(p)
-			assert.Error(st, err)
-			assert.EqualError(st, err, errString)
+			assert.Error(env.T, err)
+			assert.EqualError(env.T, err, errString)
 		}
 	})
 
-	testutil.RunTest("adds all available platforms", t, func(st *testing.T, env testutil.TestEnv) {
+	testutil.RunUnitTest("adds all available platforms", t, func(env testutil.UnitTestEnv) {
 		env.Client.EXPECT().InstallAllPlatforms().Times(1).Return(nil)
 		err := env.ArdiCore.Platform.AddAll()
-		assert.NoError(st, err)
+		assert.NoError(env.T, err)
 	})
 
-	testutil.RunTest("returns platform 'install all' error", t, func(st *testing.T, env testutil.TestEnv) {
+	testutil.RunUnitTest("returns platform 'install all' error", t, func(env testutil.UnitTestEnv) {
 		errString := "dummy error"
 		dummyErr := errors.New(errString)
 		env.Client.EXPECT().InstallAllPlatforms().Times(1).Return(dummyErr)
 		err := env.ArdiCore.Platform.AddAll()
-		assert.Error(st, err)
-		assert.EqualError(st, err, errString)
+		assert.Error(env.T, err)
+		assert.EqualError(env.T, err, errString)
 	})
 }

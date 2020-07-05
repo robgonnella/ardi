@@ -12,7 +12,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var logger = log.New()
+var logger *log.Logger
 var port string
 var client rpc.Client
 var ardiCore *core.ArdiCore
@@ -57,8 +57,6 @@ func shouldShowProjectError(cmd string) bool {
 }
 
 func preRun(cmd *cobra.Command, args []string) {
-	ctx := cmd.Context()
-
 	setLogger()
 	cmdPath := cmd.CommandPath()
 
@@ -73,17 +71,27 @@ func preRun(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 
-	if global {
+	if global || cmdPath == "ardi version" {
 		dataDir = paths.ArdiGlobalDataDir
 		confPath := paths.ArdiGlobalDataConfig
 		util.InitDataDirectory(port, dataDir, confPath)
 	}
 
-	go rpc.StartDaemon(port, dataDir, verbose)
+	ctx := cmd.Context()
+	client = rpc.NewClient(ctx, dataDir, port, logger)
 
-	var err error
-	client, err = rpc.NewClient(ctx, port, logger)
-	if err != nil {
+	errChan := make(chan error, 1)
+	successChan := make(chan string, 1)
+	client.StartDaemon(verbose, successChan, errChan)
+	select {
+	case successMsg := <-successChan:
+		logger.Debug(successMsg)
+	case daemonErr := <-errChan:
+		logger.Errorf("arduino-cli daemon error: %s", daemonErr.Error())
+		os.Exit(1)
+	}
+
+	if err := client.Connect(); err != nil {
 		logger.WithError(err).Error("Failed to start ardi client")
 		os.Exit(1)
 	}
@@ -113,6 +121,9 @@ func getRootCommand() *cobra.Command {
 			"- Compile & upload sketches to connected boards\n- Watch log output from connected boards in terminal\n" +
 			"- Auto recompile / reupload on save",
 		PersistentPreRun: preRun,
+		PersistentPostRun: func(cmd *cobra.Command, args []string) {
+			client.Close()
+		},
 	}
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "Print all logs")
 	rootCmd.PersistentFlags().BoolVarP(&quiet, "quiet", "q", false, "Silence all logs")
@@ -122,7 +133,8 @@ func getRootCommand() *cobra.Command {
 }
 
 // GetRootCmd adds all ardi commands to root and returns root command
-func GetRootCmd() *cobra.Command {
+func GetRootCmd(cmdLogger *log.Logger) *cobra.Command {
+	logger = cmdLogger
 	rootCmd := getRootCommand()
 	rootCmd.AddCommand(getVersionCommand())
 	rootCmd.AddCommand(getCleanCommand())

@@ -5,19 +5,34 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net"
 	"path"
 	"strings"
 	"time"
 
-	arduino "github.com/arduino/arduino-cli/cli"
+	"github.com/arduino/arduino-cli/cli/globals"
+	"github.com/arduino/arduino-cli/commands/daemon"
+	"github.com/arduino/arduino-cli/rpc/commands"
 	rpc "github.com/arduino/arduino-cli/rpc/commands"
+	"github.com/arduino/arduino-cli/rpc/debug"
+	"github.com/arduino/arduino-cli/rpc/settings"
+	yaml2 "github.com/ghodss/yaml"
+	"github.com/robgonnella/ardi/v2/util"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
+	"gopkg.in/yaml.v2"
 )
+
+const configFile = "arduino-cli.yaml"
 
 // Client reprents our wrapper around the arduino-cli rpc client
 //go:generate mockgen -destination=../mocks/mock_rpc.go -package=mocks github.com/robgonnella/ardi/v2/rpc Client
 type Client interface {
+	StartDaemon(verbose bool, s chan string, e chan error)
+	SetDataDirectory(d string)
+	SetPort(p string)
+	Connect() error
+	Close()
 	UpdateIndexFiles() error
 	UpdateLibraryIndex() error
 	UpdatePlatformIndex() error
@@ -40,11 +55,16 @@ type Client interface {
 
 // ArdiClient represents a client connection to arduino-cli grpc daemon
 type ArdiClient struct {
-	ctx        context.Context
-	connection *grpc.ClientConn
-	client     rpc.ArduinoCoreClient
-	instance   *rpc.Instance
-	logger     *log.Logger
+	ctx              context.Context
+	dataDir          string
+	dataConfig       string
+	port             string
+	listener         net.Listener
+	grpcServer       *grpc.Server
+	clientConnection *grpc.ClientConn
+	client           rpc.ArduinoCoreClient
+	instance         *rpc.Instance
+	logger           *log.Logger
 }
 
 // Board represents a single arduino Board
@@ -55,48 +75,103 @@ type Board struct {
 }
 
 // NewClient return new RPC controller
-func NewClient(ctx context.Context, port string, logger *log.Logger) (Client, error) {
-	logger.Debug("Connecting to server")
-
-	conn, err := getServerConnection(ctx, port)
-	if err != nil {
-		logger.WithError(err).Error("error connecting to arduino-cli rpc server")
-		return nil, err
-	}
-
-	client := rpc.NewArduinoCoreClient(conn)
-	instance, err := getRPCInstance(ctx, client, logger)
-	if err != nil {
-		return nil, err
-	}
-
+func NewClient(ctx context.Context, dataDir, port string, logger *log.Logger) Client {
 	return &ArdiClient{
 		ctx:        ctx,
-		connection: conn,
+		dataDir:    dataDir,
+		dataConfig: path.Join(dataDir, configFile),
+		port:       port,
 		logger:     logger,
-		client:     client,
-		instance:   instance,
-	}, nil
+	}
+}
+
+// SetDataDirectory sets the data directory for arduino-cli
+func (c *ArdiClient) SetDataDirectory(dir string) {
+	c.dataDir = dir
+	c.dataConfig = path.Join(dir, configFile)
+}
+
+// SetPort sets the port for arduino-cli
+func (c *ArdiClient) SetPort(port string) {
+	c.port = port
 }
 
 //StartDaemon starts the arduino-cli grpc server locally
-func StartDaemon(port string, dataConfigPath string, verbose bool) {
-	var cli = arduino.ArduinoCli
+func (c *ArdiClient) StartDaemon(verbose bool, successChan chan string, errChan chan error) {
 
-	args := []string{
-		"daemon",
-		"--port",
-		port,
-		"--config-file",
-		dataConfigPath,
-	}
+	c.logger.Debug("Creating grpc server")
+	s := grpc.NewServer()
+	c.grpcServer = s
+
+	commands.RegisterArduinoCoreServer(s, &daemon.ArduinoCoreServerImpl{
+		VersionString: globals.VersionInfo.VersionString,
+	})
+	// Register the settings service
+	settings.RegisterSettingsServer(s, &daemon.SettingsService{})
+
 	if verbose {
-		args = append(args, "--verbose")
+		debug.RegisterDebugServer(s, &daemon.DebugService{})
 	}
-	cli.SetArgs(args)
-	if err := cli.Execute(); err != nil {
-		fmt.Printf("Error starting daemon: %s", err.Error())
+
+	go func() {
+		c.logger.Infof("Starting daemon on TCP address 127.0.0.1:%s", c.port)
+		lis, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%s", c.port))
+		if err != nil {
+			errChan <- err
+		}
+		c.listener = lis
+		msg := fmt.Sprintf("Daemon is now listening on 127.0.0.1:%s...", c.port)
+		successChan <- msg
+		s.Serve(lis)
+	}()
+}
+
+// Connect connect client to grpc server
+func (c *ArdiClient) Connect() error {
+	c.logger.Debug("Connecting to daemon")
+
+	conn, err := c.createServerConnection()
+	if err != nil {
+		return err
 	}
+	c.clientConnection = conn
+
+	settingsClient := settings.NewSettingsClient(conn)
+	data := util.GenDefaultDataConfig(c.port, c.dataDir)
+	yamlData, _ := yaml.Marshal(&data)
+	jsonData, _ := yaml2.YAMLToJSON(yamlData)
+
+	if _, err := settingsClient.Merge(
+		c.ctx,
+		&settings.RawData{
+			JsonData: string(jsonData),
+		},
+	); err != nil {
+		return err
+	}
+
+	c.logger.Debug("Creating client")
+	client := rpc.NewArduinoCoreClient(conn)
+	c.client = client
+
+	c.logger.Debug("Creating rpc instance")
+	instance, err := c.createInstance()
+	if err != nil {
+		return err
+	}
+	c.instance = instance
+
+	return nil
+}
+
+// Close closes the underlying grpc connection
+func (c *ArdiClient) Close() {
+	c.logger.Debug("Closing client connection")
+	c.clientConnection.Close()
+	c.logger.Debug("Stopping grpc server")
+	c.grpcServer.Stop()
+	c.logger.Debug("Closing net listener")
+	c.listener.Close()
 }
 
 // UpdateIndexFiles updates platform and library index files
@@ -704,6 +779,60 @@ func (c *ArdiClient) ClientVersion() string {
 }
 
 // private methods
+func (c *ArdiClient) createInstance() (*rpc.Instance, error) {
+	var err error
+	var instance *rpc.Instance
+
+	initRespStream, err := c.client.Init(c.ctx, &rpc.InitReq{})
+	if err != nil {
+		c.logger.Errorf("Error creating server instance: %s", err.Error())
+		return nil, err
+	}
+
+	// Loop and consume the server stream until all the setup procedures are done.
+	for {
+		initResp, initErr := initRespStream.Recv()
+
+		if initErr != nil {
+			// The server is done.
+			if initErr != io.EOF {
+				err = initErr
+			}
+			break
+		}
+
+		// The server sent us a valid instance, let's print its ID.
+		if instance = initResp.GetInstance(); instance != nil {
+			c.logger.Debugf("Got a new instance with ID: %v", instance.GetId())
+			break
+		}
+
+		// When a download is ongoing, log the progress
+		if initResp.GetDownloadProgress() != nil {
+			c.logger.Debugf("DOWNLOAD: %s", initResp.GetDownloadProgress())
+		}
+
+		// When an overall task is ongoing, log the progress
+		if initResp.GetTaskProgress() != nil {
+			c.logger.Debugf("TASK: %s", initResp.GetTaskProgress())
+		}
+	}
+
+	return instance, err
+}
+
+func (c *ArdiClient) createServerConnection() (*grpc.ClientConn, error) {
+	ctxWithTimeout, cancel := context.WithTimeout(c.ctx, 2*time.Second)
+	defer cancel()
+	addr := fmt.Sprintf("localhost:%s", c.port)
+	// Establish a connection with the gRPC server, started with the command: arduino-cli daemon
+	conn, err := grpc.DialContext(ctxWithTimeout, addr, grpc.WithInsecure(), grpc.WithBlock())
+	if err != nil {
+		return nil, err
+	}
+	return conn, nil
+}
+
 func (c *ArdiClient) isVerbose() bool {
 	return c.logger.Level == log.DebugLevel
 }
@@ -727,57 +856,4 @@ func parsePlatform(platform string) (string, string, string) {
 	}
 
 	return platform, arch, version
-}
-
-func getRPCInstance(ctx context.Context, client rpc.ArduinoCoreClient, logger *log.Logger) (*rpc.Instance, error) {
-	initRespStream, err := client.Init(ctx, &rpc.InitReq{})
-	if err != nil {
-		logger.Errorf("Error creating server instance: %s", err.Error())
-		return nil, err
-	}
-
-	var instance *rpc.Instance
-
-	// Loop and consume the server stream until all the setup procedures are done.
-	for {
-		initResp, err := initRespStream.Recv()
-		// The server is done.
-		if err == io.EOF {
-			return instance, nil
-		}
-
-		// There was an error.
-		if err != nil {
-			logger.WithError(err).Error("Init error")
-			return nil, err
-		}
-
-		// The server sent us a valid instance, let's print its ID.
-		if instance = initResp.GetInstance(); instance != nil {
-			logger.Debugf("Got a new instance with ID: %v", instance.GetId())
-			return instance, nil
-		}
-
-		// When a download is ongoing, log the progress
-		if initResp.GetDownloadProgress() != nil {
-			logger.Debugf("DOWNLOAD: %s", initResp.GetDownloadProgress())
-		}
-
-		// When an overall task is ongoing, log the progress
-		if initResp.GetTaskProgress() != nil {
-			logger.Debugf("TASK: %s", initResp.GetTaskProgress())
-		}
-	}
-}
-
-func getServerConnection(ctx context.Context, port string) (*grpc.ClientConn, error) {
-	ctxWithTimeout, cancel := context.WithTimeout(ctx, 2*time.Second)
-	defer cancel()
-	addr := fmt.Sprintf("localhost:%s", port)
-	// Establish a connection with the gRPC server, started with the command: arduino-cli daemon
-	conn, err := grpc.DialContext(ctxWithTimeout, addr, grpc.WithInsecure(), grpc.WithBlock())
-	if err != nil {
-		return nil, err
-	}
-	return conn, nil
 }

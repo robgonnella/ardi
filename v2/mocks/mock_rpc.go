@@ -62,6 +62,18 @@ func (mr *MockClientMockRecorder) ClientVersion() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ClientVersion", reflect.TypeOf((*MockClient)(nil).ClientVersion))
 }
 
+// Close mocks base method
+func (m *MockClient) Close() {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "Close")
+}
+
+// Close indicates an expected call of Close
+func (mr *MockClientMockRecorder) Close() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Close", reflect.TypeOf((*MockClient)(nil).Close))
+}
+
 // Compile mocks base method
 func (m *MockClient) Compile(arg0 rpc.CompileOpts) error {
 	m.ctrl.T.Helper()
@@ -74,6 +86,20 @@ func (m *MockClient) Compile(arg0 rpc.CompileOpts) error {
 func (mr *MockClientMockRecorder) Compile(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Compile", reflect.TypeOf((*MockClient)(nil).Compile), arg0)
+}
+
+// Connect mocks base method
+func (m *MockClient) Connect() error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Connect")
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Connect indicates an expected call of Connect
+func (mr *MockClientMockRecorder) Connect() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Connect", reflect.TypeOf((*MockClient)(nil).Connect))
 }
 
 // ConnectedBoards mocks base method
@@ -191,6 +217,42 @@ func (m *MockClient) SearchLibraries(arg0 string) ([]*commands.SearchedLibrary, 
 func (mr *MockClientMockRecorder) SearchLibraries(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SearchLibraries", reflect.TypeOf((*MockClient)(nil).SearchLibraries), arg0)
+}
+
+// SetDataDirectory mocks base method
+func (m *MockClient) SetDataDirectory(arg0 string) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "SetDataDirectory", arg0)
+}
+
+// SetDataDirectory indicates an expected call of SetDataDirectory
+func (mr *MockClientMockRecorder) SetDataDirectory(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetDataDirectory", reflect.TypeOf((*MockClient)(nil).SetDataDirectory), arg0)
+}
+
+// SetPort mocks base method
+func (m *MockClient) SetPort(arg0 string) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "SetPort", arg0)
+}
+
+// SetPort indicates an expected call of SetPort
+func (mr *MockClientMockRecorder) SetPort(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetPort", reflect.TypeOf((*MockClient)(nil).SetPort), arg0)
+}
+
+// StartDaemon mocks base method
+func (m *MockClient) StartDaemon(arg0 bool, arg1 chan string, arg2 chan error) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "StartDaemon", arg0, arg1, arg2)
+}
+
+// StartDaemon indicates an expected call of StartDaemon
+func (mr *MockClientMockRecorder) StartDaemon(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StartDaemon", reflect.TypeOf((*MockClient)(nil).StartDaemon), arg0, arg1, arg2)
 }
 
 // UninstallLibrary mocks base method

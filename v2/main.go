@@ -26,11 +26,14 @@ package main
 import (
 	"context"
 
+	log "github.com/sirupsen/logrus"
+
 	"github.com/robgonnella/ardi/v2/commands"
 )
 
 func main() {
 	ctx := context.Background()
-	rootCmd := commands.GetRootCmd()
+	logger := log.New()
+	rootCmd := commands.GetRootCmd(logger)
 	rootCmd.ExecuteContext(ctx)
 }

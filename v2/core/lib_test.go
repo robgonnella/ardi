@@ -11,7 +11,7 @@ import (
 )
 
 func TestLibCore(t *testing.T) {
-	testutil.RunTest("installs versioned library", t, func(st *testing.T, env testutil.TestEnv) {
+	testutil.RunUnitTest("installs versioned library", t, func(env testutil.UnitTestEnv) {
 		defer env.Ctrl.Finish()
 
 		lib := "Adafruit_Pixie"
@@ -22,12 +22,12 @@ func TestLibCore(t *testing.T) {
 		env.Client.EXPECT().InstallLibrary(lib, version).Times(1).Return(installedVersion, nil)
 
 		returnedLib, returnedVers, err := env.ArdiCore.Lib.Add(library)
-		assert.NoError(st, err)
-		assert.Equal(st, returnedLib, lib)
-		assert.Equal(st, returnedVers, installedVersion)
+		assert.NoError(env.T, err)
+		assert.Equal(env.T, returnedLib, lib)
+		assert.Equal(env.T, returnedVers, installedVersion)
 	})
 
-	testutil.RunTest("returns install error", t, func(st *testing.T, env testutil.TestEnv) {
+	testutil.RunUnitTest("returns install error", t, func(env testutil.UnitTestEnv) {
 		defer env.Ctrl.Finish()
 
 		errString := "dummy error"
@@ -40,30 +40,30 @@ func TestLibCore(t *testing.T) {
 		env.Client.EXPECT().InstallLibrary(lib, version).Times(1).Return("", dummyErr)
 
 		_, _, err := env.ArdiCore.Lib.Add(library)
-		assert.Error(st, err)
-		assert.EqualError(st, err, errString)
+		assert.Error(env.T, err)
+		assert.EqualError(env.T, err, errString)
 	})
 
-	testutil.RunTest("uninstalls library", t, func(st *testing.T, env testutil.TestEnv) {
+	testutil.RunUnitTest("uninstalls library", t, func(env testutil.UnitTestEnv) {
 		defer env.Ctrl.Finish()
 		libName := "Adafruit_Pixie"
 		env.Client.EXPECT().UninstallLibrary(libName).Times(1).Return(nil)
 		err := env.ArdiCore.Lib.Remove(libName)
-		assert.NoError(st, err)
+		assert.NoError(env.T, err)
 	})
 
-	testutil.RunTest("returns uninstall error", t, func(st *testing.T, env testutil.TestEnv) {
+	testutil.RunUnitTest("returns uninstall error", t, func(env testutil.UnitTestEnv) {
 		defer env.Ctrl.Finish()
 		errString := "dummy error"
 		dummyErr := errors.New(errString)
 		libName := "Adafruit_Pixie"
 		env.Client.EXPECT().UninstallLibrary(libName).Times(1).Return(dummyErr)
 		err := env.ArdiCore.Lib.Remove(libName)
-		assert.Error(st, err)
-		assert.EqualError(st, err, errString)
+		assert.Error(env.T, err)
+		assert.EqualError(env.T, err, errString)
 	})
 
-	testutil.RunTest("prints library searches to stdout", t, func(st *testing.T, env testutil.TestEnv) {
+	testutil.RunUnitTest("prints library searches to stdout", t, func(env testutil.UnitTestEnv) {
 		defer env.Ctrl.Finish()
 
 		searchQuery := "wifi101"
@@ -85,12 +85,12 @@ func TestLibCore(t *testing.T) {
 		env.Client.EXPECT().SearchLibraries(searchQuery).Times(1).Return(searchedLibs, nil)
 
 		err := env.ArdiCore.Lib.Search(searchQuery)
-		assert.NoError(st, err)
+		assert.NoError(env.T, err)
 
-		assert.Contains(st, env.Stdout.String(), lib.Name)
+		assert.Contains(env.T, env.Stdout.String(), lib.Name)
 	})
 
-	testutil.RunTest("prints installed libraries to stdout", t, func(st *testing.T, env testutil.TestEnv) {
+	testutil.RunUnitTest("prints installed libraries to stdout", t, func(env testutil.UnitTestEnv) {
 		defer env.Ctrl.Finish()
 
 		installedLib := commands.InstalledLibrary{
@@ -105,8 +105,8 @@ func TestLibCore(t *testing.T) {
 		env.ArdiCore.Lib.ListInstalled()
 
 		stdout := env.Stdout.String()
-		assert.Contains(st, stdout, installedLib.Library.Name)
-		assert.Contains(st, stdout, installedLib.Library.Version)
-		assert.Contains(st, stdout, installedLib.Library.Sentence)
+		assert.Contains(env.T, stdout, installedLib.Library.Name)
+		assert.Contains(env.T, stdout, installedLib.Library.Version)
+		assert.Contains(env.T, stdout, installedLib.Library.Sentence)
 	})
 }

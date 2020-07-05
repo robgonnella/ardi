@@ -12,13 +12,13 @@ import (
 )
 
 func TestCompileCore(t *testing.T) {
-	testutil.RunTest("errors when compiling directory with no sketch", t, func(st *testing.T, env testutil.TestEnv) {
+	testutil.RunUnitTest("errors when compiling directory with no sketch", t, func(env testutil.UnitTestEnv) {
 		defer env.Ctrl.Finish()
 		err := env.ArdiCore.Compiler.Compile(".", "some-fqbn", []string{}, false)
-		assert.Error(st, err)
+		assert.Error(env.T, err)
 	})
 
-	testutil.RunTest("succeeds when compiling directory with .ino file", t, func(st *testing.T, env testutil.TestEnv) {
+	testutil.RunUnitTest("succeeds when compiling directory with .ino file", t, func(env testutil.UnitTestEnv) {
 		defer env.Ctrl.Finish()
 
 		expectedFqbn := "some-fqbb"
@@ -39,10 +39,10 @@ func TestCompileCore(t *testing.T) {
 		env.Client.EXPECT().Compile(compileOpts).Times(1)
 
 		err := env.ArdiCore.Compiler.Compile(env.BlinkProjDir, expectedFqbn, expectedBuildProps, expectedShowProps)
-		assert.NoError(st, err)
+		assert.NoError(env.T, err)
 	})
 
-	testutil.RunTest("returns compile error", t, func(st *testing.T, env testutil.TestEnv) {
+	testutil.RunUnitTest("returns compile error", t, func(env testutil.UnitTestEnv) {
 		defer env.Ctrl.Finish()
 		errString := "dummy error"
 		dummyErr := errors.New(errString)
@@ -65,7 +65,7 @@ func TestCompileCore(t *testing.T) {
 		env.Client.EXPECT().Compile(compileOpts).Times(1).Return(dummyErr)
 
 		err := env.ArdiCore.Compiler.Compile(env.BlinkProjDir, expectedFqbn, expectedBuildProps, expectedShowProps)
-		assert.Error(st, err)
-		assert.EqualError(st, err, errString)
+		assert.Error(env.T, err)
+		assert.EqualError(env.T, err, errString)
 	})
 }

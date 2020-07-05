@@ -1,11 +1,8 @@
 package core
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
-	"os"
 
 	log "github.com/sirupsen/logrus"
 
@@ -45,7 +42,7 @@ func (p *ProjectCore) Init(port string) error {
 
 	p.logger.Info("data directory initialized")
 
-	if err := initializeArdiJSON(); err != nil {
+	if err := util.InitArdiJSON(); err != nil {
 		return err
 	}
 
@@ -215,22 +212,12 @@ func (p *ProjectCore) BuildAll() error {
 	return nil
 }
 
+// GetDataConfig returns config file contents in .ardi/arduino-cli.yml
+func (p *ProjectCore) GetDataConfig() types.DataConfig {
+	return p.ardiYAML.Config
+}
+
 // private methods
 func (p *ProjectCore) isQuiet() bool {
 	return p.logger.Level == log.InfoLevel
-}
-
-// helpers
-func initializeArdiJSON() error {
-	if _, err := os.Stat(paths.ArdiProjectBuildConfig); os.IsNotExist(err) {
-		buildConfig := types.ArdiConfig{
-			Libraries: make(map[string]string),
-			Builds:    make(map[string]types.ArdiBuildJSON),
-		}
-		jsonConfig, _ := json.MarshalIndent(&buildConfig, "\n", " ")
-		if err := ioutil.WriteFile(paths.ArdiProjectBuildConfig, jsonConfig, 0644); err != nil {
-			return err
-		}
-	}
-	return nil
 }

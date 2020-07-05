@@ -10,7 +10,7 @@ import (
 )
 
 func TestBoardCore(t *testing.T) {
-	testutil.RunTest("prints fqbns", t, func(st *testing.T, env testutil.TestEnv) {
+	testutil.RunUnitTest("prints fqbns", t, func(env testutil.UnitTestEnv) {
 		defer env.Ctrl.Finish()
 		boards := testutil.GenerateCmdBoards(10)
 		platform := testutil.GenerateCmdPlatform("test-platform", boards)
@@ -20,23 +20,23 @@ func TestBoardCore(t *testing.T) {
 		env.ArdiCore.Board.FQBNS("")
 
 		for _, b := range boards {
-			assert.Contains(st, env.Stdout.String(), b.GetName())
-			assert.Contains(st, env.Stdout.String(), b.GetFqbn())
+			assert.Contains(env.T, env.Stdout.String(), b.GetName())
+			assert.Contains(env.T, env.Stdout.String(), b.GetFqbn())
 		}
 	})
 
-	testutil.RunTest("returns fqbn error", t, func(st *testing.T, env testutil.TestEnv) {
+	testutil.RunUnitTest("returns fqbn error", t, func(env testutil.UnitTestEnv) {
 		defer env.Ctrl.Finish()
 		errString := "dummy error"
 		dummyErr := errors.New(errString)
 
 		env.Client.EXPECT().GetPlatforms().Return(nil, dummyErr)
 		err := env.ArdiCore.Board.FQBNS("")
-		assert.Error(st, err)
-		assert.EqualError(st, err, errString)
+		assert.Error(env.T, err)
+		assert.EqualError(env.T, err, errString)
 	})
 
-	testutil.RunTest("prints platforms", t, func(st *testing.T, env testutil.TestEnv) {
+	testutil.RunUnitTest("prints platforms", t, func(env testutil.UnitTestEnv) {
 		defer env.Ctrl.Finish()
 		boards := testutil.GenerateCmdBoards(10)
 		platform := testutil.GenerateCmdPlatform("test-platform", boards)
@@ -46,19 +46,19 @@ func TestBoardCore(t *testing.T) {
 		env.ArdiCore.Board.Platforms("")
 
 		for _, b := range boards {
-			assert.Contains(st, env.Stdout.String(), b.GetName())
-			assert.Contains(st, env.Stdout.String(), platform.GetID())
+			assert.Contains(env.T, env.Stdout.String(), b.GetName())
+			assert.Contains(env.T, env.Stdout.String(), platform.GetID())
 		}
 	})
 
-	testutil.RunTest("returns platform error", t, func(st *testing.T, env testutil.TestEnv) {
+	testutil.RunUnitTest("returns platform error", t, func(env testutil.UnitTestEnv) {
 		defer env.Ctrl.Finish()
 		errString := "dummy error"
 		dummyErr := errors.New(errString)
 
 		env.Client.EXPECT().GetPlatforms().Return(nil, dummyErr)
 		err := env.ArdiCore.Board.Platforms("")
-		assert.Error(st, err)
-		assert.EqualError(st, err, errString)
+		assert.Error(env.T, err)
+		assert.EqualError(env.T, err, errString)
 	})
 }

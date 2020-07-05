@@ -57,6 +57,8 @@ func (w *WatchCore) Init(port, dir string, props []string) error {
 		w.port = NewSerialCore(w.target.Board.Port, w.project.Baud, w.logger)
 	}
 
+	w.buildProps = props
+
 	return nil
 }
 

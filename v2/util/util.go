@@ -2,6 +2,7 @@ package util
 
 import (
 	"bufio"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -79,6 +80,21 @@ func InitDataDirectory(port, dataDirPath, dataConfigPath string) error {
 		}
 	}
 
+	return nil
+}
+
+// InitArdiJSON creates default ardi.json in current directory
+func InitArdiJSON() error {
+	if _, err := os.Stat(paths.ArdiProjectBuildConfig); os.IsNotExist(err) {
+		buildConfig := types.ArdiConfig{
+			Libraries: make(map[string]string),
+			Builds:    make(map[string]types.ArdiBuildJSON),
+		}
+		jsonConfig, _ := json.MarshalIndent(&buildConfig, "\n", " ")
+		if err := ioutil.WriteFile(paths.ArdiProjectBuildConfig, jsonConfig, 0644); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
