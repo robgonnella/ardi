@@ -36,7 +36,9 @@ lint:
 	golint -set_exit_status ./...
 
 test:
-	go test -v -cover ./...
+	rm -rf cover.out
+	go test ./... -coverprofile cover.out
+	go tool cover -func cover.out
 
 docs:
 	go run docs/gen.go
