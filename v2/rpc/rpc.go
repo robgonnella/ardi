@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net"
 	"path"
 	"strings"
@@ -12,12 +13,13 @@ import (
 
 	"github.com/arduino/arduino-cli/cli/globals"
 	"github.com/arduino/arduino-cli/commands/daemon"
+	"github.com/arduino/arduino-cli/inventory"
 	"github.com/arduino/arduino-cli/rpc/commands"
 	rpc "github.com/arduino/arduino-cli/rpc/commands"
-	"github.com/arduino/arduino-cli/rpc/debug"
 	"github.com/arduino/arduino-cli/rpc/settings"
 	yaml2 "github.com/ghodss/yaml"
 	"github.com/robgonnella/ardi/v2/util"
+	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"gopkg.in/yaml.v2"
@@ -98,7 +100,6 @@ func (c *ArdiClient) SetPort(port string) {
 
 //StartDaemon starts the arduino-cli grpc server locally
 func (c *ArdiClient) StartDaemon(verbose bool, successChan chan string, errChan chan error) {
-
 	c.logger.Debug("Creating grpc server")
 	s := grpc.NewServer()
 	c.grpcServer = s
@@ -106,15 +107,32 @@ func (c *ArdiClient) StartDaemon(verbose bool, successChan chan string, errChan 
 	commands.RegisterArduinoCoreServer(s, &daemon.ArduinoCoreServerImpl{
 		VersionString: globals.VersionInfo.VersionString,
 	})
-	// Register the settings service
-	settings.RegisterSettingsServer(s, &daemon.SettingsService{})
 
+	// Register the settings service
+	defaultSettings := util.GenDefaultDataConfig(c.port, c.dataDir)
 	if verbose {
-		debug.RegisterDebugServer(s, &daemon.DebugService{})
+		defaultSettings.Logging.Level = "debug"
+	} else {
+		logrus.SetOutput(ioutil.Discard)
+	}
+	settingsSvr := &daemon.SettingsService{}
+	yamlData, _ := yaml.Marshal(&defaultSettings)
+	jsonData, _ := yaml2.YAMLToJSON(yamlData)
+	if _, err := settingsSvr.Merge(
+		c.ctx,
+		&settings.RawData{
+			JsonData: string(jsonData),
+		},
+	); err != nil {
+		errChan <- err
+		return
 	}
 
+	settings.RegisterSettingsServer(s, settingsSvr)
+	inventory.Init(c.dataDir)
+
 	go func() {
-		c.logger.Infof("Starting daemon on TCP address 127.0.0.1:%s", c.port)
+		c.logger.Debugf("Starting daemon on TCP address 127.0.0.1:%s", c.port)
 		lis, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%s", c.port))
 		if err != nil {
 			errChan <- err
@@ -135,20 +153,6 @@ func (c *ArdiClient) Connect() error {
 		return err
 	}
 	c.clientConnection = conn
-
-	settingsClient := settings.NewSettingsClient(conn)
-	data := util.GenDefaultDataConfig(c.port, c.dataDir)
-	yamlData, _ := yaml.Marshal(&data)
-	jsonData, _ := yaml2.YAMLToJSON(yamlData)
-
-	if _, err := settingsClient.Merge(
-		c.ctx,
-		&settings.RawData{
-			JsonData: string(jsonData),
-		},
-	); err != nil {
-		return err
-	}
 
 	c.logger.Debug("Creating client")
 	client := rpc.NewArduinoCoreClient(conn)

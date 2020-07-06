@@ -11,7 +11,7 @@ import (
 )
 
 func TestCleanCommand(t *testing.T) {
-	testutil.RunIntegrationTest("deletes project level .ardi directory and ardi.json file", t, func(env testutil.IntegrationTestEnv) {
+	testutil.RunIntegrationTest("deletes project level .ardi directory and ardi.json file", t, func(env *testutil.IntegrationTestEnv) {
 		err := util.InitDataDirectory("2222", paths.ArdiProjectDataDir, paths.ArdiProjectDataConfig)
 		assert.NoError(env.T, err)
 		err = util.InitArdiJSON()
@@ -19,7 +19,7 @@ func TestCleanCommand(t *testing.T) {
 		assert.DirExists(env.T, ".ardi")
 		assert.FileExists(env.T, "ardi.json")
 
-		env.RootCmd.SetArgs([]string{"clean"})
+		env.SetArgs([]string{"clean"})
 		err = env.RootCmd.ExecuteContext(env.Ctx)
 		assert.NoError(env.T, err)
 
@@ -29,14 +29,15 @@ func TestCleanCommand(t *testing.T) {
 		assert.True(env.T, os.IsNotExist(dirErr))
 		assert.True(env.T, os.IsNotExist(fileErr))
 	})
-	testutil.RunIntegrationTest("deletes global level .ardi directory and ardi.json file", t, func(env testutil.IntegrationTestEnv) {
+
+	testutil.RunIntegrationTest("deletes global level .ardi directory and ardi.json file", t, func(env *testutil.IntegrationTestEnv) {
 		err := util.InitDataDirectory("2222", paths.ArdiGlobalDataDir, paths.ArdiGlobalDataConfig)
 		assert.NoError(env.T, err)
 
 		assert.DirExists(env.T, paths.ArdiGlobalDataDir)
 		assert.FileExists(env.T, paths.ArdiGlobalDataConfig)
 
-		env.RootCmd.SetArgs([]string{"clean", "--global"})
+		env.SetArgs([]string{"clean", "--global"})
 		err = env.RootCmd.ExecuteContext(env.Ctx)
 		assert.NoError(env.T, err)
 

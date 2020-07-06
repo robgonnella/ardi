@@ -17,7 +17,7 @@ func TestWatchCore(t *testing.T) {
 		assert.NoError(env.T, err)
 
 		port := "/dev/null"
-		sketchDir := env.BlinkProjDir
+		sketchDir := testutil.BlinkProjectDir()
 		props := []string{}
 		connectedBoards := []*rpc.Board{}
 		allBoards := []*rpc.Board{}
@@ -39,7 +39,7 @@ func TestWatchCore(t *testing.T) {
 			Name: "board-name",
 			Port: "/dev/null",
 		}
-		sketchDir := env.BlinkProjDir
+		sketchDir := testutil.BlinkProjectDir()
 		props := []string{}
 		connectedBoards := []*rpc.Board{&board}
 		allBoards := []*rpc.Board{}
@@ -83,14 +83,15 @@ func TestWatchCore(t *testing.T) {
 		}
 
 		props := []string{"somebuild_prop=DTest"}
-		sketchPath := path.Join(env.BlinkProjDir, "blink.ino")
+		projectDir := testutil.BlinkProjectDir()
+		sketchPath := path.Join(projectDir, "blink.ino")
 		showProps := false
 		exportName := ""
 		compileOpts := rpc.CompileOpts{
 			FQBN:       fqbn,
 			BuildProps: props,
 			ShowProps:  showProps,
-			SketchDir:  env.BlinkProjDir,
+			SketchDir:  projectDir,
 			ExportName: exportName,
 			SketchPath: sketchPath,
 		}
@@ -100,7 +101,7 @@ func TestWatchCore(t *testing.T) {
 
 		env.Client.EXPECT().ConnectedBoards().Times(1).Return(connectedBoards)
 		env.Client.EXPECT().AllBoards().Times(1).Return(allBoards)
-		env.ArdiCore.Watch.Init(board.Port, env.BlinkProjDir, props)
+		env.ArdiCore.Watch.Init(board.Port, projectDir, props)
 
 		env.Client.EXPECT().Compile(compileOpts).Times(1).Return(nil)
 
@@ -113,6 +114,7 @@ func TestWatchCore(t *testing.T) {
 		err := env.ArdiCore.Project.Init("2222")
 		assert.NoError(env.T, err)
 
+		projectDir := testutil.BlinkProjectDir()
 		fqbn := "some-board-fqbn"
 		boardName := "some-board-name"
 		port := "/dev/null"
@@ -128,9 +130,9 @@ func TestWatchCore(t *testing.T) {
 		env.Client.EXPECT().ConnectedBoards().Times(1).Return(connectedBoards)
 		env.Client.EXPECT().AllBoards().Times(1).Return(allBoards)
 
-		env.ArdiCore.Watch.Init(board.Port, env.BlinkProjDir, props)
+		env.ArdiCore.Watch.Init(board.Port, projectDir, props)
 
-		env.Client.EXPECT().Upload(fqbn, env.BlinkProjDir, board.Port).Times(1).Return(nil)
+		env.Client.EXPECT().Upload(fqbn, projectDir, board.Port).Times(1).Return(nil)
 
 		err = env.ArdiCore.Watch.Upload()
 		assert.NoError(env.T, err)

@@ -21,14 +21,15 @@ func TestCompileCore(t *testing.T) {
 	testutil.RunUnitTest("succeeds when compiling directory with .ino file", t, func(env testutil.UnitTestEnv) {
 		defer env.Ctrl.Finish()
 
+		projectDir := testutil.BlinkProjectDir()
 		expectedFqbn := "some-fqbb"
-		expectedSketch := path.Join(env.BlinkProjDir, "blink.ino")
+		expectedSketch := path.Join(projectDir, "blink.ino")
 		expectedBuildProps := []string{"build.extra_flags='-DSOME_OPTION'"}
 		expectedShowProps := false
 
 		compileOpts := rpc.CompileOpts{
 			FQBN:       expectedFqbn,
-			SketchDir:  env.BlinkProjDir,
+			SketchDir:  projectDir,
 			SketchPath: expectedSketch,
 			BuildProps: expectedBuildProps,
 			ShowProps:  expectedShowProps,
@@ -38,7 +39,7 @@ func TestCompileCore(t *testing.T) {
 		env.Client.EXPECT().AllBoards().Times(1).Return([]*rpc.Board{})
 		env.Client.EXPECT().Compile(compileOpts).Times(1)
 
-		err := env.ArdiCore.Compiler.Compile(env.BlinkProjDir, expectedFqbn, expectedBuildProps, expectedShowProps)
+		err := env.ArdiCore.Compiler.Compile(projectDir, expectedFqbn, expectedBuildProps, expectedShowProps)
 		assert.NoError(env.T, err)
 	})
 
@@ -47,14 +48,15 @@ func TestCompileCore(t *testing.T) {
 		errString := "dummy error"
 		dummyErr := errors.New(errString)
 
+		projectDir := testutil.BlinkProjectDir()
 		expectedFqbn := "some-fqbb"
-		expectedSketch := path.Join(env.BlinkProjDir, "blink.ino")
+		expectedSketch := path.Join(projectDir, "blink.ino")
 		expectedBuildProps := []string{"build.extra_flags='-DSOME_OPTION'"}
 		expectedShowProps := false
 
 		compileOpts := rpc.CompileOpts{
 			FQBN:       expectedFqbn,
-			SketchDir:  env.BlinkProjDir,
+			SketchDir:  projectDir,
 			SketchPath: expectedSketch,
 			BuildProps: expectedBuildProps,
 			ShowProps:  expectedShowProps,
@@ -64,7 +66,7 @@ func TestCompileCore(t *testing.T) {
 		env.Client.EXPECT().AllBoards().Times(1).Return([]*rpc.Board{})
 		env.Client.EXPECT().Compile(compileOpts).Times(1).Return(dummyErr)
 
-		err := env.ArdiCore.Compiler.Compile(env.BlinkProjDir, expectedFqbn, expectedBuildProps, expectedShowProps)
+		err := env.ArdiCore.Compiler.Compile(projectDir, expectedFqbn, expectedBuildProps, expectedShowProps)
 		assert.Error(env.T, err)
 		assert.EqualError(env.T, err, errString)
 	})

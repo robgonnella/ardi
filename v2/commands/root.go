@@ -1,7 +1,8 @@
 package commands
 
 import (
-	"os"
+	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/robgonnella/ardi/v2/core"
@@ -56,19 +57,19 @@ func shouldShowProjectError(cmd string) bool {
 		!cmdIsVersion(cmd)
 }
 
-func preRun(cmd *cobra.Command, args []string) {
+func preRun(cmd *cobra.Command, args []string) error {
 	setLogger()
 	cmdPath := cmd.CommandPath()
 
 	if strings.HasPrefix(cmdPath, "ardi project") && global {
 		logger.Error("Cannot specify --global with project command")
-		os.Exit(1)
+		return errors.New("Cannot specify --global with project command")
 	}
 
 	if shouldShowProjectError(cmdPath) {
 		logger.Error("Not an ardi project directory")
 		logger.Error("Try 'ardi project init', or run with '--global'")
-		os.Exit(1)
+		return errors.New("Not an ardi project directory")
 	}
 
 	if global || cmdPath == "ardi version" {
@@ -87,13 +88,14 @@ func preRun(cmd *cobra.Command, args []string) {
 	case successMsg := <-successChan:
 		logger.Debug(successMsg)
 	case daemonErr := <-errChan:
-		logger.Errorf("arduino-cli daemon error: %s", daemonErr.Error())
-		os.Exit(1)
+		msg := fmt.Sprintf("arduino-cli daemon error: %s", daemonErr.Error())
+		logger.Errorf(msg)
+		return errors.New(msg)
 	}
 
 	if err := client.Connect(); err != nil {
 		logger.WithError(err).Error("Failed to start ardi client")
-		os.Exit(1)
+		return err
 	}
 
 	if strings.Contains(cmdPath, "lib") || strings.Contains(cmdPath, "platform") {
@@ -107,9 +109,10 @@ func preRun(cmd *cobra.Command, args []string) {
 	if util.IsProjectDirectory() {
 		if err := ardiCore.Project.SetConfigHelpers(); err != nil {
 			logger.WithError(err).Error("Failed to initialize ardi project core")
-			os.Exit(1)
+			return err
 		}
 	}
+	return nil
 }
 
 func getRootCommand() *cobra.Command {
@@ -120,9 +123,10 @@ func getRootCommand() *cobra.Command {
 			"- Manage and store build configurations for projects with versioned dependencies\n- Run builds in CI Pipeline\n" +
 			"- Compile & upload sketches to connected boards\n- Watch log output from connected boards in terminal\n" +
 			"- Auto recompile / reupload on save",
-		PersistentPreRun: preRun,
-		PersistentPostRun: func(cmd *cobra.Command, args []string) {
+		PersistentPreRunE: preRun,
+		PersistentPostRunE: func(cmd *cobra.Command, args []string) error {
 			client.Close()
+			return nil
 		},
 	}
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "Print all logs")

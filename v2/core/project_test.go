@@ -52,7 +52,7 @@ func TestProjectCore(t *testing.T) {
 		err = env.ArdiCore.Project.SetConfigHelpers()
 		assert.NoError(env.T, err)
 
-		err = env.ArdiCore.Project.ProcessSketch(env.BlinkProjDir)
+		err = env.ArdiCore.Project.ProcessSketch(testutil.BlinkProjectDir())
 		assert.NoError(env.T, err)
 
 		assert.NotEmpty(env.T, env.ArdiCore.Project.Directory)
@@ -107,7 +107,7 @@ func TestProjectCore(t *testing.T) {
 		buildName := "blink"
 		platform := "arduino-platform"
 		boardURL := "https://some-board-url.com"
-		path := env.BlinkProjDir
+		projectPath := testutil.BlinkProjectDir()
 		fqbn := "testboardfqbb"
 		buildProp := "some_build_prop"
 		buildPropVal := "DTest"
@@ -119,14 +119,14 @@ func TestProjectCore(t *testing.T) {
 		assert.NoError(env.T, err)
 
 		env.Client.EXPECT().InstallPlatform(platform).Times(1).Return(nil)
-		env.ArdiCore.Project.AddBuild(buildName, platform, boardURL, path, fqbn, buildProps)
+		env.ArdiCore.Project.AddBuild(buildName, platform, boardURL, projectPath, fqbn, buildProps)
 		builds := env.ArdiCore.Project.GetBuilds()
 		dataConfig := env.ArdiCore.Project.GetDataConfig()
 
 		assert.Contains(env.T, builds, buildName)
 		assert.Equal(env.T, builds[buildName].Platform, platform)
 		assert.Equal(env.T, builds[buildName].BoardURL, boardURL)
-		assert.Equal(env.T, builds[buildName].Path, path)
+		assert.Equal(env.T, builds[buildName].Path, projectPath)
 		assert.Equal(env.T, builds[buildName].FQBN, fqbn)
 		assert.Contains(env.T, builds[buildName].Props, buildProp)
 		assert.Equal(env.T, builds[buildName].Props[buildProp], buildPropVal)
@@ -144,7 +144,7 @@ func TestProjectCore(t *testing.T) {
 		buildName := "blink"
 		platform := "arduino-platform"
 		boardURL := "https://some-board-url.com"
-		path := env.BlinkProjDir
+		path := testutil.BlinkProjectDir()
 		fqbn := "testboardfqbb"
 		buildProp := "some_build_prop"
 		buildPropVal := "DTest"
@@ -177,7 +177,7 @@ func TestProjectCore(t *testing.T) {
 		buildName := "blink"
 		platform := "arduino-platform"
 		boardURL := "https://some-board-url.com"
-		sketchDir := env.BlinkProjDir
+		sketchDir := testutil.BlinkProjectDir()
 		fqbn := "testboardfqbb"
 		buildProp := "some_build_prop"
 		buildPropVal := "DTest"
@@ -210,7 +210,7 @@ func TestProjectCore(t *testing.T) {
 		buildName := "blink"
 		platform := "arduino-platform"
 		boardURL := "https://some-board-url.com"
-		sketchDir := env.BlinkProjDir
+		sketchDir := testutil.BlinkProjectDir()
 		fqbn := "testboardfqbb"
 		buildProp := "some_build_prop"
 		buildPropVal := "DTest"

@@ -43,7 +43,7 @@ func GenDefaultDataConfig(port, dataDirPath string) types.DataConfig {
 			User:      path.Join(dataDirPath, "Arduino"),
 		},
 		Logging: types.Logging{
-			Level:  "info",
+			Level:  "fatal",
 			Format: "text",
 			File:   "",
 		},
@@ -72,12 +72,10 @@ func InitDataDirectory(port, dataDirPath, dataConfigPath string) error {
 		}
 	}
 
-	if _, err := os.Stat(dataConfigPath); os.IsNotExist(err) {
-		dataConfig := GenDefaultDataConfig(port, dataDirPath)
-		yamlConfig, _ := yaml.Marshal(&dataConfig)
-		if err := ioutil.WriteFile(dataConfigPath, yamlConfig, 0644); err != nil {
-			return err
-		}
+	dataConfig := GenDefaultDataConfig(port, dataDirPath)
+	yamlConfig, _ := yaml.Marshal(&dataConfig)
+	if err := ioutil.WriteFile(dataConfigPath, yamlConfig, 0644); err != nil {
+		return err
 	}
 
 	return nil

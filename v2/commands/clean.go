@@ -15,22 +15,23 @@ func getCleanCommand() *cobra.Command {
 		Long: "\nRemoves all installed platforms and libraries from project " +
 			"data directory. If run with \"--global\" all data will be removed " +
 			"from ~/.ardi",
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			logger.Infof("Cleaning ardi data directory: %s", dataDir)
 			if err := util.CleanDataDirectory(dataDir); err != nil {
 				logger.WithError(err).Errorf("Failed to clean ardi directory. You can manually clean all data by removing %s", dataDir)
-				return
+				return err
 			}
 
 			if !global {
 				logger.Info("Cleaning ardi build config")
 				if err := os.RemoveAll(paths.ArdiProjectBuildConfig); err != nil {
 					logger.WithError(err).Errorf("Failed to remove %s", paths.ArdiProjectBuildConfig)
-					return
+					return err
 				}
 			}
 
 			logger.Infof("Successfully removed all data from %s", dataDir)
+			return nil
 		},
 	}
 }

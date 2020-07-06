@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -11,6 +12,7 @@ import (
 
 	rpccommands "github.com/arduino/arduino-cli/rpc/commands"
 	"github.com/golang/mock/gomock"
+	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
@@ -19,12 +21,31 @@ import (
 	"github.com/robgonnella/ardi/v2/mocks"
 )
 
+var port = 2221
+
+func init() {
+	logrus.SetOutput(ioutil.Discard)
+}
+
 func cleanCoreDir() {
 	here, _ := filepath.Abs(".")
 	dataDir := path.Join(here, "../core/.ardi")
 	jsonFile := path.Join(here, "../core/ardi.json")
 	os.RemoveAll(dataDir)
 	os.Remove(jsonFile)
+}
+
+func cleanCommandsDir() {
+	here, _ := filepath.Abs(".")
+	dataDir := path.Join(here, "../commands/.ardi")
+	jsonFile := path.Join(here, "../commands/ardi.json")
+	os.RemoveAll(dataDir)
+	os.Remove(jsonFile)
+}
+
+// ArduinoMegaFQBN returns appropriate fqbn for arduino mega 2560
+func ArduinoMegaFQBN() string {
+	return "arduino:avr:mega"
 }
 
 // UnitTestEnv represents our unit test environment
@@ -35,7 +56,6 @@ type UnitTestEnv struct {
 	Client       *mocks.MockClient
 	ArdiCore     *core.ArdiCore
 	Stdout       *bytes.Buffer
-	BlinkProjDir string
 	PixieProjDir string
 	EmptyProjDIr string
 }
@@ -46,6 +66,12 @@ func GenerateCmdBoard(name, fqbn string) *rpccommands.Board {
 		fqbn = fmt.Sprintf("%s-fqbn", name)
 	}
 	return &rpccommands.Board{Name: name, Fqbn: fqbn}
+}
+
+// BlinkProjectDir returns path to blink project directory
+func BlinkProjectDir() string {
+	here, _ := filepath.Abs(".")
+	return path.Join(here, "../test_projects/blink")
 }
 
 // GenerateCmdBoards generate a list of boards
@@ -73,7 +99,6 @@ func RunUnitTest(name string, t *testing.T, f func(env UnitTestEnv)) {
 		ctrl := gomock.NewController(t)
 		client := mocks.NewMockClient(ctrl)
 		logger := log.New()
-		here, _ := filepath.Abs(".")
 
 		cleanCoreDir()
 
@@ -84,13 +109,12 @@ func RunUnitTest(name string, t *testing.T, f func(env UnitTestEnv)) {
 		ardiCore := core.NewArdiCore(client, logger)
 
 		env := UnitTestEnv{
-			T:            st,
-			Ctrl:         ctrl,
-			Logger:       logger,
-			Client:       client,
-			ArdiCore:     ardiCore,
-			Stdout:       &b,
-			BlinkProjDir: path.Join(here, "../test_projects/blink"),
+			T:        st,
+			Ctrl:     ctrl,
+			Logger:   logger,
+			Client:   client,
+			ArdiCore: ardiCore,
+			Stdout:   &b,
 		}
 
 		f(env)
@@ -104,13 +128,17 @@ type IntegrationTestEnv struct {
 	T       *testing.T
 	Logger  *log.Logger
 	RootCmd *cobra.Command
+	Port    int
 	SetArgs func(a []string)
 	Stdout  *bytes.Buffer
 }
 
 // RunIntegrationTest runs an ardi integration test
-func RunIntegrationTest(name string, t *testing.T, f func(env IntegrationTestEnv)) {
+func RunIntegrationTest(name string, t *testing.T, f func(env *IntegrationTestEnv)) {
 	t.Run(name, func(st *testing.T) {
+		port = port + 1
+		cleanCommandsDir()
+
 		ctx := context.Background()
 		var b bytes.Buffer
 		logger := log.New()
@@ -125,9 +153,32 @@ func RunIntegrationTest(name string, t *testing.T, f func(env IntegrationTestEnv
 			T:       st,
 			Logger:  logger,
 			RootCmd: rootCmd,
-			Stdout:  &b,
+			Port:    port,
+			SetArgs: func(args []string) {
+				args = append(args, "--verbose")
+				args = append(args, "--port")
+				args = append(args, fmt.Sprintf("%d", port))
+				rootCmd.SetArgs(args)
+			},
+			Stdout: &b,
 		}
 
-		f(env)
+		f(&env)
+		cleanCommandsDir()
 	})
+}
+
+// InstallAvrPlatform uses ardi command to install aruidno:avr platform
+func (e *IntegrationTestEnv) InstallAvrPlatform() error {
+	projectArgs := []string{"project", "init"}
+	e.SetArgs(projectArgs)
+	if err := e.RootCmd.ExecuteContext(e.Ctx); err != nil {
+		return err
+	}
+	platformArgs := []string{"platform", "add", "arduino:avr"}
+	e.SetArgs(platformArgs)
+	if err := e.RootCmd.ExecuteContext(e.Ctx); err != nil {
+		return err
+	}
+	return nil
 }

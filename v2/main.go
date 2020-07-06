@@ -25,6 +25,7 @@ package main
 
 import (
 	"context"
+	"os"
 
 	log "github.com/sirupsen/logrus"
 
@@ -35,5 +36,8 @@ func main() {
 	ctx := context.Background()
 	logger := log.New()
 	rootCmd := commands.GetRootCmd(logger)
-	rootCmd.ExecuteContext(ctx)
+	if err := rootCmd.ExecuteContext(ctx); err != nil {
+		logger.WithError(err).Error("Command failed")
+		os.Exit(1)
+	}
 }
