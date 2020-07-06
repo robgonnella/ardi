@@ -1,6 +1,8 @@
 package commands
 
 import (
+	"errors"
+
 	"github.com/spf13/cobra"
 )
 
@@ -11,18 +13,22 @@ func getPlatformListCmd() *cobra.Command {
 		Use:   "list",
 		Long:  "\nList platforms",
 		Short: "List platforms",
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			if all || (!all && !installed) {
 				if err := ardiCore.Platform.ListAll(); err != nil {
 					logger.WithError(err).Error("Failed to list arduino platforms")
+					return err
 				}
+				return nil
 			}
 
 			if installed {
 				if err := ardiCore.Platform.ListInstalled(); err != nil {
 					logger.WithError(err).Error("Failed to list installed arduino platforms")
+					return err
 				}
 			}
+			return nil
 		},
 	}
 	listCmd.Flags().BoolVarP(&all, "all", "a", false, "List all platforms")
@@ -36,22 +42,26 @@ func getPlatformAddCmd() *cobra.Command {
 		Use:   "add",
 		Long:  "\nInstall platforms",
 		Short: "Install platforms",
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			if all {
 				if err := ardiCore.Platform.AddAll(); err != nil {
 					logger.WithError(err).Error("Failed to install arduino platforms")
+					return err
 				}
-				return
+				return nil
 			}
 			if len(args) == 0 {
-				logger.Error("No platforms specified")
-				return
+				msg := "No platforms specified"
+				logger.Error(msg)
+				return errors.New(msg)
 			}
 			for _, p := range args {
 				if err := ardiCore.Platform.Add(p); err != nil {
 					logger.WithError(err).Error("Failed to install arduino platforms")
+					return err
 				}
 			}
+			return nil
 		},
 	}
 
@@ -65,12 +75,14 @@ func getPlatformRemoveCmd() *cobra.Command {
 		Long:  "\nRemove installed platforms",
 		Short: "Remove installed platforms",
 		Args:  cobra.MinimumNArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			for _, p := range args {
 				if err := ardiCore.Platform.Remove(p); err != nil {
 					logger.WithError(err).Errorf("Failed to remove arduino platform %s", p)
+					return err
 				}
 			}
+			return nil
 		},
 	}
 

@@ -13,10 +13,12 @@ func getProjectInitCommand() *cobra.Command {
 			"project level data directory for storing dependencies, and an " +
 			"ardi.json file for managing builds and dependencies.",
 		Aliases: []string{"update"},
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := ardiCore.Project.Init(port); err != nil {
 				logger.WithError(err).Error("Failed to initialize ardi project")
+				return err
 			}
+			return nil
 		},
 	}
 
@@ -28,10 +30,12 @@ func getProjectListPlatformCmd() *cobra.Command {
 		Use:   "platforms",
 		Long:  "\nList all installed platforms for this project",
 		Short: "List all installed platforms for this project",
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := ardiCore.Platform.ListInstalled(); err != nil {
 				logger.WithError(err).Error("Failed to list installed arduino platforms")
+				return err
 			}
+			return nil
 		},
 	}
 	return listCmd
@@ -43,13 +47,15 @@ func getProjectListLibrariesCmd() *cobra.Command {
 		Long:    "\nList all project libraries specified in ardi.json",
 		Short:   "List all project libraries specified in ardi.json",
 		Aliases: []string{"libs"},
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			logger.Info("Libraries specified in ardi.json")
 			ardiCore.Project.ListLibraries()
 			logger.Info("Installed libraries")
 			if err := ardiCore.Lib.ListInstalled(); err != nil {
 				logger.WithError(err).Error("Failed to list installed arduino libraries")
+				return err
 			}
+			return nil
 		},
 	}
 	return listCmd
@@ -87,19 +93,22 @@ func getProjectAddPlatformCmd() *cobra.Command {
 		Long:    "\nAdd platform(s) to project",
 		Short:   "Add platform(s) to project",
 		Aliases: []string{"platforms"},
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 0 || all {
 				if err := ardiCore.Platform.AddAll(); err != nil {
 					logger.WithError(err).Error("Failed to add arduino platforms")
+					return err
 				}
-				return
+				return nil
 			}
 
 			for _, p := range args {
 				if err := ardiCore.Platform.Add(p); err != nil {
 					logger.WithError(err).Errorf("Failed to add arduino platform %s", p)
+					return err
 				}
 			}
+			return nil
 		},
 	}
 	addCmd.Flags().BoolVarP(&all, "all", "a", false, "Add all available platforms")
@@ -136,18 +145,19 @@ func getProjectAddLibCmd() *cobra.Command {
 		Long:  "\nAdd libraries to project",
 		Short: "Add libraries to project\\e[0m",
 		Args:  cobra.MinimumNArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			for _, l := range args {
 				name, vers, err := ardiCore.Lib.Add(l)
 				if err != nil {
 					logger.WithError(err).Errorf("Failed to install library %s", l)
-					return
+					return err
 				}
 				if err := ardiCore.Project.AddLibrary(name, vers); err != nil {
 					logger.WithError(err).Error("Failed to save libary to ardi.json")
-					return
+					return err
 				}
 			}
+			return nil
 		},
 	}
 	return addCmd
@@ -172,12 +182,14 @@ func getProjectRemovePlatformCmd() *cobra.Command {
 		Short:   "Remove platform(s) from project",
 		Aliases: []string{"platforms"},
 		Args:    cobra.MinimumNArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			for _, p := range args {
 				if err := ardiCore.Platform.Remove(p); err != nil {
 					logger.WithError(err).Errorf("Failed to remove arduino platform %s", p)
+					return err
 				}
 			}
+			return nil
 		},
 	}
 	return removeCmd
@@ -190,12 +202,14 @@ func getProjectRemoveBuildCmd() *cobra.Command {
 		Short:   "Remove build config from project",
 		Aliases: []string{"builds"},
 		Args:    cobra.MinimumNArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			for _, b := range args {
 				if err := ardiCore.Project.RemoveBuild(b); err != nil {
 					logger.WithError(err).Errorf("Failed to remove build %s", b)
+					return err
 				}
 			}
+			return nil
 		},
 	}
 	return removeCmd
@@ -207,17 +221,18 @@ func getProjectRemoveLibCmd() *cobra.Command {
 		Long:  "\nRemove libraries from project",
 		Short: "Remove libraries from project",
 		Args:  cobra.MinimumNArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			for _, l := range args {
 				if err := ardiCore.Lib.Remove(l); err != nil {
 					logger.WithError(err).Errorf("Failed to uninstall library: %s", l)
-					return
+					return err
 				}
 				if err := ardiCore.Lib.Remove(l); err != nil {
 					logger.WithError(err).Errorf("Failed to remove library from ardi.json: %s", l)
-					return
+					return err
 				}
 			}
+			return nil
 		},
 	}
 	return removeCmd
@@ -240,19 +255,22 @@ func getProjectBuildCmd() *cobra.Command {
 		Use:   "build",
 		Short: "Compile builds specified in ardi.json",
 		Long:  "\nCompile builds specified in ardi.json",
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 0 {
 				if err := ardiCore.Project.BuildAll(); err != nil {
 					logger.WithError(err).Error("Failed to build projects")
+					return err
 				}
-				return
+				return nil
 			}
 
 			for _, b := range args {
 				if err := ardiCore.Project.Build(b); err != nil {
 					logger.WithError(err).Errorf("Failed to build project: %s", b)
+					return err
 				}
 			}
+			return nil
 		},
 	}
 	return buildCmd
@@ -263,13 +281,15 @@ func getProjectInstallCmd() *cobra.Command {
 		Use:   "install",
 		Short: "Install all libraries specified in ardi.json",
 		Long:  "\nInstall all libraries specified in ardi.json",
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			for _, l := range ardiCore.Project.GetLibraries() {
 				_, _, err := ardiCore.Lib.Add(l)
 				if err != nil {
 					logger.WithError(err).Errorf("Failed to install %s", l)
+					return err
 				}
 			}
+			return nil
 		},
 	}
 	return installCmd

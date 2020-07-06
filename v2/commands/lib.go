@@ -11,10 +11,12 @@ func getLibSearchCommand() *cobra.Command {
 		Short:   "Searches for availables libraries with optional search filter",
 		Aliases: []string{"find"},
 		Args:    cobra.MinimumNArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := ardiCore.Lib.Search(args[0]); err != nil {
 				logger.WithError(err).Error("Failed to find arduino libraries")
+				return err
 			}
+			return nil
 		},
 	}
 	return initCmd
@@ -26,12 +28,14 @@ func getLibAddCommand() *cobra.Command {
 		Long:  "\nAdds specified libraries to either project or global library directory",
 		Short: "Adds specified libraries to either project or global library directory",
 		Args:  cobra.MinimumNArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			for _, l := range args {
 				if _, _, err := ardiCore.Lib.Add(l); err != nil {
 					logger.WithError(err).Errorf("Failed to add library %s", l)
+					return err
 				}
 			}
+			return nil
 		},
 	}
 	return addCmd
@@ -43,12 +47,14 @@ func getLibRemoveCommand() *cobra.Command {
 		Long:  "\nRemoves specified libraries from project library directory",
 		Short: "Removes specified libraries from project library directory",
 		Args:  cobra.MinimumNArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			for _, l := range args {
 				if err := ardiCore.Lib.Remove(l); err != nil {
 					logger.WithError(err).Errorf("Failed to remove library %s", l)
+					return err
 				}
 			}
+			return nil
 		},
 	}
 	return removeCmd
@@ -60,10 +66,12 @@ func getLibListCommand() *cobra.Command {
 		Long: "\nLists all installed libraries. Use \"--global\" to list " +
 			"globally installed libraries",
 		Short: "Lists all installed libraries",
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := ardiCore.Lib.ListInstalled(); err != nil {
 				logger.WithError(err).Error("Failed to list installed libraries")
+				return err
 			}
+			return nil
 		},
 	}
 	return listCmd

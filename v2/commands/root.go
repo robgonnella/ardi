@@ -124,9 +124,8 @@ func getRootCommand() *cobra.Command {
 			"- Compile & upload sketches to connected boards\n- Watch log output from connected boards in terminal\n" +
 			"- Auto recompile / reupload on save",
 		PersistentPreRunE: preRun,
-		PersistentPostRunE: func(cmd *cobra.Command, args []string) error {
+		PersistentPostRun: func(cmd *cobra.Command, args []string) {
 			client.Close()
-			return nil
 		},
 	}
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "Print all logs")

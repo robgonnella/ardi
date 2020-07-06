@@ -4,23 +4,24 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func process(sketchDir string, buildProps []string) {
+func process(sketchDir string, buildProps []string) error {
 	if err := ardiCore.Watch.Init(port, sketchDir, buildProps); err != nil {
 		logger.WithError(err).Error("Failed to initialize ardi watch core")
-		return
+		return err
 	}
 
 	if err := ardiCore.Watch.Compile(); err != nil {
 		logger.WithError(err).Error("Failed to compile")
-		return
+		return err
 	}
 
 	if err := ardiCore.Watch.Upload(); err != nil {
 		logger.WithError(err).Error("Failed to upload")
-		return
+		return err
 	}
 
 	ardiCore.Watch.WatchSketch()
+	return nil
 }
 
 func getGoCommand() *cobra.Command {
@@ -35,9 +36,9 @@ func getGoCommand() *cobra.Command {
 			"& re-upload for you. Baud will be automatically be detected from " +
 			"sketch file.",
 		Args: cobra.MinimumNArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			sketchDir := args[0]
-			process(sketchDir, buildProps)
+			return process(sketchDir, buildProps)
 		},
 	}
 
