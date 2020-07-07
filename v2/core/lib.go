@@ -31,6 +31,9 @@ func (l *LibCore) Search(searchArg string) error {
 	if err != nil {
 		return err
 	}
+	if len(libraries) == 0 {
+		return fmt.Errorf("no libraries found for %s", searchArg)
+	}
 
 	sort.Slice(libraries, func(i, j int) bool {
 		return libraries[i].GetName() < libraries[j].GetName()

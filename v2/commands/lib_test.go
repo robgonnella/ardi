@@ -103,3 +103,24 @@ func TestLibRemoveCommand(t *testing.T) {
 		assert.NoError(env.T, err)
 	})
 }
+
+func TestLibSearchCommand(t *testing.T) {
+	testutil.RunIntegrationTest("finds a valid library", t, func(env *testutil.IntegrationTestEnv) {
+		runProjectInit(env)
+		searchLib := "Adafruit Pixie"
+		args := []string{"lib", "search", searchLib}
+		env.SetArgs(args)
+		err := env.RootCmd.ExecuteContext(env.Ctx)
+		assert.NoError(env.T, err)
+		assert.Contains(env.T, env.Stdout.String(), searchLib)
+	})
+
+	testutil.RunIntegrationTest("errors on invalid library", t, func(env *testutil.IntegrationTestEnv) {
+		runProjectInit(env)
+		searchLib := "noop"
+		args := []string{"lib", "search", searchLib}
+		env.SetArgs(args)
+		err := env.RootCmd.ExecuteContext(env.Ctx)
+		assert.Error(env.T, err)
+	})
+}
