@@ -49,7 +49,7 @@ func TestLibAddCommand(t *testing.T) {
 func TestLibRemoveCommand(t *testing.T) {
 	testutil.RunIntegrationTest("globally removes a valid library", t, func(env *testutil.IntegrationTestEnv) {
 		lib := "Adafruit Pixie"
-		env.AddLib(lib, true)
+		env.AddLib(lib, testutil.GlobalOpt{true})
 		args := []string{"lib", "remove", lib, "--global"}
 		env.SetArgs(args)
 		err := env.RootCmd.ExecuteContext(env.Ctx)
@@ -81,7 +81,7 @@ func TestLibRemoveCommand(t *testing.T) {
 	testutil.RunIntegrationTest("removes valid library from ardi project", t, func(env *testutil.IntegrationTestEnv) {
 		env.RunProjectInit()
 		lib := "Adafruit Pixie"
-		env.AddLib(lib, false)
+		env.AddLib(lib, testutil.GlobalOpt{false})
 		args := []string{"lib", "remove", "Adafruit Pixie"}
 		env.SetArgs(args)
 		err := env.RootCmd.ExecuteContext(env.Ctx)
@@ -113,7 +113,7 @@ func TestLibSearchCommand(t *testing.T) {
 func TestLibListCommand(t *testing.T) {
 	testutil.RunIntegrationTest("lists globally installed library", t, func(env *testutil.IntegrationTestEnv) {
 		lib := "Adafruit Pixie"
-		env.AddLib(lib, true)
+		env.AddLib(lib, testutil.GlobalOpt{true})
 		args := []string{"lib", "list", "--global"}
 		env.SetArgs(args)
 		err := env.RootCmd.ExecuteContext(env.Ctx)
@@ -131,7 +131,7 @@ func TestLibListCommand(t *testing.T) {
 	testutil.RunIntegrationTest("lists project level installed library", t, func(env *testutil.IntegrationTestEnv) {
 		env.RunProjectInit()
 		lib := "Adafruit Pixie"
-		env.AddLib(lib, false)
+		env.AddLib(lib, testutil.GlobalOpt{false})
 		args := []string{"lib", "list"}
 		env.SetArgs(args)
 		err := env.RootCmd.ExecuteContext(env.Ctx)

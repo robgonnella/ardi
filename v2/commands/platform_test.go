@@ -24,7 +24,7 @@ func TestPlatformAddCommand(t *testing.T) {
 
 	testutil.RunIntegrationTest("adds a valid platform to project", t, func(env *testutil.IntegrationTestEnv) {
 		env.RunProjectInit()
-		args := []string{"platform", "add", "arduino:avr"}
+		args := []string{"platform", "add", "emoro:avr"}
 		env.SetArgs(args)
 		err := env.RootCmd.ExecuteContext(env.Ctx)
 		assert.NoError(env.T, err)
@@ -41,8 +41,8 @@ func TestPlatformAddCommand(t *testing.T) {
 
 func TestPlatformRemoveCommand(t *testing.T) {
 	testutil.RunIntegrationTest("removes a valid platform globally", t, func(env *testutil.IntegrationTestEnv) {
-		platform := "arduino:avr"
-		env.AddPlatform(platform, true)
+		platform := "arduino:sam"
+		env.AddPlatform(platform, testutil.GlobalOpt{true})
 		args := []string{"platform", "remove", platform, "--global"}
 		env.SetArgs(args)
 		err := env.RootCmd.ExecuteContext(env.Ctx)
@@ -58,8 +58,8 @@ func TestPlatformRemoveCommand(t *testing.T) {
 
 	testutil.RunIntegrationTest("removes a valid platform from project", t, func(env *testutil.IntegrationTestEnv) {
 		env.RunProjectInit()
-		platform := "arduino:avr"
-		env.AddPlatform(platform, false)
+		platform := "arduino:megaavr"
+		env.AddPlatform(platform, testutil.GlobalOpt{false})
 		args := []string{"platform", "remove", platform}
 		env.SetArgs(args)
 		err := env.RootCmd.ExecuteContext(env.Ctx)

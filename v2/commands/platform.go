@@ -14,6 +14,10 @@ func getPlatformListCmd() *cobra.Command {
 		Long:  "\nList platforms",
 		Short: "List platforms",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := client.UpdatePlatformIndex(); err != nil {
+				logger.WithError(err).Error("Failed to update platform index file")
+			}
+
 			if all || (!all && !installed) {
 				if err := ardiCore.Platform.ListAll(); err != nil {
 					logger.WithError(err).Error("Failed to list arduino platforms")
@@ -43,6 +47,10 @@ func getPlatformAddCmd() *cobra.Command {
 		Long:  "\nInstall platforms",
 		Short: "Install platforms",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := client.UpdatePlatformIndex(); err != nil {
+				logger.WithError(err).Error("Failed to platform index file")
+			}
+
 			if all {
 				if err := ardiCore.Platform.AddAll(); err != nil {
 					logger.WithError(err).Error("Failed to install arduino platforms")

@@ -3,6 +3,6 @@
 *.hex
 .env
 .ardi
-cover.out
+*.out
 ardi.json
 build/

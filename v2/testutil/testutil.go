@@ -21,14 +21,22 @@ import (
 	"github.com/robgonnella/ardi/v2/mocks"
 )
 
-var port = 2221
+var port = 2222
+var here string
+var userHome string
+
+// GlobalOpt option to make a command act globally
+type GlobalOpt struct {
+	Global bool
+}
 
 func init() {
+	here, _ = filepath.Abs(".")
+	userHome, _ = os.UserHomeDir()
 	logrus.SetOutput(ioutil.Discard)
 }
 
 func cleanCoreDir() {
-	here, _ := filepath.Abs(".")
 	dataDir := path.Join(here, "../core/.ardi")
 	jsonFile := path.Join(here, "../core/ardi.json")
 	os.RemoveAll(dataDir)
@@ -36,11 +44,27 @@ func cleanCoreDir() {
 }
 
 func cleanCommandsDir() {
-	here, _ := filepath.Abs(".")
-	dataDir := path.Join(here, "../commands/.ardi")
-	jsonFile := path.Join(here, "../commands/ardi.json")
-	os.RemoveAll(dataDir)
-	os.Remove(jsonFile)
+	projectDataDir := path.Join(here, "../commands/.ardi")
+	projectJSONFile := path.Join(here, "../commands/ardi.json")
+	os.RemoveAll(projectDataDir)
+	os.Remove(projectJSONFile)
+}
+
+func cleanGlobalData() {
+	globalDataDir := path.Join(userHome, ".ardi")
+	os.RemoveAll(globalDataDir)
+}
+
+func cleanBuilds() {
+	os.RemoveAll(path.Join(BlinkProjectDir(), "build"))
+	os.RemoveAll(path.Join(PixieProjectDir(), "build"))
+}
+
+func cleanAll() {
+	cleanCoreDir()
+	cleanCommandsDir()
+	cleanGlobalData()
+	cleanBuilds()
 }
 
 // ArduinoMegaFQBN returns appropriate fqbn for arduino mega 2560
@@ -74,6 +98,12 @@ func BlinkProjectDir() string {
 	return path.Join(here, "../test_projects/blink")
 }
 
+// PixieProjectDir returns path to blink project directory
+func PixieProjectDir() string {
+	here, _ := filepath.Abs(".")
+	return path.Join(here, "../test_projects/pixie")
+}
+
 // GenerateCmdBoards generate a list of boards
 func GenerateCmdBoards(n int) []*rpccommands.Board {
 	var boards []*rpccommands.Board
@@ -100,7 +130,7 @@ func RunUnitTest(name string, t *testing.T, f func(env UnitTestEnv)) {
 		client := mocks.NewMockClient(ctrl)
 		logger := log.New()
 
-		cleanCoreDir()
+		cleanAll()
 
 		var b bytes.Buffer
 		logger.SetOutput(&b)
@@ -118,7 +148,7 @@ func RunUnitTest(name string, t *testing.T, f func(env UnitTestEnv)) {
 		}
 
 		f(env)
-		cleanCoreDir()
+		cleanAll()
 	})
 }
 
@@ -137,7 +167,7 @@ type IntegrationTestEnv struct {
 func RunIntegrationTest(name string, t *testing.T, f func(env *IntegrationTestEnv)) {
 	t.Run(name, func(st *testing.T) {
 		port = port + 1
-		cleanCommandsDir()
+		cleanAll()
 
 		ctx := context.Background()
 		var b bytes.Buffer
@@ -164,23 +194,25 @@ func RunIntegrationTest(name string, t *testing.T, f func(env *IntegrationTestEn
 		}
 
 		f(&env)
-		cleanCommandsDir()
+		cleanAll()
 	})
 }
 
 // InstallAvrPlatform uses ardi command to install aruidno:avr platform
-func (e *IntegrationTestEnv) InstallAvrPlatform() error {
-	projectArgs := []string{"project", "init"}
-	e.SetArgs(projectArgs)
-	if err := e.RootCmd.ExecuteContext(e.Ctx); err != nil {
-		return err
+func (e *IntegrationTestEnv) InstallAvrPlatform(opt GlobalOpt) error {
+	if !opt.Global {
+		projectArgs := []string{"project", "init"}
+		e.SetArgs(projectArgs)
+		if err := e.RootCmd.ExecuteContext(e.Ctx); err != nil {
+			return err
+		}
 	}
 	platformArgs := []string{"platform", "add", "arduino:avr"}
-	e.SetArgs(platformArgs)
-	if err := e.RootCmd.ExecuteContext(e.Ctx); err != nil {
-		return err
+	if opt.Global {
+		platformArgs = append(platformArgs, "--global")
 	}
-	return nil
+	e.SetArgs(platformArgs)
+	return e.RootCmd.ExecuteContext(e.Ctx)
 }
 
 // RunProjectInit initializes and ardi project directory
@@ -191,9 +223,9 @@ func (e *IntegrationTestEnv) RunProjectInit() error {
 }
 
 // AddLib adds an arduino library
-func (e *IntegrationTestEnv) AddLib(lib string, global bool) error {
+func (e *IntegrationTestEnv) AddLib(lib string, opt GlobalOpt) error {
 	args := []string{"lib", "add", lib}
-	if global {
+	if opt.Global {
 		args = append(args, "--global")
 	}
 	e.SetArgs(args)
@@ -201,9 +233,9 @@ func (e *IntegrationTestEnv) AddLib(lib string, global bool) error {
 }
 
 // AddPlatform adds an arduino platform
-func (e *IntegrationTestEnv) AddPlatform(platform string, global bool) error {
+func (e *IntegrationTestEnv) AddPlatform(platform string, opt GlobalOpt) error {
 	args := []string{"platform", "add", platform}
-	if global {
+	if opt.Global {
 		args = append(args, "--global")
 	}
 	e.SetArgs(args)

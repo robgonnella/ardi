@@ -35,10 +35,18 @@ mock:
 lint:
 	golint -set_exit_status ./...
 
-test:
-	rm -rf cover.out
-	go test ./... -coverprofile cover.out -coverpkg github.com/robgonnella/ardi/v2/commands,github.com/robgonnella/ardi/v2/core
-	go tool cover -func cover.out
+test-unit:
+	rm -rf unit.out
+	go test -v -coverprofile unit.out github.com/robgonnella/ardi/v2/core
+
+test-int:
+	rm -rf int.out
+	go test -v -coverprofile int.out -p 1 github.com/robgonnella/ardi/v2/commands
+
+test-all:
+	$(MAKE) test-unit
+	$(MAKE) test-int
+	./coverage.sh
 
 docs:
 	go run docs/gen.go

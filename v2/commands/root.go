@@ -98,12 +98,6 @@ func preRun(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	if strings.Contains(cmdPath, "lib") || strings.Contains(cmdPath, "platform") {
-		if err := client.UpdateIndexFiles(); err != nil {
-			logger.WithError(err).Error("Failed to update index files")
-		}
-	}
-
 	ardiCore = core.NewArdiCore(client, logger)
 
 	if util.IsProjectDirectory() {
