@@ -37,7 +37,7 @@ lint:
 
 test:
 	rm -rf cover.out
-	go test ./... -coverprofile cover.out
+	go test ./... -coverprofile cover.out -coverpkg github.com/robgonnella/ardi/v2/commands,github.com/robgonnella/ardi/v2/core
 	go tool cover -func cover.out
 
 docs:

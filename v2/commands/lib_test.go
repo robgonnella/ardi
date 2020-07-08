@@ -7,21 +7,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func runProjectInit(env *testutil.IntegrationTestEnv) {
-	projectInitArgs := []string{"project", "init"}
-	env.SetArgs(projectInitArgs)
-	env.RootCmd.ExecuteContext(env.Ctx)
-}
-
-func addLib(env *testutil.IntegrationTestEnv, lib string, global bool) {
-	args := []string{"lib", "add", lib}
-	if global {
-		args = append(args, "--global")
-	}
-	env.SetArgs(args)
-	env.RootCmd.ExecuteContext(env.Ctx)
-}
-
 func TestLibAddCommand(t *testing.T) {
 	testutil.RunIntegrationTest("globally adds a valid library", t, func(env *testutil.IntegrationTestEnv) {
 		args := []string{"lib", "add", "Adafruit Pixie", "--global"}
@@ -45,7 +30,7 @@ func TestLibAddCommand(t *testing.T) {
 	})
 
 	testutil.RunIntegrationTest("errors when adding an invalid library to ardi project", t, func(env *testutil.IntegrationTestEnv) {
-		runProjectInit(env)
+		env.RunProjectInit()
 		args := []string{"lib", "add", "Noop"}
 		env.SetArgs(args)
 		err := env.RootCmd.ExecuteContext(env.Ctx)
@@ -53,7 +38,7 @@ func TestLibAddCommand(t *testing.T) {
 	})
 
 	testutil.RunIntegrationTest("adds valid library to ardi project", t, func(env *testutil.IntegrationTestEnv) {
-		runProjectInit(env)
+		env.RunProjectInit()
 		args := []string{"lib", "add", "Adafruit Pixie"}
 		env.SetArgs(args)
 		err := env.RootCmd.ExecuteContext(env.Ctx)
@@ -64,7 +49,7 @@ func TestLibAddCommand(t *testing.T) {
 func TestLibRemoveCommand(t *testing.T) {
 	testutil.RunIntegrationTest("globally removes a valid library", t, func(env *testutil.IntegrationTestEnv) {
 		lib := "Adafruit Pixie"
-		addLib(env, lib, true)
+		env.AddLib(lib, true)
 		args := []string{"lib", "remove", lib, "--global"}
 		env.SetArgs(args)
 		err := env.RootCmd.ExecuteContext(env.Ctx)
@@ -86,7 +71,7 @@ func TestLibRemoveCommand(t *testing.T) {
 	})
 
 	testutil.RunIntegrationTest("does not error when removing an invalid library from ardi project", t, func(env *testutil.IntegrationTestEnv) {
-		runProjectInit(env)
+		env.RunProjectInit()
 		args := []string{"lib", "remove", "Noop"}
 		env.SetArgs(args)
 		err := env.RootCmd.ExecuteContext(env.Ctx)
@@ -94,9 +79,9 @@ func TestLibRemoveCommand(t *testing.T) {
 	})
 
 	testutil.RunIntegrationTest("removes valid library from ardi project", t, func(env *testutil.IntegrationTestEnv) {
-		runProjectInit(env)
+		env.RunProjectInit()
 		lib := "Adafruit Pixie"
-		addLib(env, lib, true)
+		env.AddLib(lib, false)
 		args := []string{"lib", "remove", "Adafruit Pixie"}
 		env.SetArgs(args)
 		err := env.RootCmd.ExecuteContext(env.Ctx)
@@ -106,7 +91,7 @@ func TestLibRemoveCommand(t *testing.T) {
 
 func TestLibSearchCommand(t *testing.T) {
 	testutil.RunIntegrationTest("finds a valid library", t, func(env *testutil.IntegrationTestEnv) {
-		runProjectInit(env)
+		env.RunProjectInit()
 		searchLib := "Adafruit Pixie"
 		args := []string{"lib", "search", searchLib}
 		env.SetArgs(args)
@@ -116,7 +101,7 @@ func TestLibSearchCommand(t *testing.T) {
 	})
 
 	testutil.RunIntegrationTest("errors on invalid library", t, func(env *testutil.IntegrationTestEnv) {
-		runProjectInit(env)
+		env.RunProjectInit()
 		searchLib := "noop"
 		args := []string{"lib", "search", searchLib}
 		env.SetArgs(args)
@@ -128,7 +113,7 @@ func TestLibSearchCommand(t *testing.T) {
 func TestLibListCommand(t *testing.T) {
 	testutil.RunIntegrationTest("lists globally installed library", t, func(env *testutil.IntegrationTestEnv) {
 		lib := "Adafruit Pixie"
-		addLib(env, lib, true)
+		env.AddLib(lib, true)
 		args := []string{"lib", "list", "--global"}
 		env.SetArgs(args)
 		err := env.RootCmd.ExecuteContext(env.Ctx)
@@ -144,9 +129,9 @@ func TestLibListCommand(t *testing.T) {
 	})
 
 	testutil.RunIntegrationTest("lists project level installed library", t, func(env *testutil.IntegrationTestEnv) {
-		runProjectInit(env)
+		env.RunProjectInit()
 		lib := "Adafruit Pixie"
-		addLib(env, lib, false)
+		env.AddLib(lib, false)
 		args := []string{"lib", "list"}
 		env.SetArgs(args)
 		err := env.RootCmd.ExecuteContext(env.Ctx)
@@ -155,7 +140,7 @@ func TestLibListCommand(t *testing.T) {
 	})
 
 	testutil.RunIntegrationTest("does not error if no project libs found", t, func(env *testutil.IntegrationTestEnv) {
-		runProjectInit(env)
+		env.RunProjectInit()
 		args := []string{"lib", "list"}
 		env.SetArgs(args)
 		err := env.RootCmd.ExecuteContext(env.Ctx)

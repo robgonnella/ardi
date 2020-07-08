@@ -182,3 +182,30 @@ func (e *IntegrationTestEnv) InstallAvrPlatform() error {
 	}
 	return nil
 }
+
+// RunProjectInit initializes and ardi project directory
+func (e *IntegrationTestEnv) RunProjectInit() error {
+	projectInitArgs := []string{"project", "init"}
+	e.SetArgs(projectInitArgs)
+	return e.RootCmd.ExecuteContext(e.Ctx)
+}
+
+// AddLib adds an arduino library
+func (e *IntegrationTestEnv) AddLib(lib string, global bool) error {
+	args := []string{"lib", "add", lib}
+	if global {
+		args = append(args, "--global")
+	}
+	e.SetArgs(args)
+	return e.RootCmd.ExecuteContext(e.Ctx)
+}
+
+// AddPlatform adds an arduino platform
+func (e *IntegrationTestEnv) AddPlatform(platform string, global bool) error {
+	args := []string{"platform", "add", platform}
+	if global {
+		args = append(args, "--global")
+	}
+	e.SetArgs(args)
+	return e.RootCmd.ExecuteContext(e.Ctx)
+}
