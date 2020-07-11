@@ -8,107 +8,107 @@ import (
 )
 
 func TestCompileCommandGlobal(t *testing.T) {
-	testutil.RunIntegrationTest("compiles project directory using global platform", t, func(env *testutil.IntegrationTestEnv) {
-		err := env.InstallAvrPlatform(testutil.GlobalOpt{true})
-		assert.NoError(env.T, err)
-		blinkDir := testutil.BlinkProjectDir()
-		args := []string{"compile", blinkDir, "--fqbn", testutil.ArduinoMegaFQBN(), "--global"}
-		env.SetArgs(args)
-		err = env.RootCmd.ExecuteContext(env.Ctx)
-		assert.NoError(env.T, err)
-	})
+	testutil.RunIntegrationTest("using globally installed platform", t, func(groupEnv *testutil.IntegrationTestEnv) {
+		err := groupEnv.AddPlatform("arduino:avr", testutil.GlobalOpt{true})
+		assert.NoError(groupEnv.T, err)
 
-	testutil.RunIntegrationTest("errors if fqbn is missing when using global platform", t, func(env *testutil.IntegrationTestEnv) {
-		err := env.InstallAvrPlatform(testutil.GlobalOpt{true})
-		assert.NoError(env.T, err)
-		blinkDir := testutil.BlinkProjectDir()
-		args := []string{"compile", blinkDir, "--global"}
-		env.SetArgs(args)
-		err = env.RootCmd.ExecuteContext(env.Ctx)
-		assert.Error(env.T, err)
+		groupEnv.T.Run("compiles project directory", func(st *testing.T) {
+			testutil.CleanBuilds()
+			blinkDir := testutil.BlinkProjectDir()
+			args := []string{"compile", blinkDir, "--fqbn", testutil.ArduinoMegaFQBN(), "--global"}
+			err = groupEnv.Execute(args)
+			assert.NoError(st, err)
+		})
+
+		groupEnv.T.Run("errors if fqbn is missing", func(st *testing.T) {
+			testutil.CleanBuilds()
+			blinkDir := testutil.BlinkProjectDir()
+			args := []string{"compile", blinkDir, "--global"}
+			err = groupEnv.Execute(args)
+			assert.Error(st, err)
+		})
+
+		groupEnv.T.Run("errors if global lib required", func(st *testing.T) {
+			testutil.CleanBuilds()
+			pixieDir := testutil.PixieProjectDir()
+			args := []string{"compile", pixieDir, "--fqbn", testutil.ArduinoMegaFQBN(), "--global"}
+			err = groupEnv.Execute(args)
+			assert.Error(st, err)
+		})
+
+		groupEnv.T.Run("compiles project that requires globally installed library", func(st *testing.T) {
+			testutil.CleanBuilds()
+			err := groupEnv.AddLib("Adafruit Pixie", testutil.GlobalOpt{true})
+			assert.NoError(st, err)
+			pixieDir := testutil.PixieProjectDir()
+			args := []string{"compile", pixieDir, "--fqbn", testutil.ArduinoMegaFQBN(), "--global"}
+			err = groupEnv.Execute(args)
+			assert.NoError(st, err)
+		})
 	})
 
 	testutil.RunIntegrationTest("errors if platform not installed globally", t, func(env *testutil.IntegrationTestEnv) {
 		blinkDir := testutil.BlinkProjectDir()
 		args := []string{"compile", blinkDir, "--fqbn", testutil.ArduinoMegaFQBN(), "--global"}
-		env.SetArgs(args)
-		err := env.RootCmd.ExecuteContext(env.Ctx)
-		assert.Error(env.T, err)
-	})
-
-	testutil.RunIntegrationTest("compiles project that requires globally installed library", t, func(env *testutil.IntegrationTestEnv) {
-		err := env.InstallAvrPlatform(testutil.GlobalOpt{true})
-		env.AddLib("Adafruit Pixie", testutil.GlobalOpt{true})
-		pixieDir := testutil.PixieProjectDir()
-		args := []string{"compile", pixieDir, "--fqbn", testutil.ArduinoMegaFQBN(), "--global"}
-		env.SetArgs(args)
-		err = env.RootCmd.ExecuteContext(env.Ctx)
-		assert.NoError(env.T, err)
-	})
-
-	testutil.RunIntegrationTest("errors when compiling project that requires a globally installed library", t, func(env *testutil.IntegrationTestEnv) {
-		err := env.InstallAvrPlatform(testutil.GlobalOpt{true})
-		pixieDir := testutil.PixieProjectDir()
-		args := []string{"compile", pixieDir, "--fqbn", testutil.ArduinoMegaFQBN(), "--global"}
-		env.SetArgs(args)
-		err = env.RootCmd.ExecuteContext(env.Ctx)
+		err := env.Execute(args)
 		assert.Error(env.T, err)
 	})
 }
 
 func TestCompileCommandProject(t *testing.T) {
-	testutil.RunIntegrationTest("compiles project directory using project platform", t, func(env *testutil.IntegrationTestEnv) {
-		err := env.InstallAvrPlatform(testutil.GlobalOpt{false})
-		assert.NoError(env.T, err)
-		blinkDir := testutil.BlinkProjectDir()
-		args := []string{"compile", blinkDir, "--fqbn", testutil.ArduinoMegaFQBN()}
-		env.SetArgs(args)
-		err = env.RootCmd.ExecuteContext(env.Ctx)
-		assert.NoError(env.T, err)
-	})
+	testutil.RunIntegrationTest("using installed project platform", t, func(groupEnv *testutil.IntegrationTestEnv) {
+		err := groupEnv.RunProjectInit()
+		assert.NoError(groupEnv.T, err)
+		err = groupEnv.AddPlatform("arduino:avr", testutil.GlobalOpt{false})
+		assert.NoError(groupEnv.T, err)
 
-	testutil.RunIntegrationTest("errors if fqbn is missing when using project platform", t, func(env *testutil.IntegrationTestEnv) {
-		err := env.InstallAvrPlatform(testutil.GlobalOpt{false})
-		assert.NoError(env.T, err)
-		blinkDir := testutil.BlinkProjectDir()
-		args := []string{"compile", blinkDir}
-		env.SetArgs(args)
-		err = env.RootCmd.ExecuteContext(env.Ctx)
-		assert.Error(env.T, err)
+		groupEnv.T.Run("compiles project directory", func(st *testing.T) {
+			testutil.CleanBuilds()
+			blinkDir := testutil.BlinkProjectDir()
+			args := []string{"compile", blinkDir, "--fqbn", testutil.ArduinoMegaFQBN()}
+			err = groupEnv.Execute(args)
+			assert.NoError(st, err)
+		})
+
+		groupEnv.T.Run("errors if fqbn is missing", func(st *testing.T) {
+			testutil.CleanBuilds()
+			blinkDir := testutil.BlinkProjectDir()
+			args := []string{"compile", blinkDir}
+			err = groupEnv.Execute(args)
+			assert.Error(st, err)
+		})
+
+		groupEnv.T.Run("errors if project library required", func(st *testing.T) {
+			testutil.CleanBuilds()
+			pixieDir := testutil.PixieProjectDir()
+			args := []string{"compile", pixieDir, "--fqbn", testutil.ArduinoMegaFQBN()}
+			err = groupEnv.Execute(args)
+			assert.Error(st, err)
+		})
+
+		groupEnv.T.Run("compiles project that requires project library", func(st *testing.T) {
+			testutil.CleanBuilds()
+			err := groupEnv.AddLib("Adafruit Pixie", testutil.GlobalOpt{false})
+			assert.NoError(st, err)
+			pixieDir := testutil.PixieProjectDir()
+			args := []string{"compile", pixieDir, "--fqbn", testutil.ArduinoMegaFQBN()}
+			err = groupEnv.Execute(args)
+			assert.NoError(st, err)
+		})
 	})
 
 	testutil.RunIntegrationTest("errors if platform not installed for project", t, func(env *testutil.IntegrationTestEnv) {
-		env.RunProjectInit()
+		err := env.RunProjectInit()
+		assert.NoError(env.T, err)
 		blinkDir := testutil.BlinkProjectDir()
 		args := []string{"compile", blinkDir, "--fqbn", testutil.ArduinoMegaFQBN()}
-		env.SetArgs(args)
-		err := env.RootCmd.ExecuteContext(env.Ctx)
+		err = env.Execute(args)
 		assert.Error(env.T, err)
 	})
 
 	testutil.RunIntegrationTest("errors if not a valid project directory", t, func(env *testutil.IntegrationTestEnv) {
 		args := []string{"compile", ".", "--fqbn", testutil.ArduinoMegaFQBN()}
-		env.SetArgs(args)
-		err := env.RootCmd.ExecuteContext(env.Ctx)
-		assert.Error(env.T, err)
-	})
-
-	testutil.RunIntegrationTest("compiles project that requires project library", t, func(env *testutil.IntegrationTestEnv) {
-		err := env.InstallAvrPlatform(testutil.GlobalOpt{false})
-		env.AddLib("Adafruit Pixie", testutil.GlobalOpt{false})
-		pixieDir := testutil.PixieProjectDir()
-		args := []string{"compile", pixieDir, "--fqbn", testutil.ArduinoMegaFQBN()}
-		env.SetArgs(args)
-		err = env.RootCmd.ExecuteContext(env.Ctx)
-		assert.NoError(env.T, err)
-	})
-
-	testutil.RunIntegrationTest("errors when compiling project that requires project library", t, func(env *testutil.IntegrationTestEnv) {
-		err := env.InstallAvrPlatform(testutil.GlobalOpt{false})
-		pixieDir := testutil.PixieProjectDir()
-		args := []string{"compile", pixieDir, "--fqbn", testutil.ArduinoMegaFQBN()}
-		env.SetArgs(args)
-		err = env.RootCmd.ExecuteContext(env.Ctx)
+		err := env.Execute(args)
 		assert.Error(env.T, err)
 	})
 }

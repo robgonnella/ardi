@@ -11,7 +11,7 @@ import (
 
 // @todo: check that list is actually sorted
 func TestPlatformCore(t *testing.T) {
-	testutil.RunUnitTest("prints sorted list of all installed platforms to stdout", t, func(env testutil.UnitTestEnv) {
+	testutil.RunUnitTest("prints sorted list of all installed platforms to stdout", t, func(env *testutil.UnitTestEnv) {
 		defer env.Ctrl.Finish()
 		platform1 := commands.Platform{
 			Name: "test-platform-1",
@@ -32,7 +32,7 @@ func TestPlatformCore(t *testing.T) {
 	})
 
 	// @todo: check that list is actually sorted
-	testutil.RunUnitTest("prints sorted list of all available platforms to stdout", t, func(env testutil.UnitTestEnv) {
+	testutil.RunUnitTest("prints sorted list of all available platforms to stdout", t, func(env *testutil.UnitTestEnv) {
 		defer env.Ctrl.Finish()
 		platform1 := commands.Platform{
 			Name: "test-platform-1",
@@ -52,7 +52,7 @@ func TestPlatformCore(t *testing.T) {
 		assert.Contains(env.T, env.Stdout.String(), platform2.Name)
 	})
 
-	testutil.RunUnitTest("adds platforms", t, func(env testutil.UnitTestEnv) {
+	testutil.RunUnitTest("adds platforms", t, func(env *testutil.UnitTestEnv) {
 		defer env.Ctrl.Finish()
 		testPlatform1 := "test-platform1"
 		testPlatform2 := "test-platform2"
@@ -68,7 +68,7 @@ func TestPlatformCore(t *testing.T) {
 		}
 	})
 
-	testutil.RunUnitTest("returns 'platform add' error", t, func(env testutil.UnitTestEnv) {
+	testutil.RunUnitTest("returns 'platform add' error", t, func(env *testutil.UnitTestEnv) {
 		defer env.Ctrl.Finish()
 		errString := "dummy error"
 		dummyErr := errors.New(errString)
@@ -88,7 +88,7 @@ func TestPlatformCore(t *testing.T) {
 		}
 	})
 
-	testutil.RunUnitTest("removes a platforms", t, func(env testutil.UnitTestEnv) {
+	testutil.RunUnitTest("removes a platforms", t, func(env *testutil.UnitTestEnv) {
 		defer env.Ctrl.Finish()
 		testPlatform1 := "test-platform1"
 		testPlatform2 := "test-platform2"
@@ -104,7 +104,7 @@ func TestPlatformCore(t *testing.T) {
 		}
 	})
 
-	testutil.RunUnitTest("returns platform remove error", t, func(env testutil.UnitTestEnv) {
+	testutil.RunUnitTest("returns platform remove error", t, func(env *testutil.UnitTestEnv) {
 		defer env.Ctrl.Finish()
 		errString := "dummy error"
 		dummyErr := errors.New(errString)
@@ -124,13 +124,13 @@ func TestPlatformCore(t *testing.T) {
 		}
 	})
 
-	testutil.RunUnitTest("adds all available platforms", t, func(env testutil.UnitTestEnv) {
+	testutil.RunUnitTest("adds all available platforms", t, func(env *testutil.UnitTestEnv) {
 		env.Client.EXPECT().InstallAllPlatforms().Times(1).Return(nil)
 		err := env.ArdiCore.Platform.AddAll()
 		assert.NoError(env.T, err)
 	})
 
-	testutil.RunUnitTest("returns platform 'install all' error", t, func(env testutil.UnitTestEnv) {
+	testutil.RunUnitTest("returns platform 'install all' error", t, func(env *testutil.UnitTestEnv) {
 		errString := "dummy error"
 		dummyErr := errors.New(errString)
 		env.Client.EXPECT().InstallAllPlatforms().Times(1).Return(dummyErr)

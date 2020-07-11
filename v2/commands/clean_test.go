@@ -19,8 +19,8 @@ func TestCleanCommand(t *testing.T) {
 		assert.DirExists(env.T, ".ardi")
 		assert.FileExists(env.T, "ardi.json")
 
-		env.SetArgs([]string{"clean"})
-		err = env.RootCmd.ExecuteContext(env.Ctx)
+		args := []string{"clean"}
+		err = env.Execute(args)
 		assert.NoError(env.T, err)
 
 		_, dirErr := os.Stat(".ardi")
@@ -37,8 +37,9 @@ func TestCleanCommand(t *testing.T) {
 		assert.DirExists(env.T, paths.ArdiGlobalDataDir)
 		assert.FileExists(env.T, paths.ArdiGlobalDataConfig)
 
-		env.SetArgs([]string{"clean", "--global"})
-		err = env.RootCmd.ExecuteContext(env.Ctx)
+		args := []string{"clean", "--global"}
+		err = env.Execute(args)
+
 		assert.NoError(env.T, err)
 
 		_, dirErr := os.Stat(paths.ArdiGlobalDataDir)

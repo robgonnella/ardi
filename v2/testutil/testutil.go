@@ -14,14 +14,13 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
-	"github.com/spf13/cobra"
 
 	"github.com/robgonnella/ardi/v2/commands"
 	"github.com/robgonnella/ardi/v2/core"
 	"github.com/robgonnella/ardi/v2/mocks"
 )
 
-var port = 2222
+var port = 3000
 var here string
 var userHome string
 
@@ -36,35 +35,40 @@ func init() {
 	logrus.SetOutput(ioutil.Discard)
 }
 
-func cleanCoreDir() {
+// CleanCoreDir removes test data from core directory
+func CleanCoreDir() {
 	dataDir := path.Join(here, "../core/.ardi")
 	jsonFile := path.Join(here, "../core/ardi.json")
 	os.RemoveAll(dataDir)
 	os.Remove(jsonFile)
 }
 
-func cleanCommandsDir() {
+// CleanCommandsDir removes project data from commands directory
+func CleanCommandsDir() {
 	projectDataDir := path.Join(here, "../commands/.ardi")
 	projectJSONFile := path.Join(here, "../commands/ardi.json")
 	os.RemoveAll(projectDataDir)
 	os.Remove(projectJSONFile)
 }
 
-func cleanGlobalData() {
+// CleanGlobalData removes global data directory
+func CleanGlobalData() {
 	globalDataDir := path.Join(userHome, ".ardi")
 	os.RemoveAll(globalDataDir)
 }
 
-func cleanBuilds() {
+// CleanBuilds removes compiled test project builds
+func CleanBuilds() {
 	os.RemoveAll(path.Join(BlinkProjectDir(), "build"))
 	os.RemoveAll(path.Join(PixieProjectDir(), "build"))
 }
 
-func cleanAll() {
-	cleanCoreDir()
-	cleanCommandsDir()
-	cleanGlobalData()
-	cleanBuilds()
+// CleanAll removes all test data
+func CleanAll() {
+	CleanCoreDir()
+	CleanCommandsDir()
+	CleanGlobalData()
+	CleanBuilds()
 }
 
 // ArduinoMegaFQBN returns appropriate fqbn for arduino mega 2560
@@ -124,13 +128,13 @@ func GenerateCmdPlatform(name string, boards []*rpccommands.Board) *rpccommands.
 }
 
 // RunUnitTest runs an ardi unit test
-func RunUnitTest(name string, t *testing.T, f func(env UnitTestEnv)) {
+func RunUnitTest(name string, t *testing.T, f func(env *UnitTestEnv)) {
 	t.Run(name, func(st *testing.T) {
 		ctrl := gomock.NewController(t)
 		client := mocks.NewMockClient(ctrl)
 		logger := log.New()
 
-		cleanAll()
+		CleanAll()
 
 		var b bytes.Buffer
 		logger.SetOutput(&b)
@@ -147,79 +151,43 @@ func RunUnitTest(name string, t *testing.T, f func(env UnitTestEnv)) {
 			Stdout:   &b,
 		}
 
-		f(env)
-		cleanAll()
+		f(&env)
+		CleanAll()
 	})
 }
 
 // IntegrationTestEnv represents our integration test environment
 type IntegrationTestEnv struct {
-	Ctx     context.Context
-	T       *testing.T
-	Logger  *log.Logger
-	RootCmd *cobra.Command
-	Port    int
-	SetArgs func(a []string)
-	Stdout  *bytes.Buffer
+	T      *testing.T
+	Stdout *bytes.Buffer
+	logger *log.Logger
 }
 
 // RunIntegrationTest runs an ardi integration test
 func RunIntegrationTest(name string, t *testing.T, f func(env *IntegrationTestEnv)) {
 	t.Run(name, func(st *testing.T) {
-		port = port + 1
-		cleanAll()
+		CleanAll()
 
-		ctx := context.Background()
 		var b bytes.Buffer
 		logger := log.New()
 		logger.Out = &b
 		logger.SetLevel(log.DebugLevel)
 
-		rootCmd := commands.GetRootCmd(logger)
-		rootCmd.SetOut(logger.Out)
-
 		env := IntegrationTestEnv{
-			Ctx:     ctx,
-			T:       st,
-			Logger:  logger,
-			RootCmd: rootCmd,
-			Port:    port,
-			SetArgs: func(args []string) {
-				args = append(args, "--verbose")
-				args = append(args, "--port")
-				args = append(args, fmt.Sprintf("%d", port))
-				rootCmd.SetArgs(args)
-			},
+			T:      st,
 			Stdout: &b,
+			logger: logger,
 		}
 
 		f(&env)
-		cleanAll()
+		CleanAll()
 	})
-}
-
-// InstallAvrPlatform uses ardi command to install aruidno:avr platform
-func (e *IntegrationTestEnv) InstallAvrPlatform(opt GlobalOpt) error {
-	if !opt.Global {
-		projectArgs := []string{"project", "init"}
-		e.SetArgs(projectArgs)
-		if err := e.RootCmd.ExecuteContext(e.Ctx); err != nil {
-			return err
-		}
-	}
-	platformArgs := []string{"platform", "add", "arduino:avr"}
-	if opt.Global {
-		platformArgs = append(platformArgs, "--global")
-	}
-	e.SetArgs(platformArgs)
-	return e.RootCmd.ExecuteContext(e.Ctx)
 }
 
 // RunProjectInit initializes and ardi project directory
 func (e *IntegrationTestEnv) RunProjectInit() error {
 	projectInitArgs := []string{"project", "init"}
-	e.SetArgs(projectInitArgs)
-	return e.RootCmd.ExecuteContext(e.Ctx)
+	return e.Execute(projectInitArgs)
 }
 
 // AddLib adds an arduino library
@@ -228,8 +196,7 @@ func (e *IntegrationTestEnv) AddLib(lib string, opt GlobalOpt) error {
 	if opt.Global {
 		args = append(args, "--global")
 	}
-	e.SetArgs(args)
-	return e.RootCmd.ExecuteContext(e.Ctx)
+	return e.Execute(args)
 }
 
 // AddPlatform adds an arduino platform
@@ -238,6 +205,22 @@ func (e *IntegrationTestEnv) AddPlatform(platform string, opt GlobalOpt) error {
 	if opt.Global {
 		args = append(args, "--global")
 	}
-	e.SetArgs(args)
-	return e.RootCmd.ExecuteContext(e.Ctx)
+	return e.Execute(args)
+}
+
+// Execute executes the root command with given arguments
+func (e *IntegrationTestEnv) Execute(args []string) error {
+	rootCmd := commands.GetRootCmd(e.logger)
+	rootCmd.SetOut(e.logger.Out)
+
+	port = port + 1
+	args = append(args, "--verbose")
+	args = append(args, "--port")
+	args = append(args, fmt.Sprintf("%d", port))
+	rootCmd.SetArgs(args)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	return rootCmd.ExecuteContext(ctx)
 }

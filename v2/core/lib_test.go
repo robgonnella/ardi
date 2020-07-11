@@ -11,7 +11,7 @@ import (
 )
 
 func TestLibCore(t *testing.T) {
-	testutil.RunUnitTest("installs versioned library", t, func(env testutil.UnitTestEnv) {
+	testutil.RunUnitTest("installs versioned library", t, func(env *testutil.UnitTestEnv) {
 		defer env.Ctrl.Finish()
 
 		lib := "Adafruit_Pixie"
@@ -27,7 +27,7 @@ func TestLibCore(t *testing.T) {
 		assert.Equal(env.T, returnedVers, installedVersion)
 	})
 
-	testutil.RunUnitTest("returns install error", t, func(env testutil.UnitTestEnv) {
+	testutil.RunUnitTest("returns install error", t, func(env *testutil.UnitTestEnv) {
 		defer env.Ctrl.Finish()
 
 		errString := "dummy error"
@@ -44,7 +44,7 @@ func TestLibCore(t *testing.T) {
 		assert.EqualError(env.T, err, errString)
 	})
 
-	testutil.RunUnitTest("uninstalls library", t, func(env testutil.UnitTestEnv) {
+	testutil.RunUnitTest("uninstalls library", t, func(env *testutil.UnitTestEnv) {
 		defer env.Ctrl.Finish()
 		libName := "Adafruit_Pixie"
 		env.Client.EXPECT().UninstallLibrary(libName).Times(1).Return(nil)
@@ -52,7 +52,7 @@ func TestLibCore(t *testing.T) {
 		assert.NoError(env.T, err)
 	})
 
-	testutil.RunUnitTest("returns uninstall error", t, func(env testutil.UnitTestEnv) {
+	testutil.RunUnitTest("returns uninstall error", t, func(env *testutil.UnitTestEnv) {
 		defer env.Ctrl.Finish()
 		errString := "dummy error"
 		dummyErr := errors.New(errString)
@@ -63,7 +63,7 @@ func TestLibCore(t *testing.T) {
 		assert.EqualError(env.T, err, errString)
 	})
 
-	testutil.RunUnitTest("prints library searches to stdout", t, func(env testutil.UnitTestEnv) {
+	testutil.RunUnitTest("prints library searches to stdout", t, func(env *testutil.UnitTestEnv) {
 		defer env.Ctrl.Finish()
 
 		searchQuery := "wifi101"
@@ -90,7 +90,7 @@ func TestLibCore(t *testing.T) {
 		assert.Contains(env.T, env.Stdout.String(), lib.Name)
 	})
 
-	testutil.RunUnitTest("prints installed libraries to stdout", t, func(env testutil.UnitTestEnv) {
+	testutil.RunUnitTest("prints installed libraries to stdout", t, func(env *testutil.UnitTestEnv) {
 		defer env.Ctrl.Finish()
 
 		installedLib := commands.InstalledLibrary{
