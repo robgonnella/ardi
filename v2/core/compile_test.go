@@ -12,13 +12,13 @@ import (
 )
 
 func TestCompileCore(t *testing.T) {
-	testutil.RunUnitTest("errors when compiling directory with no sketch", t, func(env testutil.UnitTestEnv) {
+	testutil.RunUnitTest("errors when compiling directory with no sketch", t, func(env *testutil.UnitTestEnv) {
 		defer env.Ctrl.Finish()
 		err := env.ArdiCore.Compiler.Compile(".", "some-fqbn", []string{}, false)
 		assert.Error(env.T, err)
 	})
 
-	testutil.RunUnitTest("succeeds when compiling directory with .ino file", t, func(env testutil.UnitTestEnv) {
+	testutil.RunUnitTest("succeeds when compiling directory with .ino file", t, func(env *testutil.UnitTestEnv) {
 		defer env.Ctrl.Finish()
 
 		projectDir := testutil.BlinkProjectDir()
@@ -43,7 +43,7 @@ func TestCompileCore(t *testing.T) {
 		assert.NoError(env.T, err)
 	})
 
-	testutil.RunUnitTest("returns compile error", t, func(env testutil.UnitTestEnv) {
+	testutil.RunUnitTest("returns compile error", t, func(env *testutil.UnitTestEnv) {
 		defer env.Ctrl.Finish()
 		errString := "dummy error"
 		dummyErr := errors.New(errString)

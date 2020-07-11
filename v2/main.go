@@ -33,7 +33,8 @@ import (
 )
 
 func main() {
-	ctx := context.Background()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	logger := log.New()
 	rootCmd := commands.GetRootCmd(logger)
 	if err := rootCmd.ExecuteContext(ctx); err != nil {

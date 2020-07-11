@@ -11,7 +11,7 @@ import (
 
 // @todo: check that list is actually sorted
 func TestWatchCore(t *testing.T) {
-	testutil.RunUnitTest("returns error if no boards connected", t, func(env testutil.UnitTestEnv) {
+	testutil.RunUnitTest("returns error if no boards connected", t, func(env *testutil.UnitTestEnv) {
 		defer env.Ctrl.Finish()
 		err := env.ArdiCore.Project.Init("2222")
 		assert.NoError(env.T, err)
@@ -29,7 +29,7 @@ func TestWatchCore(t *testing.T) {
 		assert.Error(env.T, err)
 	})
 
-	testutil.RunUnitTest("succeeds when board is connected", t, func(env testutil.UnitTestEnv) {
+	testutil.RunUnitTest("succeeds when board is connected", t, func(env *testutil.UnitTestEnv) {
 		defer env.Ctrl.Finish()
 		err := env.ArdiCore.Project.Init("2222")
 		assert.NoError(env.T, err)
@@ -51,7 +51,7 @@ func TestWatchCore(t *testing.T) {
 		assert.NoError(env.T, err)
 	})
 
-	testutil.RunUnitTest("errors if not a valid sketch directory", t, func(env testutil.UnitTestEnv) {
+	testutil.RunUnitTest("errors if not a valid sketch directory", t, func(env *testutil.UnitTestEnv) {
 		defer env.Ctrl.Finish()
 		err := env.ArdiCore.Project.Init("2222")
 		assert.NoError(env.T, err)
@@ -68,7 +68,7 @@ func TestWatchCore(t *testing.T) {
 		assert.Error(env.T, err)
 	})
 
-	testutil.RunUnitTest("compiles sketch", t, func(env testutil.UnitTestEnv) {
+	testutil.RunUnitTest("compiles sketch", t, func(env *testutil.UnitTestEnv) {
 		defer env.Ctrl.Finish()
 		err := env.ArdiCore.Project.Init("2222")
 		assert.NoError(env.T, err)
@@ -109,7 +109,7 @@ func TestWatchCore(t *testing.T) {
 		assert.NoError(env.T, err)
 	})
 
-	testutil.RunUnitTest("uploads sketch", t, func(env testutil.UnitTestEnv) {
+	testutil.RunUnitTest("uploads sketch", t, func(env *testutil.UnitTestEnv) {
 		defer env.Ctrl.Finish()
 		err := env.ArdiCore.Project.Init("2222")
 		assert.NoError(env.T, err)

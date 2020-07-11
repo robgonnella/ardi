@@ -94,6 +94,10 @@ func getProjectAddPlatformCmd() *cobra.Command {
 		Short:   "Add platform(s) to project",
 		Aliases: []string{"platforms"},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := client.UpdatePlatformIndex(); err != nil {
+				logger.WithError(err).Error("Failed to update platform index file")
+			}
+
 			if len(args) == 0 || all {
 				if err := ardiCore.Platform.AddAll(); err != nil {
 					logger.WithError(err).Error("Failed to add arduino platforms")
@@ -133,9 +137,13 @@ func getProjectAddBuildCmd() *cobra.Command {
 	addCmd.Flags().StringVarP(&name, "name", "n", "", "Custom name for the build")
 	addCmd.Flags().StringVarP(&fqbn, "fqbn", "f", "", "Specify fully qualified board name")
 	addCmd.Flags().StringVarP(&sketch, "sketch", "s", "", "Path to .ino file or sketch directory")
-	addCmd.Flags().StringVarP(&platform, "platform", "m", "", "Platform for this build \"package:architecture@version\" (optional)")
-	addCmd.Flags().StringVarP(&boardURL, "board-url", "u", "", "Custom board url (optional)")
-	addCmd.Flags().StringArrayVarP(&buildProps, "build-prop", "p", []string{}, "Specify build property to compiler (optional)")
+	addCmd.Flags().StringVarP(&platform, "platform", "m", "", "Platform for this build \"package:architecture@version\"")
+	addCmd.Flags().StringVarP(&boardURL, "board-url", "u", "", "Custom board url")
+	addCmd.Flags().StringArrayVarP(&buildProps, "build-prop", "p", []string{}, "Specify build property to compiler")
+	addCmd.MarkFlagRequired("name")
+	addCmd.MarkFlagRequired("fqbn")
+	addCmd.MarkFlagRequired("sketch")
+
 	return addCmd
 }
 
@@ -146,6 +154,10 @@ func getProjectAddLibCmd() *cobra.Command {
 		Short: "Add libraries to project\\e[0m",
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := client.UpdateLibraryIndex(); err != nil {
+				logger.WithError(err).Error("Failed to update library index file")
+			}
+
 			for _, l := range args {
 				name, vers, err := ardiCore.Lib.Add(l)
 				if err != nil {
@@ -227,7 +239,7 @@ func getProjectRemoveLibCmd() *cobra.Command {
 					logger.WithError(err).Errorf("Failed to uninstall library: %s", l)
 					return err
 				}
-				if err := ardiCore.Lib.Remove(l); err != nil {
+				if err := ardiCore.Project.RemoveLibrary(l); err != nil {
 					logger.WithError(err).Errorf("Failed to remove library from ardi.json: %s", l)
 					return err
 				}

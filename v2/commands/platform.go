@@ -48,7 +48,7 @@ func getPlatformAddCmd() *cobra.Command {
 		Short: "Install platforms",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := client.UpdatePlatformIndex(); err != nil {
-				logger.WithError(err).Error("Failed to platform index file")
+				logger.WithError(err).Error("Failed to update platform index file")
 			}
 
 			if all {

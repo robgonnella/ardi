@@ -7,6 +7,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net"
+	"os"
 	"path"
 	"strings"
 	"time"
@@ -129,7 +130,10 @@ func (c *ArdiClient) StartDaemon(verbose bool, successChan chan string, errChan 
 	}
 
 	settings.RegisterSettingsServer(s, settingsSvr)
-	inventory.Init(c.dataDir)
+	_, fileErr := os.Stat(path.Join(c.dataDir, "inventory.yaml"))
+	if os.IsNotExist(fileErr) {
+		inventory.Init(c.dataDir)
+	}
 
 	go func() {
 		c.logger.Debugf("Starting daemon on TCP address 127.0.0.1:%s", c.port)
@@ -170,12 +174,18 @@ func (c *ArdiClient) Connect() error {
 
 // Close closes the underlying grpc connection
 func (c *ArdiClient) Close() {
-	c.logger.Debug("Closing client connection")
-	c.clientConnection.Close()
-	c.logger.Debug("Stopping grpc server")
-	c.grpcServer.Stop()
-	c.logger.Debug("Closing net listener")
-	c.listener.Close()
+	if c.clientConnection != nil {
+		c.logger.Debug("Closing client connection")
+		c.clientConnection.Close()
+	}
+	if c.grpcServer != nil {
+		c.logger.Debug("Stopping grpc server")
+		c.grpcServer.Stop()
+	}
+	if c.listener != nil {
+		c.logger.Debug("Closing net listener")
+		c.listener.Close()
+	}
 }
 
 // UpdateIndexFiles updates platform and library index files
@@ -738,7 +748,7 @@ func (c *ArdiClient) UninstallLibrary(name string) error {
 	for {
 		uninstallRespStream, err := uninstallRespStream.Recv()
 		if err == io.EOF {
-			c.logger.Info("Lib uninstall done")
+			c.logger.Debug("Lib uninstall done")
 			return nil
 		}
 
@@ -748,7 +758,7 @@ func (c *ArdiClient) UninstallLibrary(name string) error {
 		}
 
 		if uninstallRespStream.GetTaskProgress() != nil {
-			c.logger.Infof("TASK: %s\n", uninstallRespStream.GetTaskProgress())
+			c.logger.Debug("TASK: %s\n", uninstallRespStream.GetTaskProgress())
 		}
 	}
 }

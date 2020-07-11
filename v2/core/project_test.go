@@ -12,14 +12,14 @@ import (
 
 // @todo: check that list is actually sorted
 func TestProjectCore(t *testing.T) {
-	testutil.RunUnitTest("init creates ardi.json", t, func(env testutil.UnitTestEnv) {
+	testutil.RunUnitTest("init creates ardi.json", t, func(env *testutil.UnitTestEnv) {
 		defer env.Ctrl.Finish()
 		err := env.ArdiCore.Project.Init("2222")
 		assert.NoError(env.T, err)
 		assert.FileExists(env.T, "ardi.json")
 	})
 
-	testutil.RunUnitTest("init creates .ardi directory", t, func(env testutil.UnitTestEnv) {
+	testutil.RunUnitTest("init creates .ardi directory", t, func(env *testutil.UnitTestEnv) {
 		defer env.Ctrl.Finish()
 		err := env.ArdiCore.Project.Init("2222")
 		assert.NoError(env.T, err)
@@ -27,7 +27,7 @@ func TestProjectCore(t *testing.T) {
 		assert.FileExists(env.T, ".ardi/arduino-cli.yaml")
 	})
 
-	testutil.RunUnitTest("adds library to ardi.json", t, func(env testutil.UnitTestEnv) {
+	testutil.RunUnitTest("adds library to ardi.json", t, func(env *testutil.UnitTestEnv) {
 		defer env.Ctrl.Finish()
 		err := env.ArdiCore.Project.Init("2222")
 		assert.NoError(env.T, err)
@@ -45,7 +45,7 @@ func TestProjectCore(t *testing.T) {
 		assert.Equal(env.T, libs[lib], vers)
 	})
 
-	testutil.RunUnitTest("processes sketch", t, func(env testutil.UnitTestEnv) {
+	testutil.RunUnitTest("processes sketch", t, func(env *testutil.UnitTestEnv) {
 		defer env.Ctrl.Finish()
 		err := env.ArdiCore.Project.Init("2222")
 		assert.NoError(env.T, err)
@@ -60,7 +60,7 @@ func TestProjectCore(t *testing.T) {
 		assert.Equal(env.T, env.ArdiCore.Project.Baud, 9600)
 	})
 
-	testutil.RunUnitTest("removes library from ardi.json", t, func(env testutil.UnitTestEnv) {
+	testutil.RunUnitTest("removes library from ardi.json", t, func(env *testutil.UnitTestEnv) {
 		defer env.Ctrl.Finish()
 		err := env.ArdiCore.Project.Init("2222")
 		assert.NoError(env.T, err)
@@ -83,7 +83,7 @@ func TestProjectCore(t *testing.T) {
 		assert.NotContains(env.T, libs, lib)
 	})
 
-	testutil.RunUnitTest("lists libraries in ardi.json", t, func(env testutil.UnitTestEnv) {
+	testutil.RunUnitTest("lists libraries in ardi.json", t, func(env *testutil.UnitTestEnv) {
 		defer env.Ctrl.Finish()
 		err := env.ArdiCore.Project.Init("2222")
 		assert.NoError(env.T, err)
@@ -101,7 +101,7 @@ func TestProjectCore(t *testing.T) {
 		assert.Equal(env.T, libs[lib], vers)
 	})
 
-	testutil.RunUnitTest("adds build to ardi.json", t, func(env testutil.UnitTestEnv) {
+	testutil.RunUnitTest("adds build to ardi.json", t, func(env *testutil.UnitTestEnv) {
 		defer env.Ctrl.Finish()
 		port := "2222"
 		buildName := "blink"
@@ -134,7 +134,7 @@ func TestProjectCore(t *testing.T) {
 		assert.Equal(env.T, dataConfig.Daemon.Port, port)
 	})
 
-	testutil.RunUnitTest("removes build from ardi.json", t, func(env testutil.UnitTestEnv) {
+	testutil.RunUnitTest("removes build from ardi.json", t, func(env *testutil.UnitTestEnv) {
 		defer env.Ctrl.Finish()
 		err := env.ArdiCore.Project.Init("2222")
 		assert.NoError(env.T, err)
@@ -167,7 +167,7 @@ func TestProjectCore(t *testing.T) {
 		assert.NotContains(env.T, builds, buildName)
 	})
 
-	testutil.RunUnitTest("builds project specified ardi.json", t, func(env testutil.UnitTestEnv) {
+	testutil.RunUnitTest("builds project specified ardi.json", t, func(env *testutil.UnitTestEnv) {
 		defer env.Ctrl.Finish()
 		err := env.ArdiCore.Project.Init("2222")
 		assert.NoError(env.T, err)
@@ -200,7 +200,7 @@ func TestProjectCore(t *testing.T) {
 		assert.NoError(env.T, err)
 	})
 
-	testutil.RunUnitTest("builds project by name", t, func(env testutil.UnitTestEnv) {
+	testutil.RunUnitTest("builds project by name", t, func(env *testutil.UnitTestEnv) {
 		defer env.Ctrl.Finish()
 		err := env.ArdiCore.Project.Init("2222")
 		assert.NoError(env.T, err)
@@ -234,7 +234,7 @@ func TestProjectCore(t *testing.T) {
 		assert.NoError(env.T, err)
 	})
 
-	testutil.RunUnitTest("errors if build doesn't exist", t, func(env testutil.UnitTestEnv) {
+	testutil.RunUnitTest("errors if build doesn't exist", t, func(env *testutil.UnitTestEnv) {
 		defer env.Ctrl.Finish()
 		err := env.ArdiCore.Project.Init("2222")
 		assert.NoError(env.T, err)
