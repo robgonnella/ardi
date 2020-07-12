@@ -6,3 +6,4 @@
 *.out
 ardi.json
 build/
+test_artifacts/
