@@ -1,9 +1,6 @@
 name: V1
 
-on:
-  push:
-    paths-ignore:
-      - 'v2/**'
+on: [push]
 
 jobs:
   test:
