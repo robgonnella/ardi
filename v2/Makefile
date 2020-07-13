@@ -36,11 +36,13 @@ lint:
 	golint -set_exit_status ./...
 
 test-unit:
-	rm -rf test_artifacts/unit.out
+	mkdir test_artifacts || true
+	rm -rf test_artifacts/unit.out || true
 	go test -v -coverprofile test_artifacts/unit.out github.com/robgonnella/ardi/v2/core
 
 test-int:
-	rm -rf test_artifacts/int.out
+	mkdir test_artifacts || true
+	rm -rf test_artifacts/int.out || true
 	go test -v -coverprofile test_artifacts/int.out -p 1 github.com/robgonnella/ardi/v2/commands
 
 test-e2e:
