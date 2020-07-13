@@ -1,8 +1,8 @@
 #!/bin/bash
 
-set -euox pipefail
+set -ex
 
-here="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+here="$( cd "$( dirname "${BASH_SOURCE[0]}" )" > /dev/null 2>&1 && pwd )"
 
 rm -rf $here/../test_artifacts/coverage.out
 

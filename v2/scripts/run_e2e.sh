@@ -1,10 +1,12 @@
 #!/bin/bash
 
-set -e
+set -ex
+
+here="$( cd "$( dirname "${BASH_SOURCE[0]}" )" > /dev/null 2>&1 && pwd )"
 
 function clean_up {
-  rm -rf ../test_projects/pixie/build || true
-  rm -rf ../.ardi $here/../ardi.json || true
+  rm -rf $here/../test_projects/pixie/build || true
+  rm -rf $here/../.ardi $here/../ardi.json || true
 }
 
 trap "clean_up" EXIT
@@ -23,6 +25,6 @@ ardi project add build \
   --name pixie \
   --platform arduino:avr \
   --fqbn arduino:avr:mega \
-  --sketch ../test_projects/pixie
+  --sketch $here/../test_projects/pixie
 
 ardi project build pixie
