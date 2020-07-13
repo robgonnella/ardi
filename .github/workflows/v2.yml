@@ -3,13 +3,13 @@ name: V2TEST
 on: [push]
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
-
     steps:
+      - name: testing ardi v2
+      - uses: actions/checkout@v2
       - uses: actions/setup-go@v2
         with:
           go-version: '^1.14.0'
-      - name: test
         run: |
           cd v2 && make test-all
