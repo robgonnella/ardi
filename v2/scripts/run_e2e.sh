@@ -1,4 +1,6 @@
-set -euox pipefail
+#!/bin/bash
+
+set -e
 
 function clean_up {
   rm -rf ../test_projects/pixie/build || true
