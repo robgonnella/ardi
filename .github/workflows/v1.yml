@@ -6,11 +6,11 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - name: testing ardi v1
-        uses: actions/checkout@v2
-        uses: actions/setup-go@v2
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v2
         with:
           go-version: '^1.14.0'
+      - name: run ardi v1 tests
         run: |
           cd ~ && GO111MODULE=on go get github.com/robgonnella/ardi@latest
           ardi version
