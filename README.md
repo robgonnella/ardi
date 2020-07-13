@@ -1,5 +1,4 @@
-[![GoDoc](https://godoc.org/github.com/robgonnella/ardi?status.svg)](https://godoc.org/github.com/robgonnella/ardi) ![Build](https://codebuild.us-east-1.amazonaws.com/badges?uuid=eyJlbmNyeXB0ZWREYXRhIjoiclFVTnRkYjY1QXlnTjdueC9rZFhhRjNXVzdaUlZhL0tpdW9wMlA4TU94MC9POU5lcGJkTE4rSDJkSTdhYWJianBPWDhXdzR4a2x3U1lZL1h1NEYzSzBBPSIsIml2UGFyYW1ldGVyU3BlYyI6ImUxUXhjTjhhZFlHb0Q5b3AiLCJtYXRlcmlhbFNldFNlcmlhbCI6MX0%3D&branch=master)
-
+![V2](https://github.com/robgonnella/ardi/workflows/V2/badge.svg)
 
 # Ardi
 
