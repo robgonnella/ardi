@@ -1,4 +1,4 @@
-![V2](https://github.com/robgonnella/ardi/workflows/V2/badge.svg)
+![V1](https://github.com/robgonnella/ardi/workflows/V1/badge.svg)
 
 # Ardi
 
