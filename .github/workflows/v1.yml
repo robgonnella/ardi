@@ -1,0 +1,18 @@
+name: V1TEST
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/setup-go@v2
+        with:
+          go-version: '^1.14.0'
+      - name: Add all platforms
+        run: |
+          cd ~ && GO111MODULE=on go get github.com/robgonnella/ardi@latest
+          ardi version
+          ardi init -v
+          ardi clean
