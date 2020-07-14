@@ -48,6 +48,10 @@ func TestLibRemoveCommand(t *testing.T) {
 		args := []string{"lib", "remove", lib, "--global"}
 		err := env.Execute(args)
 		assert.NoError(env.T, err)
+
+		env.ClearStdout()
+		env.Execute([]string{"lib", "list", "--global"})
+		assert.NotContains(env.T, env.Stdout.String(), "Adafruit_Pixie")
 	})
 
 	testutil.RunIntegrationTest("does not error when removing invalid library globally", t, func(env *testutil.IntegrationTestEnv) {
@@ -76,6 +80,10 @@ func TestLibRemoveCommand(t *testing.T) {
 		args := []string{"lib", "remove", "Adafruit Pixie"}
 		err := env.Execute(args)
 		assert.NoError(env.T, err)
+
+		env.ClearStdout()
+		env.Execute([]string{"lib", "list"})
+		assert.NotContains(env.T, env.Stdout.String(), "Adafruit_Pixie")
 	})
 }
 
@@ -102,10 +110,13 @@ func TestLibListCommand(t *testing.T) {
 	testutil.RunIntegrationTest("lists globally installed library", t, func(env *testutil.IntegrationTestEnv) {
 		lib := "Adafruit Pixie"
 		env.AddLib(lib, testutil.GlobalOpt{true})
+
+		env.ClearStdout()
+		installedLib := "Adafruit_Pixie"
 		args := []string{"lib", "list", "--global"}
 		err := env.Execute(args)
 		assert.NoError(env.T, err)
-		assert.Contains(env.T, env.Stdout.String(), lib)
+		assert.Contains(env.T, env.Stdout.String(), installedLib)
 	})
 
 	testutil.RunIntegrationTest("does not error if no global libs found", t, func(env *testutil.IntegrationTestEnv) {
@@ -118,10 +129,13 @@ func TestLibListCommand(t *testing.T) {
 		env.RunProjectInit()
 		lib := "Adafruit Pixie"
 		env.AddLib(lib, testutil.GlobalOpt{false})
+
+		env.ClearStdout()
+		installedLib := "Adafruit_Pixie"
 		args := []string{"lib", "list"}
 		err := env.Execute(args)
 		assert.NoError(env.T, err)
-		assert.Contains(env.T, env.Stdout.String(), lib)
+		assert.Contains(env.T, env.Stdout.String(), installedLib)
 	})
 
 	testutil.RunIntegrationTest("does not error if no project libs found", t, func(env *testutil.IntegrationTestEnv) {

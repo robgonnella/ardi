@@ -191,11 +191,13 @@ func (mr *MockClientMockRecorder) InstallLibrary(arg0, arg1 interface{}) *gomock
 }
 
 // InstallPlatform mocks base method
-func (m *MockClient) InstallPlatform(arg0 string) error {
+func (m *MockClient) InstallPlatform(arg0 string) (string, string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "InstallPlatform", arg0)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(string)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
 }
 
 // InstallPlatform indicates an expected call of InstallPlatform
@@ -270,11 +272,12 @@ func (mr *MockClientMockRecorder) UninstallLibrary(arg0 interface{}) *gomock.Cal
 }
 
 // UninstallPlatform mocks base method
-func (m *MockClient) UninstallPlatform(arg0 string) error {
+func (m *MockClient) UninstallPlatform(arg0 string) (string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UninstallPlatform", arg0)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // UninstallPlatform indicates an expected call of UninstallPlatform

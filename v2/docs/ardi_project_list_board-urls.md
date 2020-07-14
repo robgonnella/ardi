@@ -1,20 +1,20 @@
-## ardi project install
+## ardi project list board-urls
 
-Install all libraries specified in ardi.json
+List all project board urls ardi.json
 
 ### Synopsis
 
 
-Install all libraries specified in ardi.json
+List all project board urls ardi.json
 
 ```
-ardi project install [flags]
+ardi project list board-urls [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for install
+  -h, --help   help for board-urls
 ```
 
 ### Options inherited from parent commands
@@ -28,5 +28,5 @@ ardi project install [flags]
 
 ### SEE ALSO
 
-* [ardi project](ardi_project.md)	 - Project manager
+* [ardi project list](ardi_project_list.md)	 - List project attributes saved in ardi.json
 

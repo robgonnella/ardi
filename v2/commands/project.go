@@ -1,6 +1,8 @@
 package commands
 
 import (
+	"fmt"
+
 	"github.com/spf13/cobra"
 )
 
@@ -31,6 +33,9 @@ func getProjectListPlatformCmd() *cobra.Command {
 		Long:  "\nList all installed platforms for this project",
 		Short: "List all installed platforms for this project",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			logger.Info("Platforms specified in ardi.json")
+			ardiCore.Project.ListPlatforms()
+			logger.Info("Installed platforms")
 			if err := ardiCore.Platform.ListInstalled(); err != nil {
 				logger.WithError(err).Error("Failed to list installed arduino platforms")
 				return err
@@ -74,6 +79,18 @@ func getProjectListBuildsCmd() *cobra.Command {
 	return listCmd
 }
 
+func getProjectListBoardURLSCmd() *cobra.Command {
+	listCmd := &cobra.Command{
+		Use:   "board-urls",
+		Long:  "\nList all project board urls ardi.json",
+		Short: "List all project board urls ardi.json",
+		Run: func(cmd *cobra.Command, args []string) {
+			ardiCore.Project.ListBoardURLS()
+		},
+	}
+	return listCmd
+}
+
 func getProjectListCmd() *cobra.Command {
 	listCmd := &cobra.Command{
 		Use:   "list",
@@ -83,6 +100,7 @@ func getProjectListCmd() *cobra.Command {
 	listCmd.AddCommand(getProjectListPlatformCmd())
 	listCmd.AddCommand(getProjectListLibrariesCmd())
 	listCmd.AddCommand(getProjectListBuildsCmd())
+	listCmd.AddCommand(getProjectListBoardURLSCmd())
 	return listCmd
 }
 
@@ -94,10 +112,7 @@ func getProjectAddPlatformCmd() *cobra.Command {
 		Short:   "Add platform(s) to project",
 		Aliases: []string{"platforms"},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := client.UpdatePlatformIndex(); err != nil {
-				logger.WithError(err).Error("Failed to update platform index file")
-			}
-
+			// TODO: make it so we each platform gets saved in project config when adding all platforms
 			if len(args) == 0 || all {
 				if err := ardiCore.Platform.AddAll(); err != nil {
 					logger.WithError(err).Error("Failed to add arduino platforms")
@@ -107,8 +122,12 @@ func getProjectAddPlatformCmd() *cobra.Command {
 			}
 
 			for _, p := range args {
-				if err := ardiCore.Platform.Add(p); err != nil {
+				installed, vers, err := ardiCore.Platform.Add(p)
+				if err != nil {
 					logger.WithError(err).Errorf("Failed to add arduino platform %s", p)
+					return err
+				}
+				if err := ardiCore.Project.AddPlatform(installed, vers); err != nil {
 					return err
 				}
 			}
@@ -151,13 +170,9 @@ func getProjectAddLibCmd() *cobra.Command {
 	addCmd := &cobra.Command{
 		Use:   "lib",
 		Long:  "\nAdd libraries to project",
-		Short: "Add libraries to project\\e[0m",
+		Short: "Add libraries to project",
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := client.UpdateLibraryIndex(); err != nil {
-				logger.WithError(err).Error("Failed to update library index file")
-			}
-
 			for _, l := range args {
 				name, vers, err := ardiCore.Lib.Add(l)
 				if err != nil {
@@ -175,15 +190,34 @@ func getProjectAddLibCmd() *cobra.Command {
 	return addCmd
 }
 
+func getProjectAddBoardURLCmd() *cobra.Command {
+	addCmd := &cobra.Command{
+		Use:   "board-url",
+		Long:  "\nAdd board urls to project",
+		Short: "Add board urls to project",
+		Args:  cobra.MinimumNArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			for _, u := range args {
+				if err := ardiCore.Project.AddBoardURL(u); err != nil {
+					return err
+				}
+			}
+			return nil
+		},
+	}
+	return addCmd
+}
+
 func getProjectAddCmd() *cobra.Command {
 	addCmd := &cobra.Command{
 		Use:   "add",
-		Long:  "\nAdd libraries and builds to project",
-		Short: "Add libraries and builds to project",
+		Long:  "\nAdd project dependencies",
+		Short: "Add project dependencies",
 	}
 	addCmd.AddCommand(getProjectAddPlatformCmd())
 	addCmd.AddCommand(getProjectAddBuildCmd())
 	addCmd.AddCommand(getProjectAddLibCmd())
+	addCmd.AddCommand(getProjectAddBoardURLCmd())
 	return addCmd
 }
 
@@ -196,8 +230,12 @@ func getProjectRemovePlatformCmd() *cobra.Command {
 		Args:    cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			for _, p := range args {
-				if err := ardiCore.Platform.Remove(p); err != nil {
+				removed, err := ardiCore.Platform.Remove(p)
+				if err != nil {
 					logger.WithError(err).Errorf("Failed to remove arduino platform %s", p)
+					return err
+				}
+				if err := ardiCore.Project.RemovePlatform(removed); err != nil {
 					return err
 				}
 			}
@@ -250,6 +288,24 @@ func getProjectRemoveLibCmd() *cobra.Command {
 	return removeCmd
 }
 
+func getProjectRemoveBoardURLCmd() *cobra.Command {
+	removeCmd := &cobra.Command{
+		Use:   "board-url",
+		Long:  "\nRemove board urls from project",
+		Short: "Remove board urls from project",
+		Args:  cobra.MinimumNArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			for _, url := range args {
+				if err := ardiCore.Project.RemoveBoardURL(url); err != nil {
+					return err
+				}
+			}
+			return nil
+		},
+	}
+	return removeCmd
+}
+
 func getProjectRemoveCmd() *cobra.Command {
 	removeCmd := &cobra.Command{
 		Use:   "remove",
@@ -259,6 +315,7 @@ func getProjectRemoveCmd() *cobra.Command {
 	removeCmd.AddCommand(getProjectRemovePlatformCmd())
 	removeCmd.AddCommand(getProjectRemoveBuildCmd())
 	removeCmd.AddCommand(getProjectRemoveLibCmd())
+	removeCmd.AddCommand(getProjectRemoveBoardURLCmd())
 	return removeCmd
 }
 
@@ -294,10 +351,23 @@ func getProjectInstallCmd() *cobra.Command {
 		Short: "Install all libraries specified in ardi.json",
 		Long:  "\nInstall all libraries specified in ardi.json",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			for _, l := range ardiCore.Project.GetLibraries() {
-				_, _, err := ardiCore.Lib.Add(l)
+			for plat, vers := range ardiCore.Project.GetPlatforms() {
+				_, _, err := ardiCore.Platform.Add(fmt.Sprintf("%s@%s", plat, vers))
 				if err != nil {
-					logger.WithError(err).Errorf("Failed to install %s", l)
+					logger.WithError(err).Errorf("Failed to install %s", plat)
+					return err
+				}
+			}
+			for lib, vers := range ardiCore.Project.GetLibraries() {
+				_, _, err := ardiCore.Lib.Add(fmt.Sprintf("%s@%s", lib, vers))
+				if err != nil {
+					logger.WithError(err).Errorf("Failed to install %s", lib)
+					return err
+				}
+			}
+			for _, url := range ardiCore.Project.GetBoardURLS() {
+				if err := ardiCore.Project.AddBoardURL(url); err != nil {
+					logger.WithError(err).Errorf("Failed add board url %s", url)
 					return err
 				}
 			}

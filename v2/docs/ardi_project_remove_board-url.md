@@ -1,20 +1,20 @@
-## ardi project install
+## ardi project remove board-url
 
-Install all libraries specified in ardi.json
+Remove board urls from project
 
 ### Synopsis
 
 
-Install all libraries specified in ardi.json
+Remove board urls from project
 
 ```
-ardi project install [flags]
+ardi project remove board-url [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for install
+  -h, --help   help for board-url
 ```
 
 ### Options inherited from parent commands
@@ -28,5 +28,5 @@ ardi project install [flags]
 
 ### SEE ALSO
 
-* [ardi project](ardi_project.md)	 - Project manager
+* [ardi project remove](ardi_project_remove.md)	 - Remove libraries and builds from project
 

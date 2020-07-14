@@ -88,6 +88,13 @@ type UnitTestEnv struct {
 	EmptyProjDIr string
 }
 
+// ClearStdout clears stdout for unit test
+func (e *UnitTestEnv) ClearStdout() {
+	var b bytes.Buffer
+	e.Logger.SetOutput(&b)
+	e.Stdout = &b
+}
+
 // GenerateCmdBoard returns a single rpc Board
 func GenerateCmdBoard(name, fqbn string) *rpccommands.Board {
 	if fqbn == "" {
@@ -131,6 +138,8 @@ func GenerateCmdPlatform(name string, boards []*rpccommands.Board) *rpccommands.
 func RunUnitTest(name string, t *testing.T, f func(env *UnitTestEnv)) {
 	t.Run(name, func(st *testing.T) {
 		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
 		client := mocks.NewMockClient(ctrl)
 		logger := log.New()
 
@@ -223,4 +232,11 @@ func (e *IntegrationTestEnv) Execute(args []string) error {
 	defer cancel()
 
 	return rootCmd.ExecuteContext(ctx)
+}
+
+// ClearStdout clears integration test env stdout
+func (e *IntegrationTestEnv) ClearStdout() {
+	var b bytes.Buffer
+	e.logger.SetOutput(&b)
+	e.Stdout = &b
 }

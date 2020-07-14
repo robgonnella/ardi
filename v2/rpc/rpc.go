@@ -40,8 +40,8 @@ type Client interface {
 	UpdateLibraryIndex() error
 	UpdatePlatformIndex() error
 	UpgradePlatform(platform string) error
-	InstallPlatform(platform string) error
-	UninstallPlatform(platform string) error
+	InstallPlatform(platform string) (string, string, error)
+	UninstallPlatform(platform string) (string, error)
 	InstallAllPlatforms() error
 	GetInstalledPlatforms() ([]*rpc.Platform, error)
 	GetPlatforms() ([]*rpc.Platform, error)
@@ -322,16 +322,17 @@ func (c *ArdiClient) UpgradePlatform(platform string) error {
 }
 
 // InstallPlatform installs a given platform
-func (c *ArdiClient) InstallPlatform(platform string) error {
+func (c *ArdiClient) InstallPlatform(platform string) (string, string, error) {
 	if platform == "" {
 		err := errors.New("Must specify a platform to install")
 		c.logger.WithError(err).Error()
-		return err
+		return "", "", err
 	}
 
 	pkg, arch, version := parsePlatform(platform)
+	installedPlatform := fmt.Sprintf("%s:%s", pkg, arch)
 
-	c.logger.Infof("Installing platform: %s:%s\n", pkg, arch)
+	c.logger.Infof("Installing platform: %s\n", installedPlatform)
 
 	installRespStream, err := c.client.PlatformInstall(
 		c.ctx,
@@ -345,7 +346,7 @@ func (c *ArdiClient) InstallPlatform(platform string) error {
 
 	if err != nil {
 		c.logger.WithError(err).Error("Failed to install platform")
-		return err
+		return "", "", err
 	}
 
 	installedVersion := ""
@@ -356,13 +357,13 @@ func (c *ArdiClient) InstallPlatform(platform string) error {
 		// The server is done.
 		if err == io.EOF {
 			c.logger.Infof("Installed: %s:%s@%s", pkg, arch, installedVersion)
-			return nil
+			return installedPlatform, installedVersion, nil
 		}
 
 		// There was an error.
 		if err != nil {
 			c.logger.WithError(err).Error("Failed to install platform")
-			return err
+			return "", "", err
 		}
 
 		// When a download is ongoing, log the progress
@@ -390,16 +391,17 @@ func (c *ArdiClient) InstallPlatform(platform string) error {
 }
 
 // UninstallPlatform installs a given platform
-func (c *ArdiClient) UninstallPlatform(platform string) error {
+func (c *ArdiClient) UninstallPlatform(platform string) (string, error) {
 	if platform == "" {
 		err := errors.New("Must specify a platform to install")
 		c.logger.WithError(err).Error()
-		return err
+		return "", err
 	}
 
 	pkg, arch, _ := parsePlatform(platform)
 
-	c.logger.Infof("Uninstalling platform: %s:%s\n", pkg, arch)
+	removedPlatform := fmt.Sprintf("%s:%s", pkg, arch)
+	c.logger.Infof("Uninstalling platform: %s\n", removedPlatform)
 
 	uninstallRespStream, err := c.client.PlatformUninstall(
 		c.ctx,
@@ -412,7 +414,7 @@ func (c *ArdiClient) UninstallPlatform(platform string) error {
 
 	if err != nil {
 		c.logger.WithError(err).Error("Failed to uninstall platform")
-		return err
+		return "", err
 	}
 
 	// Loop and consume the server stream until all the operations are done.
@@ -422,13 +424,13 @@ func (c *ArdiClient) UninstallPlatform(platform string) error {
 		// The server is done.
 		if err == io.EOF {
 			c.logger.Infof("Uninstalled: %s:%s", pkg, arch)
-			return nil
+			return removedPlatform, nil
 		}
 
 		// There was an error.
 		if err != nil {
 			c.logger.WithError(err).Error("Failed to uninstall platform")
-			return err
+			return "", err
 		}
 
 		// When an overall task is ongoing, log the progress

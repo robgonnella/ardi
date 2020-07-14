@@ -12,10 +12,6 @@ func getLibSearchCommand() *cobra.Command {
 		Aliases: []string{"find"},
 		Args:    cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := client.UpdateLibraryIndex(); err != nil {
-				logger.WithError(err).Error("Failed to update library index file")
-			}
-
 			if err := ardiCore.Lib.Search(args[0]); err != nil {
 				logger.WithError(err).Error("Failed to find arduino libraries")
 				return err
@@ -33,10 +29,6 @@ func getLibAddCommand() *cobra.Command {
 		Short: "Adds specified libraries to either project or global library directory",
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := client.UpdateLibraryIndex(); err != nil {
-				logger.WithError(err).Error("Failed to update library index file")
-			}
-
 			for _, l := range args {
 				if _, _, err := ardiCore.Lib.Add(l); err != nil {
 					logger.WithError(err).Errorf("Failed to add library %s", l)
