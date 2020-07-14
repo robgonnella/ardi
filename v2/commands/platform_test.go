@@ -7,13 +7,58 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestPlatformAddCommand(t *testing.T) {
-	testutil.RunIntegrationTest("adds a valid platform globally", t, func(env *testutil.IntegrationTestEnv) {
-		args := []string{"platform", "add", "arduino:avr", "--global"}
+func TestPlatform(t *testing.T) {
+	testutil.RunIntegrationTest("adding, listing, and removing platform globally", t, func(env *testutil.IntegrationTestEnv) {
+		platform := "arduino:avr"
+		args := []string{"platform", "add", platform, "--global"}
 		err := env.Execute(args)
 		assert.NoError(env.T, err)
+
+		env.ClearStdout()
+		args = []string{"platform", "list", "--installed", "--global"}
+		err = env.Execute(args)
+		assert.NoError(env.T, err)
+		assert.Contains(env.T, env.Stdout.String(), platform)
+
+		args = []string{"platform", "remove", platform, "--global"}
+		err = env.Execute(args)
+		assert.NoError(env.T, err)
+
+		env.ClearStdout()
+		args = []string{"platform", "list", "--installed", "--global"}
+		err = env.Execute(args)
+		assert.NoError(env.T, err)
+		assert.NotContains(env.T, env.Stdout.String(), platform)
 	})
 
+	testutil.RunIntegrationTest("adding, listing, and removing platform in project", t, func(env *testutil.IntegrationTestEnv) {
+		err := env.RunProjectInit()
+		assert.NoError(env.T, err)
+
+		platform := "arduino:avr"
+		args := []string{"platform", "add", platform}
+		err = env.Execute(args)
+		assert.NoError(env.T, err)
+
+		env.ClearStdout()
+		args = []string{"platform", "list", "--installed"}
+		err = env.Execute(args)
+		assert.NoError(env.T, err)
+		assert.Contains(env.T, env.Stdout.String(), platform)
+
+		args = []string{"platform", "remove", platform}
+		err = env.Execute(args)
+		assert.NoError(env.T, err)
+
+		env.ClearStdout()
+		args = []string{"platform", "list", "--installed"}
+		err = env.Execute(args)
+		assert.NoError(env.T, err)
+		assert.NotContains(env.T, env.Stdout.String(), platform)
+	})
+}
+
+func TestPlatformAddCommand(t *testing.T) {
 	testutil.RunIntegrationTest("errors when adding an invalid platform globally", t, func(env *testutil.IntegrationTestEnv) {
 		args := []string{"platform", "add", "noop", "--global"}
 		err := env.Execute(args)
@@ -36,27 +81,10 @@ func TestPlatformAddCommand(t *testing.T) {
 }
 
 func TestPlatformRemoveCommand(t *testing.T) {
-	testutil.RunIntegrationTest("removes a valid platform globally", t, func(env *testutil.IntegrationTestEnv) {
-		platform := "arduino:sam"
-		env.AddPlatform(platform, testutil.GlobalOpt{true})
-		args := []string{"platform", "remove", platform, "--global"}
-		err := env.Execute(args)
-		assert.NoError(env.T, err)
-	})
-
 	testutil.RunIntegrationTest("errors when removing an invalid platform globally", t, func(env *testutil.IntegrationTestEnv) {
 		args := []string{"platform", "remove", "noop", "--global"}
 		err := env.Execute(args)
 		assert.Error(env.T, err)
-	})
-
-	testutil.RunIntegrationTest("removes a valid platform from project", t, func(env *testutil.IntegrationTestEnv) {
-		env.RunProjectInit()
-		platform := "arduino:megaavr"
-		env.AddPlatform(platform, testutil.GlobalOpt{false})
-		args := []string{"platform", "remove", platform}
-		err := env.Execute(args)
-		assert.NoError(env.T, err)
 	})
 
 	testutil.RunIntegrationTest("errors when removing an invalid project platform", t, func(env *testutil.IntegrationTestEnv) {

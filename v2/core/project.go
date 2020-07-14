@@ -23,6 +23,8 @@ type ProjectCore struct {
 	logger    *log.Logger
 }
 
+var errInitialization = errors.New("project not initialized")
+
 // NewProjectCore returns new Project instance
 func NewProjectCore(client rpc.Client, logger *log.Logger) *ProjectCore {
 	return &ProjectCore{
@@ -62,7 +64,7 @@ func (p *ProjectCore) SetConfigHelpers() error {
 	}
 
 	if p.ardiYAML == nil {
-		ardiYAML, err := NewArdiYAML(p.logger)
+		ardiYAML, err := NewArdiYAML()
 		if err != nil {
 			return err
 		}
@@ -87,56 +89,161 @@ func (p *ProjectCore) ProcessSketch(sketchDir string) error {
 
 // AddLibrary adds a library to ardi.json
 func (p *ProjectCore) AddLibrary(name, version string) error {
+	if p.ardiJSON == nil {
+		return errInitialization
+	}
 	return p.ardiJSON.AddLibrary(name, version)
 }
 
 // RemoveLibrary removes a library from ardi.json
 func (p *ProjectCore) RemoveLibrary(name string) error {
+	if p.ardiJSON == nil {
+		return errInitialization
+	}
 	return p.ardiJSON.RemoveLibrary(name)
 }
 
 // ListLibraries specified in ardi.json
 func (p *ProjectCore) ListLibraries() {
+	if p.ardiJSON == nil {
+		return
+	}
 	p.ardiJSON.ListLibraries()
 }
 
 // GetLibraries returns map of libraries specified in ardi.json
 func (p *ProjectCore) GetLibraries() map[string]string {
+	if p.ardiJSON == nil {
+		return make(map[string]string)
+	}
 	return p.ardiJSON.Config.Libraries
 }
 
+// AddPlatform adds a platform to ardi.json
+func (p *ProjectCore) AddPlatform(platform, vers string) error {
+	if p.ardiJSON == nil {
+		return errInitialization
+	}
+	return p.ardiJSON.AddPlatform(platform, vers)
+}
+
+// RemovePlatform removes a platform from ardi.json
+func (p *ProjectCore) RemovePlatform(platform string) error {
+	if p.ardiJSON == nil {
+		return errInitialization
+	}
+	return p.ardiJSON.RemovePlatform(platform)
+}
+
+// ListPlatforms lists all project platforms in config file
+func (p *ProjectCore) ListPlatforms() {
+	if p.ardiJSON == nil {
+		return
+	}
+	p.ardiJSON.ListPlatforms()
+}
+
+// GetPlatforms returns map of platforms specified in ardi.json
+func (p *ProjectCore) GetPlatforms() map[string]string {
+	if p.ardiJSON == nil {
+		return make(map[string]string)
+	}
+	return p.ardiJSON.Config.Platforms
+}
+
 // AddBuild to ardi.json build specifications
-func (p *ProjectCore) AddBuild(name, platform, boardURL, path, fqbn string, buildProps []string) {
+func (p *ProjectCore) AddBuild(name, platform, boardURL, path, fqbn string, buildProps []string) error {
+	if p.ardiJSON == nil || p.ardiYAML == nil {
+		return errInitialization
+	}
 	if platform != "" {
-		if err := p.client.InstallPlatform(platform); err != nil {
-			p.logger.WithError(err).Warnf("Failed to install platform: %s", platform)
+		installed, vers, err := p.client.InstallPlatform(platform)
+		if err != nil {
+			return err
+		}
+		if err := p.ardiJSON.AddPlatform(installed, vers); err != nil {
+			return err
 		}
 	}
 	if boardURL != "" {
 		if err := p.ardiYAML.AddBoardURL(boardURL); err != nil {
-			p.logger.WithError(err).Warnf("Failed to add board url: %s", boardURL)
+			return err
+		}
+		if err := p.ardiJSON.AddBoardURL(boardURL); err != nil {
+			return err
 		}
 	}
-	p.ardiJSON.AddBuild(name, platform, boardURL, path, fqbn, buildProps)
+	return p.ardiJSON.AddBuild(name, path, fqbn, buildProps)
 }
 
 // RemoveBuild removes specified build from project
 func (p *ProjectCore) RemoveBuild(build string) error {
+	if p.ardiJSON == nil {
+		return errInitialization
+	}
 	return p.ardiJSON.RemoveBuild(build)
 }
 
 // GetBuilds returns map of builds stored in ardi.json
 func (p *ProjectCore) GetBuilds() map[string]types.ArdiBuildJSON {
+	if p.ardiJSON == nil {
+		return make(map[string]types.ArdiBuildJSON)
+	}
 	return p.ardiJSON.Config.Builds
 }
 
 // ListBuilds specified in ardi.json
 func (p *ProjectCore) ListBuilds(builds []string) {
+	if p.ardiJSON == nil {
+		return
+	}
 	p.ardiJSON.ListBuilds(builds)
+}
+
+// AddBoardURL add board url to project config
+func (p *ProjectCore) AddBoardURL(url string) error {
+	if p.ardiJSON == nil || p.ardiYAML == nil {
+		return errInitialization
+	}
+	if err := p.ardiYAML.AddBoardURL(url); err != nil {
+		return err
+	}
+	return p.ardiJSON.AddBoardURL(url)
+}
+
+// RemoveBoardURL removes board url from project config
+func (p *ProjectCore) RemoveBoardURL(url string) error {
+	if p.ardiJSON == nil || p.ardiYAML == nil {
+		return errInitialization
+	}
+	if err := p.ardiYAML.RemoveBoardURL(url); err != nil {
+		return err
+	}
+	return p.ardiJSON.RemoveBoardURL(url)
+}
+
+// ListBoardURLS lists board urls specified in ardi.json
+func (p *ProjectCore) ListBoardURLS() {
+	if p.ardiJSON == nil || p.ardiYAML == nil {
+		return
+	}
+	p.ardiJSON.ListBoardURLS()
+}
+
+// GetBoardURLS returns the list of board urls in config file
+func (p *ProjectCore) GetBoardURLS() []string {
+	if p.ardiJSON == nil {
+		return []string{}
+	}
+	return p.ardiJSON.Config.BoardURLS
 }
 
 // Build builds only the build name specified by the user
 func (p *ProjectCore) Build(buildName string) error {
+	if p.ardiJSON == nil || p.ardiYAML == nil {
+		return errInitialization
+	}
+
 	if buildName == "" {
 		return errors.New("Empty build list")
 	}
@@ -148,16 +255,6 @@ func (p *ProjectCore) Build(buildName string) error {
 	}
 	if err := p.ProcessSketch(build.Path); err != nil {
 		return err
-	}
-	if build.Platform != "" {
-		if err := p.client.InstallPlatform(build.Platform); err != nil {
-			p.logger.WithError(err).Warnf("Failed to install platform: %s", build.Platform)
-		}
-	}
-	if build.BoardURL != "" {
-		if err := p.ardiYAML.AddBoardURL(build.BoardURL); err != nil {
-			p.logger.WithError(err).Warnf("Failed to add board url: %s", build.BoardURL)
-		}
 	}
 
 	buildProps := []string{}
@@ -183,6 +280,10 @@ func (p *ProjectCore) Build(buildName string) error {
 
 // BuildAll builds all builds specified in config
 func (p *ProjectCore) BuildAll() error {
+	if p.ardiJSON == nil || p.ardiYAML == nil {
+		return errInitialization
+	}
+
 	if len(p.ardiJSON.Config.Builds) == 0 {
 		p.logger.Warn("No builds defined. Use 'ardi project add build' to define a build.")
 		return nil
@@ -214,6 +315,9 @@ func (p *ProjectCore) BuildAll() error {
 
 // GetDataConfig returns config file contents in .ardi/arduino-cli.yml
 func (p *ProjectCore) GetDataConfig() types.DataConfig {
+	if p.ardiYAML == nil {
+		return types.DataConfig{}
+	}
 	return p.ardiYAML.Config
 }
 

@@ -14,10 +14,6 @@ func getPlatformListCmd() *cobra.Command {
 		Long:  "\nList platforms",
 		Short: "List platforms",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := client.UpdatePlatformIndex(); err != nil {
-				logger.WithError(err).Error("Failed to update platform index file")
-			}
-
 			if all || (!all && !installed) {
 				if err := ardiCore.Platform.ListAll(); err != nil {
 					logger.WithError(err).Error("Failed to list arduino platforms")
@@ -47,10 +43,6 @@ func getPlatformAddCmd() *cobra.Command {
 		Long:  "\nInstall platforms",
 		Short: "Install platforms",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := client.UpdatePlatformIndex(); err != nil {
-				logger.WithError(err).Error("Failed to update platform index file")
-			}
-
 			if all {
 				if err := ardiCore.Platform.AddAll(); err != nil {
 					logger.WithError(err).Error("Failed to install arduino platforms")
@@ -64,7 +56,7 @@ func getPlatformAddCmd() *cobra.Command {
 				return errors.New(msg)
 			}
 			for _, p := range args {
-				if err := ardiCore.Platform.Add(p); err != nil {
+				if _, _, err := ardiCore.Platform.Add(p); err != nil {
 					logger.WithError(err).Error("Failed to install arduino platforms")
 					return err
 				}
@@ -85,7 +77,7 @@ func getPlatformRemoveCmd() *cobra.Command {
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			for _, p := range args {
-				if err := ardiCore.Platform.Remove(p); err != nil {
+				if _, err := ardiCore.Platform.Remove(p); err != nil {
 					logger.WithError(err).Errorf("Failed to remove arduino platform %s", p)
 					return err
 				}

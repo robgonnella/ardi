@@ -11,7 +11,6 @@ import (
 
 func TestBoardCore(t *testing.T) {
 	testutil.RunUnitTest("prints fqbns", t, func(env *testutil.UnitTestEnv) {
-		defer env.Ctrl.Finish()
 		boards := testutil.GenerateCmdBoards(10)
 		platform := testutil.GenerateCmdPlatform("test-platform", boards)
 		platforms := []*commands.Platform{platform}
@@ -26,7 +25,6 @@ func TestBoardCore(t *testing.T) {
 	})
 
 	testutil.RunUnitTest("returns fqbn error", t, func(env *testutil.UnitTestEnv) {
-		defer env.Ctrl.Finish()
 		errString := "dummy error"
 		dummyErr := errors.New(errString)
 
@@ -37,7 +35,6 @@ func TestBoardCore(t *testing.T) {
 	})
 
 	testutil.RunUnitTest("prints platforms", t, func(env *testutil.UnitTestEnv) {
-		defer env.Ctrl.Finish()
 		boards := testutil.GenerateCmdBoards(10)
 		platform := testutil.GenerateCmdPlatform("test-platform", boards)
 		platforms := []*commands.Platform{platform}
@@ -52,7 +49,6 @@ func TestBoardCore(t *testing.T) {
 	})
 
 	testutil.RunUnitTest("returns platform error", t, func(env *testutil.UnitTestEnv) {
-		defer env.Ctrl.Finish()
 		errString := "dummy error"
 		dummyErr := errors.New(errString)
 

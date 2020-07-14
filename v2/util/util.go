@@ -85,6 +85,8 @@ func InitDataDirectory(port, dataDirPath, dataConfigPath string) error {
 func InitArdiJSON() error {
 	if _, err := os.Stat(paths.ArdiProjectBuildConfig); os.IsNotExist(err) {
 		buildConfig := types.ArdiConfig{
+			Platforms: make(map[string]string),
+			BoardURLS: []string{},
 			Libraries: make(map[string]string),
 			Builds:    make(map[string]types.ArdiBuildJSON),
 		}

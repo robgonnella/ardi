@@ -12,13 +12,12 @@ import (
 
 func TestLibCore(t *testing.T) {
 	testutil.RunUnitTest("installs versioned library", t, func(env *testutil.UnitTestEnv) {
-		defer env.Ctrl.Finish()
-
 		lib := "Adafruit_Pixie"
 		version := "1.0.0"
 		library := fmt.Sprintf("%s@%s", lib, version)
 		installedVersion := "1.0.0-alpha.2"
 
+		env.Client.EXPECT().UpdateLibraryIndex().Times(1).Return(nil)
 		env.Client.EXPECT().InstallLibrary(lib, version).Times(1).Return(installedVersion, nil)
 
 		returnedLib, returnedVers, err := env.ArdiCore.Lib.Add(library)
@@ -28,8 +27,6 @@ func TestLibCore(t *testing.T) {
 	})
 
 	testutil.RunUnitTest("returns install error", t, func(env *testutil.UnitTestEnv) {
-		defer env.Ctrl.Finish()
-
 		errString := "dummy error"
 		dummyErr := errors.New(errString)
 
@@ -37,6 +34,7 @@ func TestLibCore(t *testing.T) {
 		version := "1.0.0"
 		library := fmt.Sprintf("%s@%s", lib, version)
 
+		env.Client.EXPECT().UpdateLibraryIndex().Times(1).Return(nil)
 		env.Client.EXPECT().InstallLibrary(lib, version).Times(1).Return("", dummyErr)
 
 		_, _, err := env.ArdiCore.Lib.Add(library)
@@ -45,7 +43,6 @@ func TestLibCore(t *testing.T) {
 	})
 
 	testutil.RunUnitTest("uninstalls library", t, func(env *testutil.UnitTestEnv) {
-		defer env.Ctrl.Finish()
 		libName := "Adafruit_Pixie"
 		env.Client.EXPECT().UninstallLibrary(libName).Times(1).Return(nil)
 		err := env.ArdiCore.Lib.Remove(libName)
@@ -53,7 +50,6 @@ func TestLibCore(t *testing.T) {
 	})
 
 	testutil.RunUnitTest("returns uninstall error", t, func(env *testutil.UnitTestEnv) {
-		defer env.Ctrl.Finish()
 		errString := "dummy error"
 		dummyErr := errors.New(errString)
 		libName := "Adafruit_Pixie"
@@ -64,8 +60,6 @@ func TestLibCore(t *testing.T) {
 	})
 
 	testutil.RunUnitTest("prints library searches to stdout", t, func(env *testutil.UnitTestEnv) {
-		defer env.Ctrl.Finish()
-
 		searchQuery := "wifi101"
 
 		latest := commands.LibraryRelease{Version: "1.2.1"}
@@ -82,6 +76,7 @@ func TestLibCore(t *testing.T) {
 
 		searchedLibs := []*commands.SearchedLibrary{&lib}
 
+		env.Client.EXPECT().UpdateLibraryIndex().Times(1).Return(nil)
 		env.Client.EXPECT().SearchLibraries(searchQuery).Times(1).Return(searchedLibs, nil)
 
 		err := env.ArdiCore.Lib.Search(searchQuery)
@@ -91,8 +86,6 @@ func TestLibCore(t *testing.T) {
 	})
 
 	testutil.RunUnitTest("prints installed libraries to stdout", t, func(env *testutil.UnitTestEnv) {
-		defer env.Ctrl.Finish()
-
 		installedLib := commands.InstalledLibrary{
 			Library: &commands.Library{
 				Name:     "My favorite library",

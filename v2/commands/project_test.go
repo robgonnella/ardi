@@ -29,16 +29,25 @@ func TestProjectInitCommand(t *testing.T) {
 }
 
 func TestProjectRequiringPlatform(t *testing.T) {
-	testutil.RunIntegrationTest("project platform", t, func(groupEnv *testutil.IntegrationTestEnv) {
+	testutil.RunIntegrationTest("with platform and library added", t, func(groupEnv *testutil.IntegrationTestEnv) {
 		err := groupEnv.RunProjectInit()
 		assert.NoError(groupEnv.T, err)
 
 		platform := "arduino:avr"
 		groupEnv.T.Logf("Adding platform: %s", platform)
-		err = groupEnv.AddPlatform(platform, testutil.GlobalOpt{false})
+		platArgs := []string{"project", "add", "platform", platform}
+		err = groupEnv.Execute(platArgs)
+		assert.NoError(groupEnv.T, err)
+
+		lib := "Adafruit Pixie"
+		groupEnv.T.Logf("Adding library: %s", lib)
+		installedLib := "Adafruit_Pixie"
+		libArgs := []string{"project", "add", "lib", lib}
+		err = groupEnv.Execute(libArgs)
 		assert.NoError(groupEnv.T, err)
 
 		groupEnv.T.Run("lists platforms", func(st *testing.T) {
+			groupEnv.ClearStdout()
 			args := []string{"project", "list", "platforms"}
 			err = groupEnv.Execute(args)
 			assert.NoError(st, err)
@@ -47,7 +56,7 @@ func TestProjectRequiringPlatform(t *testing.T) {
 
 		groupEnv.T.Run("builds all projects", func(st *testing.T) {
 			testutil.CleanBuilds()
-			args := []string{"project", "add", "build", "--name", "blink", "--fqbn", testutil.ArduinoMegaFQBN(), "--sketch", testutil.BlinkProjectDir()}
+			args := []string{"project", "add", "build", "--name", "pixie", "--fqbn", testutil.ArduinoMegaFQBN(), "--sketch", testutil.PixieProjectDir()}
 			err := groupEnv.Execute(args)
 			assert.NoError(st, err)
 
@@ -58,8 +67,8 @@ func TestProjectRequiringPlatform(t *testing.T) {
 
 		groupEnv.T.Run("builds a single project", func(st *testing.T) {
 			testutil.CleanBuilds()
-			buildName := "blink"
-			args := []string{"project", "add", "build", "--name", buildName, "--fqbn", testutil.ArduinoMegaFQBN(), "--sketch", testutil.BlinkProjectDir()}
+			buildName := "pixie"
+			args := []string{"project", "add", "build", "--name", buildName, "--fqbn", testutil.ArduinoMegaFQBN(), "--sketch", testutil.PixieProjectDir()}
 			err := groupEnv.Execute(args)
 			assert.NoError(st, err)
 
@@ -68,10 +77,55 @@ func TestProjectRequiringPlatform(t *testing.T) {
 			assert.NoError(st, err)
 		})
 
-		groupEnv.T.Run("removes platform", func(st *testing.T) {
-			args := []string{"project", "remove", "platform", platform}
+		groupEnv.T.Run("removes lib and platform then reinstalls dependencies", func(st *testing.T) {
+			groupEnv.ClearStdout()
+			args := []string{"lib", "list"}
 			err = groupEnv.Execute(args)
 			assert.NoError(st, err)
+			assert.Contains(st, groupEnv.Stdout.String(), installedLib)
+
+			groupEnv.ClearStdout()
+			args = []string{"platform", "list", "--installed"}
+			err = groupEnv.Execute(args)
+			assert.NoError(st, err)
+			assert.Contains(st, groupEnv.Stdout.String(), platform)
+
+			args = []string{"lib", "remove", installedLib}
+			err = groupEnv.Execute(args)
+			assert.NoError(st, err)
+
+			args = []string{"platform", "remove", platform}
+			err = groupEnv.Execute(args)
+			assert.NoError(st, err)
+
+			groupEnv.ClearStdout()
+			args = []string{"lib", "list"}
+			err = groupEnv.Execute(args)
+			assert.NoError(st, err)
+			assert.NotContains(st, groupEnv.Stdout.String(), lib)
+			assert.NotContains(st, groupEnv.Stdout.String(), installedLib)
+
+			groupEnv.ClearStdout()
+			args = []string{"platform", "list", "--installed"}
+			err = groupEnv.Execute(args)
+			assert.NoError(st, err)
+			assert.NotContains(st, groupEnv.Stdout.String(), platform)
+
+			args = []string{"project", "install"}
+			err = groupEnv.Execute(args)
+			assert.NoError(st, err)
+
+			groupEnv.ClearStdout()
+			args = []string{"lib", "list"}
+			err = groupEnv.Execute(args)
+			assert.NoError(st, err)
+			assert.Contains(st, groupEnv.Stdout.String(), installedLib)
+
+			groupEnv.ClearStdout()
+			args = []string{"platform", "list", "--installed"}
+			err = groupEnv.Execute(args)
+			assert.NoError(st, err)
+			assert.Contains(st, groupEnv.Stdout.String(), platform)
 		})
 	})
 }
@@ -106,10 +160,10 @@ func TestProjectListCommand(t *testing.T) {
 	testutil.RunIntegrationTest("lists builds", t, func(env *testutil.IntegrationTestEnv) {
 		err := env.RunProjectInit()
 		assert.NoError(env.T, err)
-		name := "some_build_name"
-		platform := "some-platform"
-		fqbn := "some-fqbn"
-		args := []string{"project", "add", "build", "--name", name, "--platform", platform, "--fqbn", fqbn, "--sketch", "."}
+		name := "pixie"
+		fqbn := "arduino:avr:mega"
+		sketchPath := testutil.PixieProjectDir()
+		args := []string{"project", "add", "build", "--name", name, "--fqbn", fqbn, "--sketch", sketchPath}
 		err = env.Execute(args)
 		assert.NoError(env.T, err)
 		args = []string{"project", "list", "builds"}
@@ -117,7 +171,7 @@ func TestProjectListCommand(t *testing.T) {
 		assert.NoError(env.T, err)
 		out := env.Stdout.String()
 		assert.Contains(env.T, out, name)
-		assert.Contains(env.T, out, platform)
+		assert.Contains(env.T, out, sketchPath)
 		assert.Contains(env.T, out, fqbn)
 	})
 
@@ -125,6 +179,30 @@ func TestProjectListCommand(t *testing.T) {
 		err := env.RunProjectInit()
 		assert.NoError(env.T, err)
 		args := []string{"project", "list", "builds"}
+		err = env.Execute(args)
+		assert.NoError(env.T, err)
+	})
+
+	testutil.RunIntegrationTest("lists board urls", t, func(env *testutil.IntegrationTestEnv) {
+		err := env.RunProjectInit()
+		assert.NoError(env.T, err)
+
+		boardURL := "https://someboardurl.com"
+		args := []string{"project", "add", "board-url", boardURL}
+		err = env.Execute(args)
+		assert.NoError(env.T, err)
+
+		env.ClearStdout()
+		args = []string{"project", "list", "board-urls"}
+		err = env.Execute(args)
+		assert.NoError(env.T, err)
+		assert.Contains(env.T, env.Stdout.String(), boardURL)
+	})
+
+	testutil.RunIntegrationTest("does not error if no board urls added", t, func(env *testutil.IntegrationTestEnv) {
+		err := env.RunProjectInit()
+		assert.NoError(env.T, err)
+		args := []string{"project", "list", "board-urls"}
 		err = env.Execute(args)
 		assert.NoError(env.T, err)
 	})
@@ -140,6 +218,10 @@ func TestProjectListCommand(t *testing.T) {
 		assert.Error(env.T, err)
 
 		args = []string{"project", "list", "builds"}
+		err = env.Execute(args)
+		assert.Error(env.T, err)
+
+		args = []string{"project", "list", "board-urls"}
 		err = env.Execute(args)
 		assert.Error(env.T, err)
 	})
@@ -201,6 +283,22 @@ func TestProjectAddCommand(t *testing.T) {
 		assert.Error(env.T, err)
 	})
 
+	testutil.RunIntegrationTest("adds board url", t, func(env *testutil.IntegrationTestEnv) {
+		err := env.RunProjectInit()
+		assert.NoError(env.T, err)
+
+		boardURL := "https://someboardurl.com"
+		args := []string{"project", "add", "board-url", boardURL}
+		err = env.Execute(args)
+		assert.NoError(env.T, err)
+
+		env.ClearStdout()
+		args = []string{"project", "list", "board-urls"}
+		err = env.Execute(args)
+		assert.NoError(env.T, err)
+		assert.Contains(env.T, env.Stdout.String(), boardURL)
+	})
+
 	testutil.RunIntegrationTest("errors if project not initialized", t, func(env *testutil.IntegrationTestEnv) {
 		args := []string{"project", "add", "platform", "arduino:avr"}
 		err := env.Execute(args)
@@ -211,6 +309,10 @@ func TestProjectAddCommand(t *testing.T) {
 		assert.Error(env.T, err)
 
 		args = []string{"project", "add", "build", "--name", "pixie", "--sketch", "."}
+		err = env.Execute(args)
+		assert.Error(env.T, err)
+
+		args = []string{"project", "add", "board-url", "https://someboardurl.com"}
 		err = env.Execute(args)
 		assert.Error(env.T, err)
 	})
@@ -264,6 +366,39 @@ func TestProjectRemoveCommand(t *testing.T) {
 		assert.NoError(env.T, err)
 	})
 
+	testutil.RunIntegrationTest("removes board url", t, func(env *testutil.IntegrationTestEnv) {
+		err := env.RunProjectInit()
+		assert.NoError(env.T, err)
+		boardURL := "https://someboardurl.com"
+		args := []string{"project", "add", "board-url", boardURL}
+		err = env.Execute(args)
+		assert.NoError(env.T, err)
+
+		env.ClearStdout()
+		args = []string{"project", "list", "board-urls"}
+		err = env.Execute(args)
+		assert.NoError(env.T, err)
+		assert.Contains(env.T, env.Stdout.String(), boardURL)
+
+		args = []string{"project", "remove", "board-url", boardURL}
+		err = env.Execute(args)
+		assert.NoError(env.T, err)
+
+		env.ClearStdout()
+		args = []string{"project", "list", "board-urls"}
+		err = env.Execute(args)
+		assert.NoError(env.T, err)
+		assert.NotContains(env.T, env.Stdout.String(), boardURL)
+	})
+
+	testutil.RunIntegrationTest("does not error if board url not added", t, func(env *testutil.IntegrationTestEnv) {
+		err := env.RunProjectInit()
+		assert.NoError(env.T, err)
+		args := []string{"project", "remove", "board-url", "noop"}
+		err = env.Execute(args)
+		assert.NoError(env.T, err)
+	})
+
 	testutil.RunIntegrationTest("errors if project not initialized", t, func(env *testutil.IntegrationTestEnv) {
 		args := []string{"project", "remove", "platform", "arduino:sam"}
 		err := env.Execute(args)
@@ -276,21 +411,9 @@ func TestProjectRemoveCommand(t *testing.T) {
 		args = []string{"project", "remove", "build", "pixie"}
 		err = env.Execute(args)
 		assert.Error(env.T, err)
-	})
-}
 
-func TestProjectInstallCommand(t *testing.T) {
-	testutil.RunIntegrationTest("installs dependencies", t, func(env *testutil.IntegrationTestEnv) {
-		env.RunProjectInit()
-		lib := "Adafruit Pixie"
-		env.AddLib(lib, testutil.GlobalOpt{false})
-
-		args := []string{"lib", "remove", lib}
-		err := env.Execute(args)
-		assert.NoError(env.T, err)
-
-		args = []string{"project", "install"}
+		args = []string{"project", "remove", "board-url", "https://someboardurl.com"}
 		err = env.Execute(args)
-		assert.NoError(env.T, err)
+		assert.Error(env.T, err)
 	})
 }

@@ -1,20 +1,20 @@
-## ardi project install
+## ardi project add board-url
 
-Install all libraries specified in ardi.json
+Add board urls to project
 
 ### Synopsis
 
 
-Install all libraries specified in ardi.json
+Add board urls to project
 
 ```
-ardi project install [flags]
+ardi project add board-url [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for install
+  -h, --help   help for board-url
 ```
 
 ### Options inherited from parent commands
@@ -28,5 +28,5 @@ ardi project install [flags]
 
 ### SEE ALSO
 
-* [ardi project](ardi_project.md)	 - Project manager
+* [ardi project add](ardi_project_add.md)	 - Add project dependencies
 

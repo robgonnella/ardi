@@ -13,15 +13,17 @@ import (
 
 // PlatformCore module for platform commands
 type PlatformCore struct {
-	logger *log.Logger
-	client rpc.Client
+	logger      *log.Logger
+	client      rpc.Client
+	initialized bool
 }
 
 // NewPlatformCore platform module instance
 func NewPlatformCore(client rpc.Client, logger *log.Logger) *PlatformCore {
 	return &PlatformCore{
-		logger: logger,
-		client: client,
+		logger:      logger,
+		client:      client,
+		initialized: false,
 	}
 }
 
@@ -36,7 +38,6 @@ func (p *PlatformCore) ListInstalled() error {
 		return platforms[i].GetName() < platforms[j].GetName()
 	})
 
-	p.logger.Info("------INSTALLED PLATFORMS------")
 	w := tabwriter.NewWriter(p.logger.Out, 0, 0, 8, ' ', 0)
 	defer w.Flush()
 	w.Write([]byte("Platform\tID\tInstalled\n"))
@@ -48,6 +49,8 @@ func (p *PlatformCore) ListInstalled() error {
 
 // ListAll lists all available platforms
 func (p *PlatformCore) ListAll() error {
+	p.init()
+
 	platforms, err := p.client.GetPlatforms()
 	if err != nil {
 		return err
@@ -68,32 +71,49 @@ func (p *PlatformCore) ListAll() error {
 }
 
 // Add installs specified platforms
-func (p *PlatformCore) Add(platform string) error {
+func (p *PlatformCore) Add(platform string) (string, string, error) {
+	p.init()
+
 	if platform == "" {
-		return errors.New("Empty platform list")
+		return "", "", errors.New("Empty platform list")
 	}
 
-	if err := p.client.InstallPlatform(platform); err != nil {
-		return err
+	installed, vers, err := p.client.InstallPlatform(platform)
+	if err != nil {
+		return "", "", err
 	}
 
-	return nil
+	return installed, vers, nil
 }
 
 // AddAll installs all platforms
 func (p *PlatformCore) AddAll() error {
+	p.init()
+
 	return p.client.InstallAllPlatforms()
 }
 
 // Remove uninstalls specified platforms
-func (p *PlatformCore) Remove(platform string) error {
+func (p *PlatformCore) Remove(platform string) (string, error) {
 	if platform == "" {
-		return errors.New("Empty platform list")
+		return "", errors.New("Empty platform list")
 	}
 
-	if err := p.client.UninstallPlatform(platform); err != nil {
-		return err
+	removed, err := p.client.UninstallPlatform(platform)
+	if err != nil {
+		return "", err
 	}
 
+	return removed, nil
+}
+
+// private
+func (p *PlatformCore) init() error {
+	if !p.initialized {
+		if err := p.client.UpdatePlatformIndex(); err != nil {
+			return err
+		}
+		p.initialized = true
+	}
 	return nil
 }

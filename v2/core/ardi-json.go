@@ -7,6 +7,7 @@ import (
 
 	"github.com/robgonnella/ardi/v2/paths"
 	"github.com/robgonnella/ardi/v2/types"
+	"github.com/robgonnella/ardi/v2/util"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -35,13 +36,11 @@ func NewArdiJSON(logger *log.Logger) (*ArdiJSON, error) {
 }
 
 // AddBuild to ardi.json
-func (a *ArdiJSON) AddBuild(name, platform, boardURL, path, fqbn string, buildProps []string) error {
+func (a *ArdiJSON) AddBuild(name, path, fqbn string, buildProps []string) error {
 	newBuild := types.ArdiBuildJSON{
-		Platform: platform,
-		BoardURL: boardURL,
-		Path:     path,
-		FQBN:     fqbn,
-		Props:    make(map[string]string),
+		Path:  path,
+		FQBN:  fqbn,
+		Props: make(map[string]string),
 	}
 
 	for _, p := range buildProps {
@@ -86,11 +85,7 @@ func (a *ArdiJSON) AddLibrary(name, version string) error {
 
 // RemoveLibrary from ardi.json
 func (a *ArdiJSON) RemoveLibrary(name string) error {
-	for lib := range a.Config.Libraries {
-		if lib == name {
-			delete(a.Config.Libraries, lib)
-		}
-	}
+	delete(a.Config.Libraries, name)
 	return a.write()
 }
 
@@ -101,6 +96,62 @@ func (a *ArdiJSON) ListLibraries() {
 		a.logger.Printf("%s: %s\n", library, version)
 	}
 	a.logger.Println("")
+}
+
+// AddPlatform to ardi.json
+func (a *ArdiJSON) AddPlatform(platform, version string) error {
+	a.Config.Platforms[platform] = version
+	return a.write()
+}
+
+// RemovePlatform from ardi.json
+func (a *ArdiJSON) RemovePlatform(platform string) error {
+	delete(a.Config.Platforms, platform)
+	return a.write()
+}
+
+// ListPlatforms lists all board urls in config
+func (a *ArdiJSON) ListPlatforms() {
+	a.logger.Println("")
+	for platform, vers := range a.Config.Platforms {
+		a.logger.Infof("%s: %s", platform, vers)
+	}
+	a.logger.Println("")
+}
+
+// AddBoardURL to ardi.json
+func (a *ArdiJSON) AddBoardURL(url string) error {
+	if !util.ArrayContains(a.Config.BoardURLS, url) {
+		a.logger.Infof("Adding board url: %s", url)
+		a.Config.BoardURLS = append(a.Config.BoardURLS, url)
+		return a.write()
+	}
+	a.logger.Infof("board url already added: %s", url)
+	return nil
+}
+
+// RemoveBoardURL from ardi.json
+func (a *ArdiJSON) RemoveBoardURL(url string) error {
+	if util.ArrayContains(a.Config.BoardURLS, url) {
+		newList := []string{}
+		for _, u := range a.Config.BoardURLS {
+			if u != url {
+				newList = append(newList, u)
+			}
+		}
+		a.Config.BoardURLS = newList
+		return a.write()
+	}
+	a.logger.Infof("board url not in config: %s", url)
+	return nil
+}
+
+// ListBoardURLS lists all board urls in config
+func (a *ArdiJSON) ListBoardURLS() {
+	a.logger.Info("Board URLS")
+	for _, url := range a.Config.BoardURLS {
+		a.logger.Info(url)
+	}
 }
 
 func (a *ArdiJSON) write() error {
@@ -120,8 +171,6 @@ func (a *ArdiJSON) write() error {
 func (a *ArdiJSON) printBuild(name string, b types.ArdiBuildJSON) {
 	a.logger.Println("")
 	a.logger.Printf("%s:\n", name)
-	a.logger.Printf("  Platform: %s\n", b.Platform)
-	a.logger.Printf("  Board URL: %s\n", b.BoardURL)
 	a.logger.Printf("  Path: %s\n", b.Path)
 	a.logger.Printf("  FQBN: %s\n", b.FQBN)
 	a.logger.Printf("  Props:\n")

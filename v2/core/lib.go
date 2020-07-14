@@ -13,20 +13,24 @@ import (
 
 // LibCore core module for lib commands
 type LibCore struct {
-	logger *log.Logger
-	client rpc.Client
+	logger      *log.Logger
+	client      rpc.Client
+	initialized bool
 }
 
 // NewLibCore Lib instance
 func NewLibCore(client rpc.Client, logger *log.Logger) *LibCore {
 	return &LibCore{
-		logger: logger,
-		client: client,
+		logger:      logger,
+		client:      client,
+		initialized: false,
 	}
 }
 
 // Search all available libraries with optional search filter
 func (l *LibCore) Search(searchArg string) error {
+	l.init()
+
 	libraries, err := l.client.SearchLibraries(searchArg)
 	if err != nil {
 		return err
@@ -67,6 +71,8 @@ func (l *LibCore) Search(searchArg string) error {
 
 // Add library for project
 func (l *LibCore) Add(lib string) (string, string, error) {
+	l.init()
+
 	libParts := strings.Split(lib, "@")
 	library := libParts[0]
 	version := ""
@@ -115,5 +121,17 @@ func (l *LibCore) ListInstalled() error {
 		w.Write([]byte(fields))
 	}
 
+	return nil
+}
+
+// private
+func (l *LibCore) init() error {
+	if !l.initialized {
+		if err := l.client.UpdateLibraryIndex(); err != nil {
+			l.logger.WithError(err).Warn("Failed to update library index file")
+			return err
+		}
+		l.initialized = true
+	}
 	return nil
 }
