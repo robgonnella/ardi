@@ -1,28 +1,54 @@
 package core
 
 import (
+	"github.com/robgonnella/ardi/v2/paths"
 	"github.com/robgonnella/ardi/v2/rpc"
+	"github.com/robgonnella/ardi/v2/types"
 	log "github.com/sirupsen/logrus"
 )
 
 // ArdiCore represents the core package of ardi
 type ArdiCore struct {
-	Watch    *WatchCore
-	Board    *BoardCore
-	Compiler *CompileCore
-	Lib      *LibCore
-	Platform *PlatformCore
-	Project  *ProjectCore
+	RPCClient rpc.Client
+	Config    *ArdiJSON
+	CliConfig *ArdiYAML
+	Watch     *WatchCore
+	Board     *BoardCore
+	Compiler  *CompileCore
+	Lib       *LibCore
+	Platform  *PlatformCore
+}
+
+// NewArdiCoreOpts options fore creating new ardi core
+type NewArdiCoreOpts struct {
+	Global             bool
+	ArdiConfig         types.ArdiConfig
+	ArduinoCliSettings types.ArduinoCliSettings
+	Client             rpc.Client
+	Logger             *log.Logger
 }
 
 // NewArdiCore returns a new ardi core
-func NewArdiCore(client rpc.Client, logger *log.Logger) *ArdiCore {
+func NewArdiCore(opts NewArdiCoreOpts) *ArdiCore {
+	ardiConf := paths.ArdiProjectConfig
+	cliConf := paths.ArduinoCliProjectConfig
+
+	if opts.Global {
+		ardiConf = paths.ArdiGlobalConfig
+		cliConf = paths.ArduinoCliGlobalConfig
+	}
+
+	client := opts.Client
+	logger := opts.Logger
+
 	return &ArdiCore{
-		Watch:    NewWatchCore(client, logger),
-		Board:    NewBoardCore(client, logger),
-		Compiler: NewCompileCore(client, logger),
-		Lib:      NewLibCore(client, logger),
-		Platform: NewPlatformCore(client, logger),
-		Project:  NewProjectCore(client, logger),
+		RPCClient: client,
+		Config:    NewArdiJSON(ardiConf, opts.ArdiConfig, logger),
+		CliConfig: NewArdiYAML(cliConf, opts.ArduinoCliSettings),
+		Watch:     NewWatchCore(client, logger),
+		Board:     NewBoardCore(client, logger),
+		Compiler:  NewCompileCore(client, logger),
+		Lib:       NewLibCore(client, logger),
+		Platform:  NewPlatformCore(client, logger),
 	}
 }

@@ -18,6 +18,7 @@ import (
 	"github.com/robgonnella/ardi/v2/commands"
 	"github.com/robgonnella/ardi/v2/core"
 	"github.com/robgonnella/ardi/v2/mocks"
+	"github.com/robgonnella/ardi/v2/util"
 )
 
 var port = 3000
@@ -149,7 +150,21 @@ func RunUnitTest(name string, t *testing.T, f func(env *UnitTestEnv)) {
 		logger.SetOutput(&b)
 		logger.SetLevel(log.DebugLevel)
 
-		ardiCore := core.NewArdiCore(client, logger)
+		opts := util.GetAllSettingsOpts{
+			Global:   false,
+			LogLevel: "debug",
+			Port:     "2222",
+		}
+		ardiConfig, svrSettings := util.GetAllSettings(opts)
+
+		coreOpts := core.NewArdiCoreOpts{
+			Global:             false,
+			Logger:             logger,
+			Client:             client,
+			ArdiConfig:         *ardiConfig,
+			ArduinoCliSettings: *svrSettings,
+		}
+		ardiCore := core.NewArdiCore(coreOpts)
 
 		env := UnitTestEnv{
 			T:        st,
@@ -195,13 +210,13 @@ func RunIntegrationTest(name string, t *testing.T, f func(env *IntegrationTestEn
 
 // RunProjectInit initializes and ardi project directory
 func (e *IntegrationTestEnv) RunProjectInit() error {
-	projectInitArgs := []string{"project", "init"}
+	projectInitArgs := []string{"project-init"}
 	return e.Execute(projectInitArgs)
 }
 
 // AddLib adds an arduino library
 func (e *IntegrationTestEnv) AddLib(lib string, opt GlobalOpt) error {
-	args := []string{"lib", "add", lib}
+	args := []string{"add", "lib", lib}
 	if opt.Global {
 		args = append(args, "--global")
 	}
@@ -210,7 +225,7 @@ func (e *IntegrationTestEnv) AddLib(lib string, opt GlobalOpt) error {
 
 // AddPlatform adds an arduino platform
 func (e *IntegrationTestEnv) AddPlatform(platform string, opt GlobalOpt) error {
-	args := []string{"platform", "add", platform}
+	args := []string{"add", "platform", platform}
 	if opt.Global {
 		args = append(args, "--global")
 	}

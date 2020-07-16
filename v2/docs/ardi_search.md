@@ -1,20 +1,16 @@
-## ardi clean
+## ardi search
 
-Delete project, or global, data directory
+Search for arduino platforms, libraries, and boards
 
 ### Synopsis
 
 
-Removes all installed platforms and libraries from project data directory. If run with "--global" all data will be removed from ~/.ardi
-
-```
-ardi clean [flags]
-```
+Search for arduino platforms, libraries, and boards
 
 ### Options
 
 ```
-  -h, --help   help for clean
+  -h, --help   help for search
 ```
 
 ### Options inherited from parent commands
@@ -29,4 +25,6 @@ ardi clean [flags]
 ### SEE ALSO
 
 * [ardi](ardi.md)	 - Ardi is a command line build manager for arduino projects.
+* [ardi search libs](ardi_search_libs.md)	 - Searches for availables libraries with optional search filter
+* [ardi search platforms](ardi_search_platforms.md)	 - Search all available platforms
 

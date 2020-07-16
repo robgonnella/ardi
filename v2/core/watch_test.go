@@ -6,13 +6,14 @@ import (
 
 	"github.com/robgonnella/ardi/v2/rpc"
 	"github.com/robgonnella/ardi/v2/testutil"
+	"github.com/robgonnella/ardi/v2/util"
 	"github.com/stretchr/testify/assert"
 )
 
 // @todo: check that list is actually sorted
 func TestWatchCore(t *testing.T) {
 	testutil.RunUnitTest("returns error if no boards connected", t, func(env *testutil.UnitTestEnv) {
-		err := env.ArdiCore.Project.Init("2222")
+		err := util.InitProjectDirectory("2222")
 		assert.NoError(env.T, err)
 
 		port := "/dev/null"
@@ -29,7 +30,7 @@ func TestWatchCore(t *testing.T) {
 	})
 
 	testutil.RunUnitTest("succeeds when board is connected", t, func(env *testutil.UnitTestEnv) {
-		err := env.ArdiCore.Project.Init("2222")
+		err := util.InitProjectDirectory("2222")
 		assert.NoError(env.T, err)
 
 		board := rpc.Board{
@@ -50,7 +51,7 @@ func TestWatchCore(t *testing.T) {
 	})
 
 	testutil.RunUnitTest("errors if not a valid sketch directory", t, func(env *testutil.UnitTestEnv) {
-		err := env.ArdiCore.Project.Init("2222")
+		err := util.InitProjectDirectory("2222")
 		assert.NoError(env.T, err)
 
 		board := rpc.Board{
@@ -66,7 +67,7 @@ func TestWatchCore(t *testing.T) {
 	})
 
 	testutil.RunUnitTest("compiles sketch", t, func(env *testutil.UnitTestEnv) {
-		err := env.ArdiCore.Project.Init("2222")
+		err := util.InitProjectDirectory("2222")
 		assert.NoError(env.T, err)
 
 		fqbn := "some-board-fqbn"
@@ -106,7 +107,7 @@ func TestWatchCore(t *testing.T) {
 	})
 
 	testutil.RunUnitTest("uploads sketch", t, func(env *testutil.UnitTestEnv) {
-		err := env.ArdiCore.Project.Init("2222")
+		err := util.InitProjectDirectory("2222")
 		assert.NoError(env.T, err)
 
 		projectDir := testutil.BlinkProjectDir()

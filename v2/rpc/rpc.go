@@ -5,25 +5,21 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net"
-	"os"
 	"path"
 	"strings"
 	"time"
 
 	"github.com/arduino/arduino-cli/cli/globals"
 	"github.com/arduino/arduino-cli/commands/daemon"
-	"github.com/arduino/arduino-cli/inventory"
 	"github.com/arduino/arduino-cli/rpc/commands"
 	rpc "github.com/arduino/arduino-cli/rpc/commands"
 	"github.com/arduino/arduino-cli/rpc/settings"
+	"github.com/ghodss/yaml"
 	yaml2 "github.com/ghodss/yaml"
-	"github.com/robgonnella/ardi/v2/util"
-	"github.com/sirupsen/logrus"
+	"github.com/robgonnella/ardi/v2/types"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
-	"gopkg.in/yaml.v2"
 )
 
 const configFile = "arduino-cli.yaml"
@@ -31,9 +27,7 @@ const configFile = "arduino-cli.yaml"
 // Client reprents our wrapper around the arduino-cli rpc client
 //go:generate mockgen -destination=../mocks/mock_rpc.go -package=mocks github.com/robgonnella/ardi/v2/rpc Client
 type Client interface {
-	StartDaemon(verbose bool, s chan string, e chan error)
-	SetDataDirectory(d string)
-	SetPort(p string)
+	StartDaemon(s chan string, e chan error)
 	Connect() error
 	Close()
 	UpdateIndexFiles() error
@@ -59,9 +53,7 @@ type Client interface {
 // ArdiClient represents a client connection to arduino-cli grpc daemon
 type ArdiClient struct {
 	ctx              context.Context
-	dataDir          string
-	dataConfig       string
-	port             string
+	svrSettings      *types.ArduinoCliSettings
 	listener         net.Listener
 	grpcServer       *grpc.Server
 	clientConnection *grpc.ClientConn
@@ -78,29 +70,16 @@ type Board struct {
 }
 
 // NewClient return new RPC controller
-func NewClient(ctx context.Context, dataDir, port string, logger *log.Logger) Client {
+func NewClient(ctx context.Context, svrSettings *types.ArduinoCliSettings, logger *log.Logger) Client {
 	return &ArdiClient{
-		ctx:        ctx,
-		dataDir:    dataDir,
-		dataConfig: path.Join(dataDir, configFile),
-		port:       port,
-		logger:     logger,
+		ctx:         ctx,
+		svrSettings: svrSettings,
+		logger:      logger,
 	}
 }
 
-// SetDataDirectory sets the data directory for arduino-cli
-func (c *ArdiClient) SetDataDirectory(dir string) {
-	c.dataDir = dir
-	c.dataConfig = path.Join(dir, configFile)
-}
-
-// SetPort sets the port for arduino-cli
-func (c *ArdiClient) SetPort(port string) {
-	c.port = port
-}
-
 //StartDaemon starts the arduino-cli grpc server locally
-func (c *ArdiClient) StartDaemon(verbose bool, successChan chan string, errChan chan error) {
+func (c *ArdiClient) StartDaemon(successChan chan string, errChan chan error) {
 	c.logger.Debug("Creating grpc server")
 	s := grpc.NewServer()
 	c.grpcServer = s
@@ -109,16 +88,9 @@ func (c *ArdiClient) StartDaemon(verbose bool, successChan chan string, errChan 
 		VersionString: globals.VersionInfo.VersionString,
 	})
 
-	// Register the settings service
-	defaultSettings := util.GenDefaultDataConfig(c.port, c.dataDir)
-	if verbose {
-		defaultSettings.Logging.Level = "debug"
-	} else {
-		logrus.SetOutput(ioutil.Discard)
-	}
+	byteData, _ := yaml.Marshal(c.svrSettings)
+	jsonData, _ := yaml2.YAMLToJSON(byteData)
 	settingsSvr := &daemon.SettingsService{}
-	yamlData, _ := yaml.Marshal(&defaultSettings)
-	jsonData, _ := yaml2.YAMLToJSON(yamlData)
 	if _, err := settingsSvr.Merge(
 		c.ctx,
 		&settings.RawData{
@@ -130,19 +102,16 @@ func (c *ArdiClient) StartDaemon(verbose bool, successChan chan string, errChan 
 	}
 
 	settings.RegisterSettingsServer(s, settingsSvr)
-	_, fileErr := os.Stat(path.Join(c.dataDir, "inventory.yaml"))
-	if os.IsNotExist(fileErr) {
-		inventory.Init(c.dataDir)
-	}
 
 	go func() {
-		c.logger.Debugf("Starting daemon on TCP address 127.0.0.1:%s", c.port)
-		lis, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%s", c.port))
+		port := c.svrSettings.Daemon.Port
+		c.logger.Debugf("Starting daemon on TCP address 127.0.0.1:%s", port)
+		lis, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%s", port))
 		if err != nil {
 			errChan <- err
 		}
 		c.listener = lis
-		msg := fmt.Sprintf("Daemon is now listening on 127.0.0.1:%s...", c.port)
+		msg := fmt.Sprintf("Daemon is now listening on 127.0.0.1:%s...", port)
 		successChan <- msg
 		s.Serve(lis)
 	}()
@@ -840,7 +809,7 @@ func (c *ArdiClient) createInstance() (*rpc.Instance, error) {
 func (c *ArdiClient) createServerConnection() (*grpc.ClientConn, error) {
 	ctxWithTimeout, cancel := context.WithTimeout(c.ctx, 2*time.Second)
 	defer cancel()
-	addr := fmt.Sprintf("localhost:%s", c.port)
+	addr := fmt.Sprintf("localhost:%s", c.svrSettings.Daemon.Port)
 	// Establish a connection with the gRPC server, started with the command: arduino-cli daemon
 	conn, err := grpc.DialContext(ctxWithTimeout, addr, grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {

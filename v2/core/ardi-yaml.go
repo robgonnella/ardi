@@ -3,7 +3,6 @@ package core
 import (
 	"io/ioutil"
 
-	"github.com/robgonnella/ardi/v2/paths"
 	"github.com/robgonnella/ardi/v2/types"
 	"github.com/robgonnella/ardi/v2/util"
 	"gopkg.in/yaml.v2"
@@ -11,22 +10,16 @@ import (
 
 // ArdiYAML represents core module for data config file manipulations
 type ArdiYAML struct {
-	Config types.DataConfig
+	Config   types.ArduinoCliSettings
+	confPath string
 }
 
 // NewArdiYAML returns core yaml module for handling data config file
-func NewArdiYAML() (*ArdiYAML, error) {
-	config := types.DataConfig{}
-	dataConfig, err := ioutil.ReadFile(paths.ArdiProjectDataConfig)
-	if err != nil {
-		return nil, err
-	}
-	if err := yaml.Unmarshal(dataConfig, &config); err != nil {
-		return nil, err
-	}
+func NewArdiYAML(confPath string, initalConfig types.ArduinoCliSettings) *ArdiYAML {
 	return &ArdiYAML{
-		Config: config,
-	}, nil
+		Config:   initalConfig,
+		confPath: confPath,
+	}
 }
 
 // AddBoardURL add a board url to data config file
@@ -60,7 +53,7 @@ func (a *ArdiYAML) write() error {
 		return err
 	}
 
-	if err := ioutil.WriteFile(paths.ArdiProjectDataConfig, newData, 0644); err != nil {
+	if err := ioutil.WriteFile(a.confPath, newData, 0644); err != nil {
 		return err
 	}
 

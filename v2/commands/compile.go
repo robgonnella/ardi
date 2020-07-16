@@ -4,7 +4,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func getCompileCommand() *cobra.Command {
+func getCompileCmd() *cobra.Command {
 	var fqbn string
 	var buildProps []string
 	var showProps bool

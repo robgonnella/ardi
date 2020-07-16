@@ -23,7 +23,7 @@ func NewCompileCore(client rpc.Client, logger *log.Logger) *CompileCore {
 
 // Compile a given project
 func (c *CompileCore) Compile(sketchDir, fqbn string, buildProps []string, showProps bool) error {
-	sketchDir, sketchFile, _, err := util.ProcessSketch(sketchDir, c.logger)
+	project, err := util.ProcessSketch(sketchDir)
 	if err != nil {
 		return err
 	}
@@ -38,8 +38,8 @@ func (c *CompileCore) Compile(sketchDir, fqbn string, buildProps []string, showP
 
 	opts := rpc.CompileOpts{
 		FQBN:       target.Board.FQBN,
-		SketchDir:  sketchDir,
-		SketchPath: sketchFile,
+		SketchDir:  project.Directory,
+		SketchPath: project.Sketch,
 		ExportName: "",
 		BuildProps: buildProps,
 		ShowProps:  showProps,

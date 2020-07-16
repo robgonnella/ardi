@@ -45,7 +45,7 @@ func (b *BoardCore) FQBNS(query string) error {
 	}
 
 	if len(boardList) == 0 {
-		err := errors.New("you must install platforms with 'ardi platform add' or 'ardi project add platform' first")
+		err := errors.New("you must install platforms with 'ardi add platform'")
 		return err
 	}
 

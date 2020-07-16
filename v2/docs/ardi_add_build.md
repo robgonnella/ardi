@@ -1,14 +1,14 @@
-## ardi compile
+## ardi add build
 
-Compile specified sketch
+Add build config to project
 
 ### Synopsis
 
 
-Compile sketches for a specified board. You must provide the board FQBN, if left unspecified, a list of available choices will be be printed.
+Add build config to project
 
 ```
-ardi compile [sketch] [flags]
+ardi add build [flags]
 ```
 
 ### Options
@@ -16,8 +16,9 @@ ardi compile [sketch] [flags]
 ```
   -p, --build-prop stringArray   Specify build property to compiler
   -f, --fqbn string              Specify fully qualified board name
-  -h, --help                     help for compile
-  -s, --show-props               Show all build properties (does not compile)
+  -h, --help                     help for build
+  -n, --name string              Custom name for the build
+  -s, --sketch string            Path to .ino file or sketch directory
 ```
 
 ### Options inherited from parent commands
@@ -31,5 +32,5 @@ ardi compile [sketch] [flags]
 
 ### SEE ALSO
 
-* [ardi](ardi.md)	 - Ardi is a command line build manager for arduino projects.
+* [ardi add](ardi_add.md)	 - Add project dependencies
 

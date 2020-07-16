@@ -1,20 +1,21 @@
-## ardi version
+## ardi add platform
 
-Prints current version of ardi
+Add platform(s) to project
 
 ### Synopsis
 
 
-Prints current version of ardi
+Add platform(s) to project
 
 ```
-ardi version [flags]
+ardi add platform [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for version
+  -a, --all    Add all available platforms
+  -h, --help   help for platform
 ```
 
 ### Options inherited from parent commands
@@ -28,5 +29,5 @@ ardi version [flags]
 
 ### SEE ALSO
 
-* [ardi](ardi.md)	 - Ardi is a command line build manager for arduino projects.
+* [ardi add](ardi_add.md)	 - Add project dependencies
 

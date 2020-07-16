@@ -13,12 +13,33 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/arduino/arduino-cli/inventory"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 
 	"github.com/robgonnella/ardi/v2/paths"
 	"github.com/robgonnella/ardi/v2/types"
 )
+
+// DefaultDaemonPort default port to run arduino-cli daemon
+const DefaultDaemonPort = "50051"
+
+// DefaultDaemonLogLevel default arduino-cli daemon log level
+const DefaultDaemonLogLevel = "fatal"
+
+// GetAllSettingsOpts options for retrieving all settings
+type GetAllSettingsOpts struct {
+	Global   bool
+	LogLevel string
+	Port     string
+}
+
+// WriteSettingsOpts options for writing all settings to file
+type WriteSettingsOpts struct {
+	Global             bool
+	ArdiConfig         *types.ArdiConfig
+	ArduinoCliSettings *types.ArduinoCliSettings
+}
 
 // ArrayContains checks if a string array contains a value
 func ArrayContains(arr []string, str string) bool {
@@ -30,20 +51,51 @@ func ArrayContains(arr []string, str string) bool {
 	return false
 }
 
-// GenDefaultDataConfig generated data config file with default values
-func GenDefaultDataConfig(port, dataDirPath string) types.DataConfig {
-	return types.DataConfig{
+// CreateDataDir creates a data dir with proper permissions for ardi / arduino-cli
+func CreateDataDir(dir string) error {
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
+		if err := os.MkdirAll(dir, 0777); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// ReadArduinoCliSettings reads data config file and returns unmarshalled data and stringified version
+func ReadArduinoCliSettings(confPath string) (*types.ArduinoCliSettings, error) {
+	var config types.ArduinoCliSettings
+	dataFile, err := os.Open(confPath)
+	if err != nil {
+		return nil, err
+	}
+	defer dataFile.Close()
+
+	byteData, err := ioutil.ReadAll(dataFile)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := yaml.Unmarshal(byteData, &config); err != nil {
+		return nil, err
+	}
+
+	return &config, nil
+}
+
+// GenArduinoCliSettings generated data config file with default values
+func GenArduinoCliSettings(logLevel, port, dataDir string) *types.ArduinoCliSettings {
+	return &types.ArduinoCliSettings{
 		BoardManager: types.BoardManager{AdditionalUrls: []string{}},
 		Daemon: types.Daemon{
 			Port: port,
 		},
 		Directories: types.Directories{
-			Data:      dataDirPath,
-			Downloads: path.Join(dataDirPath, "staging"),
-			User:      path.Join(dataDirPath, "Arduino"),
+			Data:      dataDir,
+			Downloads: path.Join(dataDir, "staging"),
+			User:      path.Join(dataDir, "Arduino"),
 		},
 		Logging: types.Logging{
-			Level:  "fatal",
+			Level:  logLevel,
 			Format: "text",
 			File:   "",
 		},
@@ -54,48 +106,153 @@ func GenDefaultDataConfig(port, dataDirPath string) types.DataConfig {
 	}
 }
 
-// IsProjectDirectory returns whether or not currect directory has been initialized as an ardi project
-func IsProjectDirectory() bool {
-	_, dirErr := os.Stat(paths.ArdiProjectDataDir)
-	_, buildErr := os.Stat(paths.ArdiProjectBuildConfig)
-	if os.IsNotExist(dirErr) || os.IsNotExist(buildErr) {
-		return false
+// GenArdiConfig returns default ardi.json in current directory
+func GenArdiConfig(logLevel, port string) *types.ArdiConfig {
+	return &types.ArdiConfig{
+		Daemon: types.ArdiDaemonConfig{
+			Port:     port,
+			LogLevel: logLevel,
+		},
+		Platforms: make(map[string]string),
+		BoardURLS: []string{},
+		Libraries: make(map[string]string),
+		Builds:    make(map[string]types.ArdiBuildJSON),
 	}
-	return true
 }
 
-// InitDataDirectory creates and initializes project data directory if necessary
-func InitDataDirectory(port, dataDirPath, dataConfigPath string) error {
-	if _, err := os.Stat(dataDirPath); os.IsNotExist(err) {
-		if err := os.MkdirAll(dataDirPath, 0777); err != nil {
-			return err
-		}
+// ReadArdiConfig reads ardi.json and returns config
+func ReadArdiConfig(confPath string) (*types.ArdiConfig, error) {
+	var config types.ArdiConfig
+	configFile, err := os.Open(confPath)
+	if err != nil {
+		return nil, err
+	}
+	defer configFile.Close()
+
+	byteData, err := ioutil.ReadAll(configFile)
+	if err != nil {
+		return nil, err
 	}
 
-	dataConfig := GenDefaultDataConfig(port, dataDirPath)
-	yamlConfig, _ := yaml.Marshal(&dataConfig)
-	if err := ioutil.WriteFile(dataConfigPath, yamlConfig, 0644); err != nil {
+	if err := json.Unmarshal(byteData, &config); err != nil {
+		return nil, err
+	}
+
+	return &config, nil
+}
+
+// GetAllSettings returns settings for both ardi and arduino-cli
+func GetAllSettings(opts GetAllSettingsOpts) (*types.ArdiConfig, *types.ArduinoCliSettings) {
+	var ardiConfig *types.ArdiConfig
+	var cliSettings *types.ArduinoCliSettings
+	logLevel := opts.LogLevel
+	port := opts.Port
+
+	dataDir := paths.ArdiProjectDataDir
+	ardiConf := paths.ArdiProjectConfig
+	cliConf := paths.ArduinoCliProjectConfig
+
+	if opts.Global {
+		dataDir = paths.ArdiGlobalDataDir
+		ardiConf = paths.ArdiGlobalConfig
+		cliConf = paths.ArduinoCliGlobalConfig
+	}
+
+	if _, err := os.Stat(ardiConf); os.IsNotExist(err) {
+		ardiConfig = GenArdiConfig(logLevel, port)
+	} else if ardiConfig, err = ReadArdiConfig(ardiConf); err != nil {
+		ardiConfig = GenArdiConfig(logLevel, port)
+	}
+	if port != "" {
+		ardiConfig.Daemon.Port = port
+	}
+	if ardiConfig.Daemon.Port == "" {
+		ardiConfig.Daemon.Port = DefaultDaemonPort
+	}
+	if ardiConfig.Daemon.LogLevel == "" {
+		ardiConfig.Daemon.LogLevel = DefaultDaemonLogLevel
+	}
+
+	if _, err := os.Stat(cliConf); os.IsNotExist(err) {
+		cliSettings = GenArduinoCliSettings(ardiConfig.Daemon.LogLevel, ardiConfig.Daemon.Port, dataDir)
+	} else if cliSettings, err = ReadArduinoCliSettings(cliConf); err != nil {
+		cliSettings = GenArduinoCliSettings(ardiConfig.Daemon.LogLevel, ardiConfig.Daemon.Port, dataDir)
+	}
+	cliSettings.Daemon.Port = ardiConfig.Daemon.Port
+	cliSettings.Logging.Level = ardiConfig.Daemon.LogLevel
+
+	return ardiConfig, cliSettings
+}
+
+// WriteAllSettings writes all settings files
+func WriteAllSettings(opts WriteSettingsOpts) error {
+	dataDir := paths.ArdiProjectDataDir
+	ardiConf := paths.ArdiProjectConfig
+	cliConf := paths.ArduinoCliProjectConfig
+
+	if opts.Global {
+		dataDir = paths.ArdiGlobalDataDir
+		ardiConf = paths.ArdiGlobalConfig
+		cliConf = paths.ArduinoCliGlobalConfig
+	}
+
+	if err := CreateDataDir(dataDir); err != nil {
+		return err
+	}
+
+	byteData, _ := json.MarshalIndent(opts.ArdiConfig, "\n", " ")
+	if err := ioutil.WriteFile(ardiConf, byteData, 0644); err != nil {
+		return err
+	}
+
+	byteData, _ = yaml.Marshal(opts.ArduinoCliSettings)
+	if err := ioutil.WriteFile(cliConf, byteData, 0644); err != nil {
+		return err
+	}
+
+	if _, fileErr := os.Stat(path.Join(dataDir, "inventory.yaml")); os.IsNotExist(fileErr) {
+		inventory.Init(dataDir)
+	}
+
+	return nil
+}
+
+// InitProjectDirectory initializes a directory as an ardi project
+func InitProjectDirectory(port string) error {
+	getOpts := GetAllSettingsOpts{
+		Global:   false,
+		LogLevel: "fatal",
+		Port:     port,
+	}
+	ardiConfig, cliSettings := GetAllSettings(getOpts)
+
+	writeOpts := WriteSettingsOpts{
+		Global:             false,
+		ArdiConfig:         ardiConfig,
+		ArduinoCliSettings: cliSettings,
+	}
+	if err := WriteAllSettings(writeOpts); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-// InitArdiJSON creates default ardi.json in current directory
-func InitArdiJSON() error {
-	if _, err := os.Stat(paths.ArdiProjectBuildConfig); os.IsNotExist(err) {
-		buildConfig := types.ArdiConfig{
-			Platforms: make(map[string]string),
-			BoardURLS: []string{},
-			Libraries: make(map[string]string),
-			Builds:    make(map[string]types.ArdiBuildJSON),
-		}
-		jsonConfig, _ := json.MarshalIndent(&buildConfig, "\n", " ")
-		if err := ioutil.WriteFile(paths.ArdiProjectBuildConfig, jsonConfig, 0644); err != nil {
-			return err
-		}
+// IsProjectDirectory returns whether or not currect directory has been initialized as an ardi project
+func IsProjectDirectory() bool {
+	_, buildErr := os.Stat(paths.ArdiProjectConfig)
+	if os.IsNotExist(buildErr) {
+		return false
 	}
-	return nil
+	return true
+}
+
+// GetDaemonLogLevel returns daemon log level string based on logger settings
+func GetDaemonLogLevel(logger *log.Logger) string {
+	if logger.GetLevel() == log.DebugLevel {
+		return "debug"
+	}
+	return "fatal"
 }
 
 // CleanDataDirectory removes directory
@@ -104,18 +261,15 @@ func CleanDataDirectory(dir string) error {
 }
 
 // ProcessSketch looks for .ino file in specified directory and parses
-func ProcessSketch(sketchDir string, logger *log.Logger) (string, string, int, error) {
+func ProcessSketch(sketchDir string) (*types.Project, error) {
 	if sketchDir == "" {
-		msg := "Must provide a sketch directory as an argument"
 		err := errors.New("Missing directory argument")
-		logger.WithError(err).Error(msg)
-		return "", "", 0, err
+		return nil, err
 	}
 
 	stat, err := os.Stat(sketchDir)
 	if err != nil {
-		logger.WithError(err).Error()
-		return "", "", 0, err
+		return nil, err
 	}
 
 	mode := stat.Mode()
@@ -123,36 +277,33 @@ func ProcessSketch(sketchDir string, logger *log.Logger) (string, string, int, e
 		sketchDir = path.Dir(sketchDir)
 	}
 
-	sketchFile, err := findSketch(sketchDir, logger)
+	sketchFile, err := findSketch(sketchDir)
 	if err != nil {
-		return "", "", 0, err
+		return nil, err
 	}
 
-	sketchBaud := parseSketchBaud(sketchFile, logger)
-	if sketchBaud != 0 {
-		logger.Infoln("")
-		logger.WithField("detected baud", sketchBaud).Info("Detected baud rate from sketch file.")
-		logger.Infoln("")
-	}
+	sketchBaud := parseSketchBaud(sketchFile)
 
-	return sketchDir, sketchFile, sketchBaud, nil
+	return &types.Project{
+		Directory: sketchDir,
+		Sketch:    sketchFile,
+		Baud:      sketchBaud,
+	}, nil
 }
 
 // private helpers
 // helpers
-func findSketch(directory string, logger *log.Logger) (string, error) {
+func findSketch(directory string) (string, error) {
 	sketchFile := ""
 
 	d, err := os.Open(directory)
 	if err != nil {
-		logger.WithError(err).Error("Failed to open sketch directory")
 		return "", err
 	}
 	defer d.Close()
 
 	files, err := d.Readdir(-1)
 	if err != nil {
-		logger.WithError(err).Error("Cannot process .ino file")
 		return "", err
 	}
 
@@ -165,29 +316,22 @@ func findSketch(directory string, logger *log.Logger) (string, error) {
 	}
 	if sketchFile == "" {
 		msg := fmt.Sprintf("Failed to find .ino file in %s", directory)
-		logger.Error(msg)
 		return "", errors.New(msg)
 	}
 
 	if sketchFile, err = filepath.Abs(sketchFile); err != nil {
 		msg := "Could not resolve sketch file path"
-		logger.WithError(err).Error(msg)
 		return "", errors.New(msg)
 	}
 
 	return sketchFile, nil
 }
 
-func parseSketchBaud(sketch string, logger *log.Logger) int {
+func parseSketchBaud(sketch string) int {
 	var baud = 9600
 	rgx := regexp.MustCompile(`Serial\.begin\((\d+)\);`)
 	file, err := os.Open(sketch)
 	if err != nil {
-		// Log the error and return 0 for baud to let script continue
-		// with either default value or value specified from command-line.
-		logger.WithError(err).
-			WithField("sketch", sketch).
-			Info("Failed to read sketch")
 		return baud
 	}
 
@@ -198,9 +342,6 @@ func parseSketchBaud(sketch string, logger *log.Logger) int {
 		if match := rgx.MatchString(text); match {
 			stringBaud := strings.TrimSpace(rgx.ReplaceAllString(text, "$1"))
 			if baud, err = strconv.Atoi(stringBaud); err != nil {
-				// set baud to 0 and let script continue with either default
-				// value or value specified from command-line.
-				logger.WithError(err).Info("Failed to parse baud rate from sketch")
 				baud = 9600
 			}
 			break

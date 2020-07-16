@@ -8,26 +8,29 @@ import (
 
 var homeDir, _ = os.UserHomeDir()
 
-// ardiDataDir data directory name
+// arduinoCliDataDir data directory name
 const ardiDataDir = ".ardi"
 
-// ardiDataConfig data directory config name
-const ardiDataConfig = "arduino-cli.yaml"
+// arduinoCliDataConfig data directory config name
+const arduinoCliDataConfig = "arduino-cli.yaml"
 
-// build config name
-const ardiBuildConfig = "ardi.json"
+// ardi config name
+const ardiConfig = "ardi.json"
 
-// ArdiProjectBuildConfig per-project build config
-var ArdiProjectBuildConfig, _ = filepath.Abs(path.Join(".", ardiBuildConfig))
+// ArdiProjectConfig per-project ardi config
+var ArdiProjectConfig, _ = filepath.Abs(path.Join(".", ardiConfig))
 
 // ArdiProjectDataDir per-project data config directory for cores, libraries etc
 var ArdiProjectDataDir, _ = filepath.Abs(path.Join(".", ardiDataDir))
 
-// ArdiProjectDataConfig per-project arduino-cli config
-var ArdiProjectDataConfig, _ = filepath.Abs(path.Join(ArdiProjectDataDir, ardiDataConfig))
+// ArduinoCliProjectConfig per-project arduino-cli config
+var ArduinoCliProjectConfig, _ = filepath.Abs(path.Join(ArdiProjectDataDir, arduinoCliDataConfig))
 
 // ArdiGlobalDataDir global data directory for storage of cores, libaraires etc.
 var ArdiGlobalDataDir, _ = filepath.Abs(path.Join(homeDir, ardiDataDir))
 
-// ArdiGlobalDataConfig used to configure the global data directory
-var ArdiGlobalDataConfig, _ = filepath.Abs(path.Join(ArdiGlobalDataDir, ardiDataConfig))
+// ArduinoCliGlobalConfig used to configure the global data directory
+var ArduinoCliGlobalConfig, _ = filepath.Abs(path.Join(ArdiGlobalDataDir, arduinoCliDataConfig))
+
+// ArdiGlobalConfig global ardi config
+var ArdiGlobalConfig, _ = filepath.Abs(path.Join(ArdiGlobalDataDir, ardiConfig))
