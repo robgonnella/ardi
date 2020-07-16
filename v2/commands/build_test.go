@@ -16,19 +16,24 @@ func TestBuildCommandGlobal(t *testing.T) {
 		buildName := "pixie"
 		projectDir := testutil.PixieProjectDir()
 		buildDir := path.Join(projectDir, "build")
-		fqbn := testutil.ArduinoMegaFQBN()
-
-		platform := "arduino:avr"
-		platArgs := []string{"add", "platform", platform, "--global"}
-		err := env.Execute(platArgs)
-		assert.NoError(env.T, err)
-
+		boardURL := testutil.Esp8266BoardURL()
+		platform := testutil.Esp8266Platform()
+		fqbn := testutil.Esp8266WifiduinoFQBN()
 		lib := "Adafruit Pixie"
-		libArgs := []string{"add", "lib", lib, "--global"}
-		err = env.Execute(libArgs)
+
+		args := []string{"add", "board-urls", boardURL, "--global"}
+		err := env.Execute(args)
 		assert.NoError(env.T, err)
 
-		args := []string{"add", "build", "--name", buildName, "--fqbn", fqbn, "--sketch", projectDir, "--global"}
+		args = []string{"add", "platform", platform, "--global"}
+		err = env.Execute(args)
+		assert.NoError(env.T, err)
+
+		args = []string{"add", "lib", lib, "--global"}
+		err = env.Execute(args)
+		assert.NoError(env.T, err)
+
+		args = []string{"add", "build", "--name", buildName, "--fqbn", fqbn, "--sketch", projectDir, "--global"}
 		err = env.Execute(args)
 		assert.NoError(env.T, err)
 
@@ -63,19 +68,24 @@ func TestBuildCommand(t *testing.T) {
 		buildName := "pixie"
 		projectDir := testutil.PixieProjectDir()
 		buildDir := path.Join(projectDir, "build")
-		fqbn := testutil.ArduinoMegaFQBN()
-
-		platform := "arduino:avr"
-		platArgs := []string{"add", "platform", platform}
-		err = env.Execute(platArgs)
-		assert.NoError(env.T, err)
-
+		boardURL := testutil.Esp8266BoardURL()
+		platform := testutil.Esp8266Platform()
+		fqbn := testutil.Esp8266WifiduinoFQBN()
 		lib := "Adafruit Pixie"
-		libArgs := []string{"add", "lib", lib}
-		err = env.Execute(libArgs)
+
+		args := []string{"add", "board-urls", boardURL}
+		err = env.Execute(args)
 		assert.NoError(env.T, err)
 
-		args := []string{"add", "build", "--name", buildName, "--fqbn", fqbn, "--sketch", projectDir}
+		args = []string{"add", "platform", platform}
+		err = env.Execute(args)
+		assert.NoError(env.T, err)
+
+		args = []string{"add", "lib", lib}
+		err = env.Execute(args)
+		assert.NoError(env.T, err)
+
+		args = []string{"add", "build", "--name", buildName, "--fqbn", fqbn, "--sketch", projectDir}
 		err = env.Execute(args)
 		assert.NoError(env.T, err)
 

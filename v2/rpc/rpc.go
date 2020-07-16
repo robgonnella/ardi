@@ -15,11 +15,11 @@ import (
 	"github.com/arduino/arduino-cli/rpc/commands"
 	rpc "github.com/arduino/arduino-cli/rpc/commands"
 	"github.com/arduino/arduino-cli/rpc/settings"
-	"github.com/ghodss/yaml"
 	yaml2 "github.com/ghodss/yaml"
 	"github.com/robgonnella/ardi/v2/types"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
+	yaml "gopkg.in/yaml.v2"
 )
 
 const configFile = "arduino-cli.yaml"

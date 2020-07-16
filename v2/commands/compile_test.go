@@ -8,14 +8,23 @@ import (
 )
 
 func TestCompileCommandGlobal(t *testing.T) {
-	testutil.RunIntegrationTest("using globally installed platform", t, func(groupEnv *testutil.IntegrationTestEnv) {
-		err := groupEnv.AddPlatform("arduino:avr", testutil.GlobalOpt{true})
+	testutil.RunIntegrationTest("using globally installed platform from external url", t, func(groupEnv *testutil.IntegrationTestEnv) {
+		boardURL := testutil.Esp8266BoardURL()
+		platform := testutil.Esp8266Platform()
+		fqbn := testutil.Esp8266WifiduinoFQBN()
+
+		args := []string{"add", "board-url", boardURL, "--global"}
+		err := groupEnv.Execute(args)
+		assert.NoError(groupEnv.T, err)
+
+		args = []string{"add", "platform", platform, "--global"}
+		err = groupEnv.Execute(args)
 		assert.NoError(groupEnv.T, err)
 
 		groupEnv.T.Run("compiles project directory", func(st *testing.T) {
 			testutil.CleanBuilds()
 			blinkDir := testutil.BlinkProjectDir()
-			args := []string{"compile", blinkDir, "--fqbn", testutil.ArduinoMegaFQBN(), "--global"}
+			args := []string{"compile", blinkDir, "--fqbn", fqbn, "--global"}
 			err = groupEnv.Execute(args)
 			assert.NoError(st, err)
 		})
@@ -38,10 +47,12 @@ func TestCompileCommandGlobal(t *testing.T) {
 
 		groupEnv.T.Run("compiles project that requires globally installed library", func(st *testing.T) {
 			testutil.CleanBuilds()
-			err := groupEnv.AddLib("Adafruit Pixie", testutil.GlobalOpt{true})
+			args := []string{"add", "lib", "Adafruit Pixie", "--global"}
+			err := groupEnv.Execute(args)
 			assert.NoError(st, err)
+
 			pixieDir := testutil.PixieProjectDir()
-			args := []string{"compile", pixieDir, "--fqbn", testutil.ArduinoMegaFQBN(), "--global"}
+			args = []string{"compile", pixieDir, "--fqbn", fqbn, "--global"}
 			err = groupEnv.Execute(args)
 			assert.NoError(st, err)
 		})
@@ -59,13 +70,23 @@ func TestCompileCommandProject(t *testing.T) {
 	testutil.RunIntegrationTest("using installed project platform", t, func(groupEnv *testutil.IntegrationTestEnv) {
 		err := groupEnv.RunProjectInit()
 		assert.NoError(groupEnv.T, err)
-		err = groupEnv.AddPlatform("arduino:avr", testutil.GlobalOpt{false})
+
+		boardURL := testutil.Esp8266BoardURL()
+		platform := testutil.Esp8266Platform()
+		fqbn := testutil.Esp8266WifiduinoFQBN()
+
+		args := []string{"add", "board-url", boardURL}
+		err = groupEnv.Execute(args)
+		assert.NoError(groupEnv.T, err)
+
+		args = []string{"add", "platform", platform}
+		err = groupEnv.Execute(args)
 		assert.NoError(groupEnv.T, err)
 
 		groupEnv.T.Run("compiles project directory", func(st *testing.T) {
 			testutil.CleanBuilds()
 			blinkDir := testutil.BlinkProjectDir()
-			args := []string{"compile", blinkDir, "--fqbn", testutil.ArduinoMegaFQBN()}
+			args := []string{"compile", blinkDir, "--fqbn", fqbn}
 			err = groupEnv.Execute(args)
 			assert.NoError(st, err)
 		})
@@ -81,17 +102,19 @@ func TestCompileCommandProject(t *testing.T) {
 		groupEnv.T.Run("errors if project library required", func(st *testing.T) {
 			testutil.CleanBuilds()
 			pixieDir := testutil.PixieProjectDir()
-			args := []string{"compile", pixieDir, "--fqbn", testutil.ArduinoMegaFQBN()}
+			args := []string{"compile", pixieDir, "--fqbn", fqbn}
 			err = groupEnv.Execute(args)
 			assert.Error(st, err)
 		})
 
 		groupEnv.T.Run("compiles project that requires project library", func(st *testing.T) {
 			testutil.CleanBuilds()
-			err := groupEnv.AddLib("Adafruit Pixie", testutil.GlobalOpt{false})
+			args := []string{"add", "lib", "Adafruit Pixie"}
+			err := groupEnv.Execute(args)
 			assert.NoError(st, err)
+
 			pixieDir := testutil.PixieProjectDir()
-			args := []string{"compile", pixieDir, "--fqbn", testutil.ArduinoMegaFQBN()}
+			args = []string{"compile", pixieDir, "--fqbn", fqbn}
 			err = groupEnv.Execute(args)
 			assert.NoError(st, err)
 		})
