@@ -13,18 +13,17 @@ trap "clean_up" EXIT
 
 clean_up
 
-GO111MODULE=on go get github.com/robgonnella/ardi/v2
+go install $here/../
 
-ardi project init -v
+ardi project-init -v
 
-ardi project add platforms --all -v
+ardi add platforms --all -v
 
-ardi project add lib "Adafruit Pixie" -v
+ardi add lib "Adafruit Pixie" -v
 
-ardi project add build \
+ardi add build \
   --name pixie \
-  --platform arduino:avr \
   --fqbn arduino:avr:mega \
   --sketch $here/../test_projects/pixie
 
-ardi project build pixie
+ardi build pixie -v

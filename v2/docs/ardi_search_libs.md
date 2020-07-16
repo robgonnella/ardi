@@ -1,20 +1,20 @@
-## ardi version
+## ardi search libs
 
-Prints current version of ardi
+Searches for availables libraries with optional search filter
 
 ### Synopsis
 
 
-Prints current version of ardi
+Searches for availables libraries with optional search filter
 
 ```
-ardi version [flags]
+ardi search libs [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for version
+  -h, --help   help for libs
 ```
 
 ### Options inherited from parent commands
@@ -28,5 +28,5 @@ ardi version [flags]
 
 ### SEE ALSO
 
-* [ardi](ardi.md)	 - Ardi is a command line build manager for arduino projects.
+* [ardi search](ardi_search.md)	 - Search for arduino platforms, libraries, and boards
 

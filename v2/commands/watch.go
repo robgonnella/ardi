@@ -24,7 +24,7 @@ func process(sketchDir string, buildProps []string) error {
 	return nil
 }
 
-func getGoCommand() *cobra.Command {
+func getWatchCmd() *cobra.Command {
 	var buildProps []string
 
 	var goCmd = &cobra.Command{

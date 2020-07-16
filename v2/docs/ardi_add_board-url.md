@@ -1,20 +1,20 @@
-## ardi version
+## ardi add board-url
 
-Prints current version of ardi
+Add board urls to project
 
 ### Synopsis
 
 
-Prints current version of ardi
+Add board urls to project
 
 ```
-ardi version [flags]
+ardi add board-url [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for version
+  -h, --help   help for board-url
 ```
 
 ### Options inherited from parent commands
@@ -28,5 +28,5 @@ ardi version [flags]
 
 ### SEE ALSO
 
-* [ardi](ardi.md)	 - Ardi is a command line build manager for arduino projects.
+* [ardi add](ardi_add.md)	 - Add project dependencies
 

@@ -221,40 +221,16 @@ func (mr *MockClientMockRecorder) SearchLibraries(arg0 interface{}) *gomock.Call
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SearchLibraries", reflect.TypeOf((*MockClient)(nil).SearchLibraries), arg0)
 }
 
-// SetDataDirectory mocks base method
-func (m *MockClient) SetDataDirectory(arg0 string) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "SetDataDirectory", arg0)
-}
-
-// SetDataDirectory indicates an expected call of SetDataDirectory
-func (mr *MockClientMockRecorder) SetDataDirectory(arg0 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetDataDirectory", reflect.TypeOf((*MockClient)(nil).SetDataDirectory), arg0)
-}
-
-// SetPort mocks base method
-func (m *MockClient) SetPort(arg0 string) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "SetPort", arg0)
-}
-
-// SetPort indicates an expected call of SetPort
-func (mr *MockClientMockRecorder) SetPort(arg0 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetPort", reflect.TypeOf((*MockClient)(nil).SetPort), arg0)
-}
-
 // StartDaemon mocks base method
-func (m *MockClient) StartDaemon(arg0 bool, arg1 chan string, arg2 chan error) {
+func (m *MockClient) StartDaemon(arg0 chan string, arg1 chan error) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "StartDaemon", arg0, arg1, arg2)
+	m.ctrl.Call(m, "StartDaemon", arg0, arg1)
 }
 
 // StartDaemon indicates an expected call of StartDaemon
-func (mr *MockClientMockRecorder) StartDaemon(arg0, arg1, arg2 interface{}) *gomock.Call {
+func (mr *MockClientMockRecorder) StartDaemon(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StartDaemon", reflect.TypeOf((*MockClient)(nil).StartDaemon), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StartDaemon", reflect.TypeOf((*MockClient)(nil).StartDaemon), arg0, arg1)
 }
 
 // UninstallLibrary mocks base method

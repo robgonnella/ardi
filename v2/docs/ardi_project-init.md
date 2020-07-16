@@ -1,20 +1,20 @@
-## ardi clean
+## ardi project-init
 
-Delete project, or global, data directory
+Initialize directory as an ardi project
 
 ### Synopsis
 
 
-Removes all installed platforms and libraries from project data directory. If run with "--global" all data will be removed from ~/.ardi
+Initialize directory as an ardi project
 
 ```
-ardi clean [flags]
+ardi project-init [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for clean
+  -h, --help   help for project-init
 ```
 
 ### Options inherited from parent commands

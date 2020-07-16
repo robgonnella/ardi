@@ -1,5 +1,12 @@
 package types
 
+// Project represents and arduino project
+type Project struct {
+	Directory string
+	Sketch    string
+	Baud      int
+}
+
 // BoardManager board_manager config for arduino-cli grpc server
 type BoardManager struct {
 	AdditionalUrls []string `yaml:"additional_urls"`
@@ -30,8 +37,8 @@ type Telemetry struct {
 	Enabled bool   `yaml:"enabled"`
 }
 
-// DataConfig represents yaml config for telling arduino-cli where to find libraries
-type DataConfig struct {
+// ArduinoCliSettings represents yaml config for arduino-cli daemon
+type ArduinoCliSettings struct {
 	BoardManager BoardManager `yaml:"board_manager"`
 	Daemon       Daemon       `yaml:"daemon"`
 	Directories  Directories  `yaml:"directories"`
@@ -46,10 +53,17 @@ type ArdiBuildJSON struct {
 	Props map[string]string `json:"props"`
 }
 
+// ArdiDaemonConfig represents daemon config in ardi.json
+type ArdiDaemonConfig struct {
+	Port     string `json:"port"`
+	LogLevel string `json:"logLevel"`
+}
+
 // ArdiConfig represents the ardi.json file
 type ArdiConfig struct {
+	Daemon    ArdiDaemonConfig         `json:"daemon"`
 	Platforms map[string]string        `json:"platforms"`
-	BoardURLS []string                 `json:"board-urls"`
+	BoardURLS []string                 `json:"boardUrls"`
 	Libraries map[string]string        `json:"libraries"`
 	Builds    map[string]ArdiBuildJSON `json:"builds"`
 }

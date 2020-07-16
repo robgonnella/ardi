@@ -22,7 +22,7 @@ ardi watch [sketch] [flags]
 
 ```
   -g, --global        Use global data directory
-      --port string   Set port for cli daemon (default "50051")
+      --port string   Set port for cli daemon
   -q, --quiet         Silence all logs
   -v, --verbose       Print all logs
 ```

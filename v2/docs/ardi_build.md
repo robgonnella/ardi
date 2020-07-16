@@ -1,20 +1,20 @@
-## ardi clean
+## ardi build
 
-Delete project, or global, data directory
+Compile configured builds
 
 ### Synopsis
 
 
-Removes all installed platforms and libraries from project data directory. If run with "--global" all data will be removed from ~/.ardi
+Compile configured builds
 
 ```
-ardi clean [flags]
+ardi build [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for clean
+  -h, --help   help for build
 ```
 
 ### Options inherited from parent commands

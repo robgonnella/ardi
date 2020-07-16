@@ -1,20 +1,20 @@
-## ardi version
+## ardi remove lib
 
-Prints current version of ardi
+Remove libraries from project
 
 ### Synopsis
 
 
-Prints current version of ardi
+Remove libraries from project
 
 ```
-ardi version [flags]
+ardi remove lib [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for version
+  -h, --help   help for lib
 ```
 
 ### Options inherited from parent commands
@@ -28,5 +28,5 @@ ardi version [flags]
 
 ### SEE ALSO
 
-* [ardi](ardi.md)	 - Ardi is a command line build manager for arduino projects.
+* [ardi remove](ardi_remove.md)	 - Remove project dependencies
 

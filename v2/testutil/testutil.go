@@ -18,16 +18,12 @@ import (
 	"github.com/robgonnella/ardi/v2/commands"
 	"github.com/robgonnella/ardi/v2/core"
 	"github.com/robgonnella/ardi/v2/mocks"
+	"github.com/robgonnella/ardi/v2/util"
 )
 
 var port = 3000
 var here string
 var userHome string
-
-// GlobalOpt option to make a command act globally
-type GlobalOpt struct {
-	Global bool
-}
 
 func init() {
 	here, _ = filepath.Abs(".")
@@ -74,6 +70,21 @@ func CleanAll() {
 // ArduinoMegaFQBN returns appropriate fqbn for arduino mega 2560
 func ArduinoMegaFQBN() string {
 	return "arduino:avr:mega"
+}
+
+// Esp8266Platform returns appropriate platform for esp8266
+func Esp8266Platform() string {
+	return "esp8266:esp8266"
+}
+
+// Esp8266WifiduinoFQBN returns appropriate fqbn for esp8266 board
+func Esp8266WifiduinoFQBN() string {
+	return "esp8266:esp8266:wifiduino"
+}
+
+// Esp8266BoardURL returns appropriate board url for esp8266 board
+func Esp8266BoardURL() string {
+	return "https://arduino.esp8266.com/stable/package_esp8266com_index.json"
 }
 
 // UnitTestEnv represents our unit test environment
@@ -149,7 +160,21 @@ func RunUnitTest(name string, t *testing.T, f func(env *UnitTestEnv)) {
 		logger.SetOutput(&b)
 		logger.SetLevel(log.DebugLevel)
 
-		ardiCore := core.NewArdiCore(client, logger)
+		opts := util.GetAllSettingsOpts{
+			Global:   false,
+			LogLevel: "debug",
+			Port:     "2222",
+		}
+		ardiConfig, svrSettings := util.GetAllSettings(opts)
+
+		coreOpts := core.NewArdiCoreOpts{
+			Global:             false,
+			Logger:             logger,
+			Client:             client,
+			ArdiConfig:         *ardiConfig,
+			ArduinoCliSettings: *svrSettings,
+		}
+		ardiCore := core.NewArdiCore(coreOpts)
 
 		env := UnitTestEnv{
 			T:        st,
@@ -195,26 +220,8 @@ func RunIntegrationTest(name string, t *testing.T, f func(env *IntegrationTestEn
 
 // RunProjectInit initializes and ardi project directory
 func (e *IntegrationTestEnv) RunProjectInit() error {
-	projectInitArgs := []string{"project", "init"}
+	projectInitArgs := []string{"project-init"}
 	return e.Execute(projectInitArgs)
-}
-
-// AddLib adds an arduino library
-func (e *IntegrationTestEnv) AddLib(lib string, opt GlobalOpt) error {
-	args := []string{"lib", "add", lib}
-	if opt.Global {
-		args = append(args, "--global")
-	}
-	return e.Execute(args)
-}
-
-// AddPlatform adds an arduino platform
-func (e *IntegrationTestEnv) AddPlatform(platform string, opt GlobalOpt) error {
-	args := []string{"platform", "add", platform}
-	if opt.Global {
-		args = append(args, "--global")
-	}
-	return e.Execute(args)
 }
 
 // Execute executes the root command with given arguments

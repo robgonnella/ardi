@@ -1,20 +1,20 @@
-## ardi version
+## ardi list libraries
 
-Prints current version of ardi
+List project libraries
 
 ### Synopsis
 
 
-Prints current version of ardi
+List project libraries
 
 ```
-ardi version [flags]
+ardi list libraries [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for version
+  -h, --help   help for libraries
 ```
 
 ### Options inherited from parent commands
@@ -28,5 +28,5 @@ ardi version [flags]
 
 ### SEE ALSO
 
-* [ardi](ardi.md)	 - Ardi is a command line build manager for arduino projects.
+* [ardi list](ardi_list.md)	 - List platforms, libraries, board urls, and builds
 

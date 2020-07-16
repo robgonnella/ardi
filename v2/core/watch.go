@@ -5,6 +5,8 @@ import (
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/robgonnella/ardi/v2/rpc"
+	"github.com/robgonnella/ardi/v2/types"
+	"github.com/robgonnella/ardi/v2/util"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -13,7 +15,7 @@ type WatchCore struct {
 	logger     *log.Logger
 	client     rpc.Client
 	target     *Target
-	project    *ProjectCore
+	project    *types.Project
 	buildProps []string
 	port       *SerialCore
 	compiling  bool
@@ -31,15 +33,11 @@ func NewWatchCore(client rpc.Client, logger *log.Logger) *WatchCore {
 // Init intialize ardi-go core
 func (w *WatchCore) Init(port, dir string, props []string) error {
 	if w.project == nil {
-		proj := NewProjectCore(w.client, w.logger)
-		err := proj.SetConfigHelpers()
+		project, err := util.ProcessSketch(dir)
 		if err != nil {
 			return err
 		}
-		if err := proj.ProcessSketch(dir); err != nil {
-			return err
-		}
-		w.project = proj
+		w.project = project
 	}
 
 	connectedBoards := w.client.ConnectedBoards()

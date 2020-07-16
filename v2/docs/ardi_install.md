@@ -1,20 +1,20 @@
-## ardi clean
+## ardi install
 
-Delete project, or global, data directory
+Install all project dependencies
 
 ### Synopsis
 
 
-Removes all installed platforms and libraries from project data directory. If run with "--global" all data will be removed from ~/.ardi
+Install all project dependencies
 
 ```
-ardi clean [flags]
+ardi install [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for clean
+  -h, --help   help for install
 ```
 
 ### Options inherited from parent commands
