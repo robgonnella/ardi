@@ -18,6 +18,7 @@ import (
 	"github.com/robgonnella/ardi/v2/commands"
 	"github.com/robgonnella/ardi/v2/core"
 	"github.com/robgonnella/ardi/v2/mocks"
+	"github.com/robgonnella/ardi/v2/rpc"
 	"github.com/robgonnella/ardi/v2/util"
 )
 
@@ -106,12 +107,54 @@ func (e *UnitTestEnv) ClearStdout() {
 	e.Stdout = &b
 }
 
-// GenerateCmdBoard returns a single rpc Board
+// GenerateCmdBoard returns a single arduino-cli command Board
 func GenerateCmdBoard(name, fqbn string) *rpccommands.Board {
 	if fqbn == "" {
 		fqbn = fmt.Sprintf("%s-fqbn", name)
 	}
 	return &rpccommands.Board{Name: name, Fqbn: fqbn}
+}
+
+// GenerateCmdBoards generate a list of arduino-cli command boards
+func GenerateCmdBoards(n int) []*rpccommands.Board {
+	var boards []*rpccommands.Board
+	for i := 0; i < n; i++ {
+		name := fmt.Sprintf("test-board-%02d", i)
+		b := GenerateCmdBoard(name, "")
+		boards = append(boards, b)
+	}
+	return boards
+}
+
+// GenerateCmdPlatform generates a single named arduino-cli command platform
+func GenerateCmdPlatform(name string, boards []*rpccommands.Board) *rpccommands.Platform {
+	return &rpccommands.Platform{
+		ID:     name,
+		Boards: boards,
+	}
+}
+
+// GenerateRPCBoard returns a single ardi rpc Board
+func GenerateRPCBoard(name, fqbn string) *rpc.Board {
+	if fqbn == "" {
+		fqbn = fmt.Sprintf("%s-fqbn", name)
+	}
+	return &rpc.Board{
+		Name: name,
+		FQBN: fqbn,
+		Port: "/dev/null",
+	}
+}
+
+// GenerateRPCBoards generate a list of ardi rpc boards
+func GenerateRPCBoards(n int) []*rpc.Board {
+	var boards []*rpc.Board
+	for i := 0; i < n; i++ {
+		name := fmt.Sprintf("test-board-%02d", i)
+		b := GenerateRPCBoard(name, "")
+		boards = append(boards, b)
+	}
+	return boards
 }
 
 // BlinkProjectDir returns path to blink project directory
@@ -124,25 +167,6 @@ func BlinkProjectDir() string {
 func PixieProjectDir() string {
 	here, _ := filepath.Abs(".")
 	return path.Join(here, "../test_projects/pixie")
-}
-
-// GenerateCmdBoards generate a list of boards
-func GenerateCmdBoards(n int) []*rpccommands.Board {
-	var boards []*rpccommands.Board
-	for i := 0; i < n; i++ {
-		name := fmt.Sprintf("test-board-%02d", i)
-		b := GenerateCmdBoard(name, "")
-		boards = append(boards, b)
-	}
-	return boards
-}
-
-// GenerateCmdPlatform generates a single named platform
-func GenerateCmdPlatform(name string, boards []*rpccommands.Board) *rpccommands.Platform {
-	return &rpccommands.Platform{
-		ID:     name,
-		Boards: boards,
-	}
 }
 
 // RunUnitTest runs an ardi unit test

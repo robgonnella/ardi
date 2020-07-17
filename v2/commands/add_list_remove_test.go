@@ -20,6 +20,18 @@ func TestAddListRemovePlatformGlobally(t *testing.T) {
 		assert.NoError(env.T, err)
 		assert.Contains(env.T, env.Stdout.String(), platform)
 
+		env.ClearStdout()
+		args = []string{"list", "board-fqbns", "--global"}
+		err = env.Execute(args)
+		assert.NoError(env.T, err)
+		assert.Contains(env.T, env.Stdout.String(), "arduino:avr:mega")
+
+		env.ClearStdout()
+		args = []string{"list", "board-platforms", "--global"}
+		err = env.Execute(args)
+		assert.NoError(env.T, err)
+		assert.Contains(env.T, env.Stdout.String(), "arduino:avr")
+
 		args = []string{"remove", "platform", platform, "--global"}
 		err = env.Execute(args)
 		assert.NoError(env.T, err)
@@ -80,6 +92,18 @@ func TestAddListRemovePlatform(t *testing.T) {
 		err = env.Execute(args)
 		assert.NoError(env.T, err)
 		assert.Contains(env.T, env.Stdout.String(), platform)
+
+		env.ClearStdout()
+		args = []string{"list", "board-fqbns"}
+		err = env.Execute(args)
+		assert.NoError(env.T, err)
+		assert.Contains(env.T, env.Stdout.String(), "arduino:avr:mega")
+
+		env.ClearStdout()
+		args = []string{"list", "board-platforms"}
+		err = env.Execute(args)
+		assert.NoError(env.T, err)
+		assert.Contains(env.T, env.Stdout.String(), "arduino:avr")
 
 		args = []string{"remove", "platform", platform}
 		err = env.Execute(args)
@@ -275,7 +299,7 @@ func TestAddListRemoveBoardURLGlobally(t *testing.T) {
 	})
 }
 
-func TestAddListRemoveBoardUR(t *testing.T) {
+func TestAddListRemoveBoardURL(t *testing.T) {
 	testutil.RunIntegrationTest("errors if project not initialized", t, func(env *testutil.IntegrationTestEnv) {
 		args := []string{"add", "board-urls", "https://someboardurl.com"}
 		err := env.Execute(args)
