@@ -19,7 +19,7 @@ Things ardi can fo for you:
 
 Ardi should work for all boards and platforms supported by [arduino-cli].
 
-Use "ardi [command] --help" for more information about a command.
+Use "ardi help [command]" for more information about a command.
 
 # Installation
 
@@ -50,7 +50,7 @@ to use the global data directory.
 To initialize an ardi project directory run:
 
 ```bash
-ardi project init
+ardi project-init
 ```
 
 ## Build Properties
@@ -60,9 +60,9 @@ using the `--build-prop` or `-p` flag followed by the build property and value.
 To specify multiple build properties just precede each property with the
 `--build-prop` or `-p` flag.
 
-    ardi compile <sketch_dir> -v -f <fqbn> \
-    -p build.extra_flags="-DSOME_OPTION" \
-    -p compiler.cpp.extra_flags="-std=c++11"
+    ardi compile <sketch_dir> --fqbn <fqbn> \
+    --build-prop build.extra_flags="-DSOME_OPTION" \
+    --build-prop compiler.cpp.extra_flags="-std=c++11"
 
 ## Storing Builds in ardi.json
 
@@ -72,30 +72,26 @@ then easily run via the `ardi project build` command.
 To add a build either manually modify ardi.json or use `ardi project add build`
 
 ```bash
-ardi project add build \
+ardi add build \
 --name <name> \
---platform <platform_id> \
+--sketch <path_to_sketch_or_directory> \
 --fqbn <fqbn> \
 --build-prop build.extra_flags="-DSOME_OPTION" \
 --build-prop compiler.cpp.extra_flags="-std=c++11"
-
-# To see list of all options
-ardi project add build --help
 ```
 
 To run stored builds
 
 ```bash
 # Run a single build
-ardi project build <name>
+ardi build <name>
 # Run multiple builds
-ardi project build <name1> <name2> <name3>
+ardi build <name1> <name2> <name3>
 # Run all builds
-ardi project build
+ardi build
 ```
 
 Documentation for all commands can be found in [docs directory][docs]
-
 
 [arduino-cli]: https://github.com/arduino/arduino-cli
 [docs]: ./docs/ardi.md
