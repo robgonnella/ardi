@@ -17,7 +17,7 @@ type WatchCore struct {
 	target     *Target
 	project    *types.Project
 	buildProps []string
-	port       *SerialCore
+	port       SerialPort
 	compiling  bool
 	uploading  bool
 }
@@ -52,7 +52,7 @@ func (w *WatchCore) Init(port, dir string, props []string) error {
 	}
 
 	if w.port == nil {
-		w.port = NewSerialCore(w.target.Board.Port, w.project.Baud, w.logger)
+		w.port = NewArdiSerialPort(w.target.Board.Port, w.project.Baud, w.logger)
 	}
 
 	w.buildProps = props

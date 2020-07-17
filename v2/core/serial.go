@@ -7,17 +7,25 @@ import (
 	"github.com/tarm/serial"
 )
 
-// SerialCore represents our serial port wrapper
-type SerialCore struct {
+// SerialPort represents a board port on which to stream logs
+//go:generate mockgen -destination=../mocks/mock_serial.go -package=mocks github.com/robgonnella/ardi/v2/core SerialPort
+type SerialPort interface {
+	Watch()
+	Stop()
+	IsStreaming() bool
+}
+
+// ArdiSerialPort represents our serial port wrapper
+type ArdiSerialPort struct {
 	stream *serial.Port
 	name   string
 	baud   int
 	logger *log.Logger
 }
 
-// NewSerialCore returns instance of serial port wrapper
-func NewSerialCore(name string, baud int, logger *log.Logger) *SerialCore {
-	return &SerialCore{
+// NewArdiSerialPort returns instance of serial port wrapper
+func NewArdiSerialPort(name string, baud int, logger *log.Logger) SerialPort {
+	return &ArdiSerialPort{
 		name:   name,
 		baud:   baud,
 		logger: logger,
@@ -25,7 +33,7 @@ func NewSerialCore(name string, baud int, logger *log.Logger) *SerialCore {
 }
 
 // Watch connects to a serial port and prints any logs received.
-func (p SerialCore) Watch() {
+func (p *ArdiSerialPort) Watch() {
 	logFields := log.Fields{"baud": p.baud, "name": p.name}
 
 	p.Stop()
@@ -55,7 +63,7 @@ func (p SerialCore) Watch() {
 }
 
 // Stop printing serial port logs
-func (p SerialCore) Stop() {
+func (p *ArdiSerialPort) Stop() {
 	if p.stream != nil {
 		logWithField := p.logger.WithField("name", p.name)
 		logWithField.Info("Closing serial port connection")
@@ -73,6 +81,6 @@ func (p SerialCore) Stop() {
 }
 
 // IsStreaming returns whether or not we are currently printing logs from port
-func (p SerialCore) IsStreaming() bool {
+func (p *ArdiSerialPort) IsStreaming() bool {
 	return p.stream != nil
 }
