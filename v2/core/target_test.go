@@ -15,7 +15,14 @@ func TestTarget(t *testing.T) {
 		allBoards := []*rpc.Board{}
 		fqbn := "someboardfqbn"
 
-		target, err := core.NewTarget(connectedBoards, allBoards, fqbn, false, env.Logger)
+		targetOpts := core.NewTargetOpts{
+			ConnectedBoards: connectedBoards,
+			AllBoards:       allBoards,
+			OnlyConnected:   false,
+			FQBN:            fqbn,
+			Logger:          env.Logger,
+		}
+		target, err := core.NewTarget(targetOpts)
 		assert.NoError(env.T, err)
 		assert.Equal(env.T, target.Board.FQBN, fqbn)
 	})
@@ -27,7 +34,14 @@ func TestTarget(t *testing.T) {
 		connectedBoards := []*rpc.Board{connectedBoard}
 		allBoards := []*rpc.Board{}
 
-		target, err := core.NewTarget(connectedBoards, allBoards, "", false, env.Logger)
+		targetOpts := core.NewTargetOpts{
+			ConnectedBoards: connectedBoards,
+			AllBoards:       allBoards,
+			OnlyConnected:   false,
+			FQBN:            "",
+			Logger:          env.Logger,
+		}
+		target, err := core.NewTarget(targetOpts)
 		assert.NoError(env.T, err)
 		assert.Equal(env.T, target.Board.Name, boardName)
 		assert.Equal(env.T, target.Board.FQBN, boardFQBN)
@@ -44,7 +58,14 @@ func TestTarget(t *testing.T) {
 		allBoards := []*rpc.Board{}
 
 		env.ClearStdout()
-		target, err := core.NewTarget(connectedBoards, allBoards, "", false, env.Logger)
+		targetOpts := core.NewTargetOpts{
+			ConnectedBoards: connectedBoards,
+			AllBoards:       allBoards,
+			OnlyConnected:   false,
+			FQBN:            "",
+			Logger:          env.Logger,
+		}
+		target, err := core.NewTarget(targetOpts)
 		assert.Error(env.T, err)
 		assert.Nil(env.T, target)
 		out := env.Stdout.String()
@@ -63,7 +84,14 @@ func TestTarget(t *testing.T) {
 		allBoards := []*rpc.Board{otherBoard}
 
 		env.ClearStdout()
-		target, err := core.NewTarget(connectedBoards, allBoards, "", false, env.Logger)
+		targetOpts := core.NewTargetOpts{
+			ConnectedBoards: connectedBoards,
+			AllBoards:       allBoards,
+			OnlyConnected:   false,
+			FQBN:            "",
+			Logger:          env.Logger,
+		}
+		target, err := core.NewTarget(targetOpts)
 		assert.Error(env.T, err)
 		assert.Nil(env.T, target)
 		out := env.Stdout.String()
@@ -80,7 +108,14 @@ func TestTarget(t *testing.T) {
 		allBoards := []*rpc.Board{otherBoard}
 
 		env.ClearStdout()
-		target, err := core.NewTarget(connectedBoards, allBoards, "", true, env.Logger)
+		targetOpts := core.NewTargetOpts{
+			ConnectedBoards: connectedBoards,
+			AllBoards:       allBoards,
+			OnlyConnected:   true,
+			FQBN:            "",
+			Logger:          env.Logger,
+		}
+		target, err := core.NewTarget(targetOpts)
 		assert.Error(env.T, err)
 		assert.Nil(env.T, target)
 		out := env.Stdout.String()

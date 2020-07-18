@@ -15,6 +15,7 @@ type ArdiCore struct {
 	Watch     *WatchCore
 	Board     *BoardCore
 	Compiler  *CompileCore
+	Uploader  *UploadCore
 	Lib       *LibCore
 	Platform  *PlatformCore
 }
@@ -41,13 +42,17 @@ func NewArdiCore(opts NewArdiCoreOpts) *ArdiCore {
 	client := opts.Client
 	logger := opts.Logger
 
+	compiler := NewCompileCore(client, logger)
+	uploader := NewUploadCore(client, logger)
+
 	return &ArdiCore{
 		RPCClient: client,
 		Config:    NewArdiJSON(ardiConf, opts.ArdiConfig, logger),
 		CliConfig: NewArdiYAML(cliConf, opts.ArduinoCliSettings),
-		Watch:     NewWatchCore(client, logger),
+		Watch:     NewWatchCore(client, compiler, uploader, logger),
 		Board:     NewBoardCore(client, logger),
-		Compiler:  NewCompileCore(client, logger),
+		Compiler:  compiler,
+		Uploader:  uploader,
 		Lib:       NewLibCore(client, logger),
 		Platform:  NewPlatformCore(client, logger),
 	}
