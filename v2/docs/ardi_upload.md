@@ -1,16 +1,20 @@
-## ardi search
+## ardi upload
 
-Search for arduino platforms, libraries, and boards
+Upload pre-compiled sketch build to a connected board
 
 ### Synopsis
 
 
-Search for arduino platforms, libraries, and boards
+Upload pre-compiled sketch build to a connected board
+
+```
+ardi upload [build-dir] [flags]
+```
 
 ### Options
 
 ```
-  -h, --help   help for search
+  -h, --help   help for upload
 ```
 
 ### Options inherited from parent commands
@@ -25,6 +29,4 @@ Search for arduino platforms, libraries, and boards
 ### SEE ALSO
 
 * [ardi](ardi.md)	 - Ardi is a command line build manager for arduino projects.
-* [ardi search libraries](ardi_search_libraries.md)	 - Searches for availables libraries with optional search filter
-* [ardi search platforms](ardi_search_platforms.md)	 - Search all available platforms
 
