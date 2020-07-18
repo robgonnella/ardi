@@ -14,6 +14,7 @@ func getAddPlatformCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// TODO: make it so we each platform gets saved in project config when adding all platforms
 			if len(args) == 0 || all {
+				logger.Info("Adding all platforms")
 				if err := ardiCore.Platform.AddAll(); err != nil {
 					logger.WithError(err).Error("Failed to add arduino platforms")
 					return err
@@ -22,14 +23,17 @@ func getAddPlatformCmd() *cobra.Command {
 			}
 
 			for _, p := range args {
+				logger.Infof("Adding platform: %s", p)
 				installed, vers, err := ardiCore.Platform.Add(p)
 				if err != nil {
 					logger.WithError(err).Errorf("Failed to add arduino platform %s", p)
 					return err
 				}
+				logger.Infof("Successfully installed %s@%s", installed, vers)
 				if err := ardiCore.Config.AddPlatform(installed, vers); err != nil {
 					return err
 				}
+				logger.Info("Updated config")
 			}
 			return nil
 		},
@@ -74,15 +78,18 @@ func getAddLibCmd() *cobra.Command {
 		Args:    cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			for _, l := range args {
+				logger.Infof("Adding library: %s", l)
 				name, vers, err := ardiCore.Lib.Add(l)
 				if err != nil {
 					logger.WithError(err).Errorf("Failed to install library %s", l)
 					return err
 				}
+				logger.Infof("Successfully installed %s@%s", name, vers)
 				if err := ardiCore.Config.AddLibrary(name, vers); err != nil {
 					logger.WithError(err).Error("Failed to save libary to ardi.json")
 					return err
 				}
+				logger.Info("Updated config")
 			}
 			return nil
 		},

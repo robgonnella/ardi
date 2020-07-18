@@ -13,20 +13,22 @@ import (
 // WatchCore represents core module for adi go commands
 type WatchCore struct {
 	logger     *log.Logger
+	uploader   *UploadCore
+	compiler   *CompileCore
 	client     rpc.Client
 	target     *Target
 	project    *types.Project
 	buildProps []string
-	port       *SerialCore
-	compiling  bool
-	uploading  bool
+	port       SerialPort
 }
 
 // NewWatchCore returns new Project instance
-func NewWatchCore(client rpc.Client, logger *log.Logger) *WatchCore {
+func NewWatchCore(client rpc.Client, compiler *CompileCore, uploader *UploadCore, logger *log.Logger) *WatchCore {
 	return &WatchCore{
-		client: client,
-		logger: logger,
+		client:   client,
+		uploader: uploader,
+		compiler: compiler,
+		logger:   logger,
 	}
 }
 
@@ -44,7 +46,14 @@ func (w *WatchCore) Init(port, dir string, props []string) error {
 	allBoards := w.client.AllBoards()
 
 	if w.target == nil {
-		target, err := NewTarget(connectedBoards, allBoards, "", true, w.logger)
+		targetOpts := NewTargetOpts{
+			ConnectedBoards: connectedBoards,
+			AllBoards:       allBoards,
+			OnlyConnected:   true,
+			FQBN:            "",
+			Logger:          w.logger,
+		}
+		target, err := NewTarget(targetOpts)
 		if err != nil {
 			return err
 		}
@@ -52,7 +61,7 @@ func (w *WatchCore) Init(port, dir string, props []string) error {
 	}
 
 	if w.port == nil {
-		w.port = NewSerialCore(w.target.Board.Port, w.project.Baud, w.logger)
+		w.port = NewArdiSerialPort(w.target.Board.Port, w.project.Baud, w.logger)
 	}
 
 	w.buildProps = props
@@ -67,18 +76,11 @@ func (w *WatchCore) Upload() error {
 	w.waitForPreviousUpload()
 	w.logger.Info("Uploading...")
 
-	fqbn := w.target.Board.FQBN
-	device := w.target.Board.Port
-	sketchDir := w.project.Directory
-
-	w.uploading = true
-	if err := w.client.Upload(fqbn, sketchDir, device); err != nil {
+	if err := w.uploader.Upload(*w.target, w.project.Directory); err != nil {
 		w.logger.WithError(err).Error("Failed to upload sketch")
-		w.uploading = false
 		return err
 	}
 
-	w.uploading = false
 	return nil
 }
 
@@ -88,27 +90,19 @@ func (w *WatchCore) Compile() error {
 	w.waitForPreviousCompile()
 	w.waitForPreviousUpload()
 
-	fqbn := w.target.Board.FQBN
-	sketchDir := w.project.Directory
-	sketch := w.project.Sketch
-	buildProps := w.buildProps
-
-	w.compiling = true
 	opts := rpc.CompileOpts{
-		FQBN:       fqbn,
-		SketchDir:  sketchDir,
-		SketchPath: sketch,
+		FQBN:       w.target.Board.FQBN,
+		SketchDir:  w.project.Directory,
+		SketchPath: w.project.Sketch,
 		ExportName: "",
-		BuildProps: buildProps,
+		BuildProps: w.buildProps,
 		ShowProps:  false,
 	}
-	if err := w.client.Compile(opts); err != nil {
+	if err := w.compiler.Compile(opts); err != nil {
 		w.logger.WithError(err).Error("Failed to compile sketch")
-		w.compiling = false
 		return err
 	}
 
-	w.compiling = false
 	return nil
 }
 
@@ -172,7 +166,7 @@ func (w *WatchCore) WatchLogs() {
 func (w *WatchCore) waitForPreviousUpload() {
 	// block until target is no longer uploading
 	for {
-		if !w.uploading {
+		if !w.uploader.IsUploading() {
 			break
 		}
 		w.logger.Info("Waiting for previous upload to finish...")
@@ -183,7 +177,7 @@ func (w *WatchCore) waitForPreviousUpload() {
 func (w *WatchCore) waitForPreviousCompile() {
 	// block until target is no longer compiling
 	for {
-		if !w.compiling {
+		if !w.compiler.IsCompiling() {
 			break
 		}
 		w.logger.Info("Waiting for previous compile to finish...")

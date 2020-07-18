@@ -12,12 +12,7 @@ import (
 )
 
 func TestCompileCore(t *testing.T) {
-	testutil.RunUnitTest("errors when compiling directory with no sketch", t, func(env *testutil.UnitTestEnv) {
-		err := env.ArdiCore.Compiler.Compile(".", "some-fqbn", []string{}, false)
-		assert.Error(env.T, err)
-	})
-
-	testutil.RunUnitTest("succeeds when compiling directory with .ino file", t, func(env *testutil.UnitTestEnv) {
+	testutil.RunUnitTest("returns nil on success", t, func(env *testutil.UnitTestEnv) {
 
 		projectDir := testutil.BlinkProjectDir()
 		expectedFqbn := "some-fqbb"
@@ -31,14 +26,12 @@ func TestCompileCore(t *testing.T) {
 			SketchPath: expectedSketch,
 			BuildProps: expectedBuildProps,
 			ShowProps:  expectedShowProps,
+			ExportName: "",
 		}
+		env.Client.EXPECT().Compile(compileOpts).Times(1).Return(nil)
 
-		env.Client.EXPECT().ConnectedBoards().Times(1).Return([]*rpc.Board{})
-		env.Client.EXPECT().AllBoards().Times(1).Return([]*rpc.Board{})
-		env.Client.EXPECT().Compile(compileOpts).Times(1)
-
-		err := env.ArdiCore.Compiler.Compile(projectDir, expectedFqbn, expectedBuildProps, expectedShowProps)
-		assert.NoError(env.T, err)
+		err := env.ArdiCore.Compiler.Compile(compileOpts)
+		assert.Nil(env.T, err)
 	})
 
 	testutil.RunUnitTest("returns compile error", t, func(env *testutil.UnitTestEnv) {
@@ -57,13 +50,12 @@ func TestCompileCore(t *testing.T) {
 			SketchPath: expectedSketch,
 			BuildProps: expectedBuildProps,
 			ShowProps:  expectedShowProps,
+			ExportName: "",
 		}
 
-		env.Client.EXPECT().ConnectedBoards().Times(1).Return([]*rpc.Board{})
-		env.Client.EXPECT().AllBoards().Times(1).Return([]*rpc.Board{})
 		env.Client.EXPECT().Compile(compileOpts).Times(1).Return(dummyErr)
 
-		err := env.ArdiCore.Compiler.Compile(projectDir, expectedFqbn, expectedBuildProps, expectedShowProps)
+		err := env.ArdiCore.Compiler.Compile(compileOpts)
 		assert.Error(env.T, err)
 		assert.EqualError(env.T, err, errString)
 	})

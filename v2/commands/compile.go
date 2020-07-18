@@ -1,6 +1,10 @@
 package commands
 
 import (
+	"github.com/robgonnella/ardi/v2/core"
+	"github.com/robgonnella/ardi/v2/rpc"
+	"github.com/robgonnella/ardi/v2/util"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -19,10 +23,46 @@ func getCompileCmd() *cobra.Command {
 			if len(args) > 0 {
 				sketchDir = args[0]
 			}
-			if err := ardiCore.Compiler.Compile(sketchDir, fqbn, buildProps, showProps); err != nil {
+			project, err := util.ProcessSketch(sketchDir)
+			if err != nil {
+				return err
+			}
+
+			connectedBoards := ardiCore.RPCClient.ConnectedBoards()
+			allBoards := ardiCore.RPCClient.AllBoards()
+
+			targetOpts := core.NewTargetOpts{
+				ConnectedBoards: connectedBoards,
+				AllBoards:       allBoards,
+				OnlyConnected:   false,
+				FQBN:            fqbn,
+				Logger:          logger,
+			}
+			target, err := core.NewTarget(targetOpts)
+			if err != nil {
+				return err
+			}
+
+			fields := logrus.Fields{
+				"sketch": project.Sketch,
+				"baud":   project.Baud,
+				"fqbn":   target.Board.FQBN,
+				"device": target.Board.Port,
+			}
+			logger.WithFields(fields).Info("Compiling...")
+			compileOpts := rpc.CompileOpts{
+				FQBN:       target.Board.FQBN,
+				SketchDir:  project.Directory,
+				SketchPath: project.Sketch,
+				ExportName: "",
+				BuildProps: buildProps,
+				ShowProps:  showProps,
+			}
+			if err := ardiCore.Compiler.Compile(compileOpts); err != nil {
 				logger.WithError(err).Errorf("Failed to compile %s", sketchDir)
 				return err
 			}
+			logger.WithFields(fields).Info("Compilation successful")
 			return nil
 		},
 	}

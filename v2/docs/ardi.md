@@ -34,6 +34,7 @@ Ardi is a build tool that allows you to completely manage your arduino project f
 * [ardi project-init](ardi_project-init.md)	 - Initialize directory as an ardi project
 * [ardi remove](ardi_remove.md)	 - Remove project dependencies
 * [ardi search](ardi_search.md)	 - Search for arduino platforms, libraries, and boards
+* [ardi upload](ardi_upload.md)	 - Upload pre-compiled sketch build to a connected board
 * [ardi version](ardi_version.md)	 - Prints current version of ardi
 * [ardi watch](ardi_watch.md)	 - Compile, upload, and watch
 

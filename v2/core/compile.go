@@ -4,50 +4,37 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/robgonnella/ardi/v2/rpc"
-	"github.com/robgonnella/ardi/v2/util"
 )
 
 // CompileCore represents core module for compile commands
 type CompileCore struct {
-	logger *log.Logger
-	client rpc.Client
+	logger    *log.Logger
+	client    rpc.Client
+	compiling bool
 }
 
 // NewCompileCore instance of core module for compile commands
 func NewCompileCore(client rpc.Client, logger *log.Logger) *CompileCore {
 	return &CompileCore{
-		logger: logger,
-		client: client,
+		logger:    logger,
+		client:    client,
+		compiling: false,
 	}
 }
 
 // Compile a given project
-func (c *CompileCore) Compile(sketchDir, fqbn string, buildProps []string, showProps bool) error {
-	project, err := util.ProcessSketch(sketchDir)
-	if err != nil {
-		return err
-	}
-
-	connectedBoards := c.client.ConnectedBoards()
-	allBoards := c.client.AllBoards()
-
-	target, err := NewTarget(connectedBoards, allBoards, fqbn, false, c.logger)
-	if err != nil {
-		return err
-	}
-
-	opts := rpc.CompileOpts{
-		FQBN:       target.Board.FQBN,
-		SketchDir:  project.Directory,
-		SketchPath: project.Sketch,
-		ExportName: "",
-		BuildProps: buildProps,
-		ShowProps:  showProps,
-	}
-
+func (c *CompileCore) Compile(opts rpc.CompileOpts) error {
+	c.compiling = true
 	if err := c.client.Compile(opts); err != nil {
+		c.compiling = false
 		return err
 	}
 
+	c.compiling = false
 	return nil
+}
+
+// IsCompiling returns if core is currently compiling
+func (c *CompileCore) IsCompiling() bool {
+	return c.compiling
 }

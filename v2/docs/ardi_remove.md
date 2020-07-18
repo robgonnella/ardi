@@ -25,8 +25,8 @@ Remove project dependencies
 ### SEE ALSO
 
 * [ardi](ardi.md)	 - Ardi is a command line build manager for arduino projects.
-* [ardi remove board-url](ardi_remove_board-url.md)	 - Remove board urls from project
-* [ardi remove build](ardi_remove_build.md)	 - Remove build config from project
-* [ardi remove lib](ardi_remove_lib.md)	 - Remove libraries from project
-* [ardi remove platform](ardi_remove_platform.md)	 - Remove platform(s) from project
+* [ardi remove board-urls](ardi_remove_board-urls.md)	 - Remove board urls from project
+* [ardi remove builds](ardi_remove_builds.md)	 - Remove build config from project
+* [ardi remove libraries](ardi_remove_libraries.md)	 - Remove libraries from project
+* [ardi remove platforms](ardi_remove_platforms.md)	 - Remove platform(s) from project
 

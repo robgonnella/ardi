@@ -27,6 +27,6 @@ Add project dependencies
 * [ardi](ardi.md)	 - Ardi is a command line build manager for arduino projects.
 * [ardi add board-url](ardi_add_board-url.md)	 - Add board urls to project
 * [ardi add build](ardi_add_build.md)	 - Add build config to project
-* [ardi add lib](ardi_add_lib.md)	 - Add libraries to project
-* [ardi add platform](ardi_add_platform.md)	 - Add platform(s) to project
+* [ardi add libraries](ardi_add_libraries.md)	 - Add libraries to project
+* [ardi add platforms](ardi_add_platforms.md)	 - Add platform(s) to project
 

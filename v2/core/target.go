@@ -16,37 +16,46 @@ type Target struct {
 	Board *rpc.Board
 }
 
+// NewTargetOpts options for creating a new target for compiling and uploading
+type NewTargetOpts struct {
+	FQBN            string
+	ConnectedBoards []*rpc.Board
+	AllBoards       []*rpc.Board
+	OnlyConnected   bool
+	Logger          *log.Logger
+}
+
 // NewTarget returns new target
-func NewTarget(connectedBoards, allBoards []*rpc.Board, fqbn string, onlyConnected bool, logger *log.Logger) (*Target, error) {
-	board, err := getTargetBoard(connectedBoards, allBoards, fqbn, onlyConnected, logger)
+func NewTarget(opts NewTargetOpts) (*Target, error) {
+	board, err := getTargetBoard(opts)
 	if err != nil {
 		return nil, err
 	}
 	return &Target{board}, nil
 }
 
-func getTargetBoard(connectedBoards, allBoards []*rpc.Board, fqbn string, onlyConnected bool, logger *log.Logger) (*rpc.Board, error) {
-	if fqbn != "" {
-		return &rpc.Board{FQBN: fqbn}, nil
+func getTargetBoard(opts NewTargetOpts) (*rpc.Board, error) {
+	if opts.FQBN != "" {
+		return &rpc.Board{FQBN: opts.FQBN}, nil
 	}
 
 	fqbnErr := errors.New("you must specify a board fqbn to compile - you can find a list of board fqbns for installed platforms above")
 
-	if len(connectedBoards) == 0 {
-		if onlyConnected {
+	if len(opts.ConnectedBoards) == 0 {
+		if opts.OnlyConnected {
 			err := errors.New("No connected boards detected")
 			return nil, err
 		}
-		printFQBNs(allBoards, logger)
+		printFQBNs(opts.AllBoards, opts.Logger)
 		return nil, fqbnErr
 	}
 
-	if len(connectedBoards) == 1 {
-		return connectedBoards[0], nil
+	if len(opts.ConnectedBoards) == 1 {
+		return opts.ConnectedBoards[0], nil
 	}
 
-	if len(connectedBoards) > 1 {
-		printFQBNs(connectedBoards, logger)
+	if len(opts.ConnectedBoards) > 1 {
+		printFQBNs(opts.ConnectedBoards, opts.Logger)
 		return nil, fqbnErr
 	}
 
