@@ -23,7 +23,6 @@ func NewUploadCore(client rpc.Client, logger *log.Logger) *UploadCore {
 
 // Upload compiled sketches to the specified board
 func (u *UploadCore) Upload(target Target, buildDir string) error {
-	u.logger.Info("Uploading...")
 	fqbn := target.Board.FQBN
 	device := target.Board.Port
 

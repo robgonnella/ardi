@@ -80,8 +80,6 @@ func (l *LibCore) Add(lib string) (string, string, error) {
 		version = libParts[1]
 	}
 
-	l.logger.Infof("Installing library: %s %s", library, version)
-
 	installedVersion, err := l.client.InstallLibrary(library, version)
 	if err != nil {
 		return "", "", err

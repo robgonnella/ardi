@@ -4,6 +4,7 @@ import (
 	"github.com/robgonnella/ardi/v2/core"
 	"github.com/robgonnella/ardi/v2/rpc"
 	"github.com/robgonnella/ardi/v2/util"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -42,6 +43,13 @@ func getCompileCmd() *cobra.Command {
 				return err
 			}
 
+			fields := logrus.Fields{
+				"sketch": project.Sketch,
+				"baud":   project.Baud,
+				"fqbn":   target.Board.FQBN,
+				"device": target.Board.Port,
+			}
+			logger.WithFields(fields).Info("Compiling...")
 			compileOpts := rpc.CompileOpts{
 				FQBN:       target.Board.FQBN,
 				SketchDir:  project.Directory,
@@ -54,6 +62,7 @@ func getCompileCmd() *cobra.Command {
 				logger.WithError(err).Errorf("Failed to compile %s", sketchDir)
 				return err
 			}
+			logger.WithFields(fields).Info("Compilation successful")
 			return nil
 		},
 	}
