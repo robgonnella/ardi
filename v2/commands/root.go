@@ -162,6 +162,7 @@ func GetRootCmd(cmdLogger *log.Logger) *cobra.Command {
 	rootCmd.AddCommand(getProjectInitCmd())
 	rootCmd.AddCommand(getRemoveCmd())
 	rootCmd.AddCommand(getSearchCmd())
+	rootCmd.AddCommand(getUploadCmd())
 	rootCmd.AddCommand(getVersionCmd())
 	rootCmd.AddCommand(getWatchCmd())
 

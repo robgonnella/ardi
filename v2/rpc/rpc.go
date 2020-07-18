@@ -301,8 +301,6 @@ func (c *ArdiClient) InstallPlatform(platform string) (string, string, error) {
 	pkg, arch, version := parsePlatform(platform)
 	installedPlatform := fmt.Sprintf("%s:%s", pkg, arch)
 
-	c.logger.Infof("Installing platform: %s\n", installedPlatform)
-
 	installRespStream, err := c.client.PlatformInstall(
 		c.ctx,
 		&rpc.PlatformInstallReq{
@@ -325,7 +323,6 @@ func (c *ArdiClient) InstallPlatform(platform string) (string, string, error) {
 
 		// The server is done.
 		if err == io.EOF {
-			c.logger.Infof("Installed: %s:%s@%s", pkg, arch, installedVersion)
 			return installedPlatform, installedVersion, nil
 		}
 
@@ -370,7 +367,6 @@ func (c *ArdiClient) UninstallPlatform(platform string) (string, error) {
 	pkg, arch, _ := parsePlatform(platform)
 
 	removedPlatform := fmt.Sprintf("%s:%s", pkg, arch)
-	c.logger.Infof("Uninstalling platform: %s\n", removedPlatform)
 
 	uninstallRespStream, err := c.client.PlatformUninstall(
 		c.ctx,
@@ -392,7 +388,6 @@ func (c *ArdiClient) UninstallPlatform(platform string) (string, error) {
 
 		// The server is done.
 		if err == io.EOF {
-			c.logger.Infof("Uninstalled: %s:%s", pkg, arch)
 			return removedPlatform, nil
 		}
 
@@ -556,8 +551,6 @@ func (c *ArdiClient) Upload(fqbn, sketchDir, device string) error {
 	for {
 		uplResp, err := uplRespStream.Recv()
 		if err == io.EOF {
-			// target.Uploading = false
-			c.logger.Info("Upload complete")
 			return nil
 		}
 
@@ -673,7 +666,6 @@ func (c *ArdiClient) InstallLibrary(name, version string) (string, error) {
 	for {
 		installResp, err := installRespStream.Recv()
 		if err == io.EOF {
-			c.logger.Info("Lib install done")
 			return foundVersion, nil
 		}
 
@@ -683,12 +675,12 @@ func (c *ArdiClient) InstallLibrary(name, version string) (string, error) {
 		}
 
 		if installResp.GetProgress() != nil {
-			c.logger.Infof("DOWNLOAD: %s\n", installResp.GetProgress())
+			c.logger.Debugf("DOWNLOAD: %s\n", installResp.GetProgress())
 		}
 		if installResp.GetTaskProgress() != nil {
 			msg := installResp.GetTaskProgress()
 			lib := msg.GetName()
-			c.logger.Infof("TASK: %s\n", msg)
+			c.logger.Debugf("TASK: %s\n", msg)
 			if foundVersion == "" {
 				foundVersion = strings.Split(lib, "@")[1]
 			}

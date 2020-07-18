@@ -2,7 +2,6 @@ package core
 
 import (
 	"github.com/robgonnella/ardi/v2/rpc"
-	"github.com/robgonnella/ardi/v2/types"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -23,14 +22,13 @@ func NewUploadCore(client rpc.Client, logger *log.Logger) *UploadCore {
 }
 
 // Upload compiled sketches to the specified board
-func (u *UploadCore) Upload(target Target, project types.Project) error {
+func (u *UploadCore) Upload(target Target, buildDir string) error {
 	u.logger.Info("Uploading...")
 	fqbn := target.Board.FQBN
 	device := target.Board.Port
-	sketchDir := project.Directory
 
 	u.uploading = true
-	if err := u.client.Upload(fqbn, sketchDir, device); err != nil {
+	if err := u.client.Upload(fqbn, buildDir, device); err != nil {
 		u.logger.WithError(err).Error("Failed to upload sketch")
 		u.uploading = false
 		return err

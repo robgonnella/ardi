@@ -7,7 +7,6 @@ import (
 	"github.com/robgonnella/ardi/v2/core"
 	"github.com/robgonnella/ardi/v2/rpc"
 	"github.com/robgonnella/ardi/v2/testutil"
-	"github.com/robgonnella/ardi/v2/util"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -24,11 +23,8 @@ func TestUploadCore(t *testing.T) {
 		target, err := core.NewTarget(targetOpts)
 		assert.NoError(env.T, err)
 
-		project, err := util.ProcessSketch(testutil.BlinkProjectDir())
-		assert.NoError(env.T, err)
-
-		env.Client.EXPECT().Upload(target.Board.FQBN, project.Directory, target.Board.Port).Times(1).Return(nil)
-		err = env.ArdiCore.Uploader.Upload(*target, *project)
+		env.Client.EXPECT().Upload(target.Board.FQBN, testutil.BlinkProjectDir(), target.Board.Port).Times(1).Return(nil)
+		err = env.ArdiCore.Uploader.Upload(*target, testutil.BlinkProjectDir())
 		assert.Nil(env.T, err)
 	})
 
@@ -45,11 +41,8 @@ func TestUploadCore(t *testing.T) {
 		target, err := core.NewTarget(targetOpts)
 		assert.NoError(env.T, err)
 
-		project, err := util.ProcessSketch(testutil.BlinkProjectDir())
-		assert.NoError(env.T, err)
-
-		env.Client.EXPECT().Upload(target.Board.FQBN, project.Directory, target.Board.Port).Times(1).Return(dummyErr)
-		err = env.ArdiCore.Uploader.Upload(*target, *project)
+		env.Client.EXPECT().Upload(target.Board.FQBN, testutil.BlinkProjectDir(), target.Board.Port).Times(1).Return(dummyErr)
+		err = env.ArdiCore.Uploader.Upload(*target, testutil.BlinkProjectDir())
 		assert.EqualError(env.T, err, dummyErr.Error())
 	})
 }

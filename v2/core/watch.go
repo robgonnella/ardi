@@ -76,7 +76,7 @@ func (w *WatchCore) Upload() error {
 	w.waitForPreviousUpload()
 	w.logger.Info("Uploading...")
 
-	if err := w.uploader.Upload(*w.target, *w.project); err != nil {
+	if err := w.uploader.Upload(*w.target, w.project.Directory); err != nil {
 		w.logger.WithError(err).Error("Failed to upload sketch")
 		return err
 	}
