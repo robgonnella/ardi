@@ -1,8 +1,10 @@
 package core_test
 
 import (
+	"path"
 	"testing"
 
+	"github.com/robgonnella/ardi/v2/rpc"
 	"github.com/robgonnella/ardi/v2/testutil"
 	"github.com/robgonnella/ardi/v2/util"
 	"github.com/stretchr/testify/assert"
@@ -12,7 +14,7 @@ func TestArdiConfigBuilds(t *testing.T) {
 	testutil.RunUnitTest("adds, lists, and removes builds", t, func(env *testutil.UnitTestEnv) {
 		util.InitProjectDirectory("2222")
 		name := "somename"
-		dir := "."
+		dir := testutil.BlinkProjectDir()
 		fqbn := "somefqbn"
 		buildProps := []string{"someprop=somevalue"}
 
@@ -22,7 +24,7 @@ func TestArdiConfigBuilds(t *testing.T) {
 		builds := env.ArdiCore.Config.GetBuilds()
 		build, ok := builds[name]
 		assert.True(env.T, ok)
-		assert.Equal(env.T, dir, build.Path)
+		assert.Equal(env.T, dir, build.Directory)
 		assert.Equal(env.T, fqbn, build.FQBN)
 		assert.Contains(env.T, build.Props, "someprop")
 		assert.Equal(env.T, build.Props["someprop"], "somevalue")
@@ -115,5 +117,29 @@ func TestArdiConfigLibraries(t *testing.T) {
 		assert.NoError(env.T, err)
 		libraries = env.ArdiCore.Config.GetLibraries()
 		assert.NotContains(env.T, libraries, lib)
+	})
+}
+
+func TestArdiConfigCompileOpts(t *testing.T) {
+	testutil.RunUnitTest("returns compile options for build", t, func(env *testutil.UnitTestEnv) {
+		util.InitProjectDirectory("2222")
+		name := "somename"
+		dir := testutil.BlinkProjectDir()
+		fqbn := "somefqbn"
+		buildProps := []string{"someprop=somevalue"}
+		expectedOpts := &rpc.CompileOpts{
+			SketchDir:  dir,
+			SketchPath: path.Join(dir, "blink.ino"),
+			FQBN:       fqbn,
+			BuildProps: buildProps,
+			ExportName: name,
+		}
+
+		err := env.ArdiCore.Config.AddBuild(name, dir, fqbn, buildProps)
+		assert.NoError(env.T, err)
+
+		compileOpts, err := env.ArdiCore.Config.GetCompileOpts(name)
+		assert.NoError(env.T, err)
+		assert.Equal(env.T, expectedOpts, compileOpts)
 	})
 }

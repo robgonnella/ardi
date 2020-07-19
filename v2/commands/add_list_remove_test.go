@@ -362,10 +362,16 @@ func TestAddListRemoveBoardURL(t *testing.T) {
 }
 
 func TestAddListRemoveBuildGlobally(t *testing.T) {
+	testutil.RunIntegrationTest("errors if not a valid sketch path", t, func(env *testutil.IntegrationTestEnv) {
+		args := []string{"add", "build", "--name", "somename", "--fqbn", "somefqbn", "--sketch", "noop", "--global"}
+		err := env.Execute(args)
+		assert.Error(env.T, err)
+	})
+
 	testutil.RunIntegrationTest("adding, listing, and removing builds", t, func(env *testutil.IntegrationTestEnv) {
 		name := "pixie"
 		fqbn := "somefqbn"
-		sketch := "somesketch"
+		sketch := testutil.PixieProjectDir()
 
 		args := []string{"add", "build", "--name", name, "--fqbn", fqbn, "--sketch", sketch, "--global"}
 		err := env.Execute(args)
@@ -424,8 +430,14 @@ func TestAddListRemoveBuildGlobally(t *testing.T) {
 }
 
 func TestAddListRemoveBuild(t *testing.T) {
+	testutil.RunIntegrationTest("errors if not a valid sketch path", t, func(env *testutil.IntegrationTestEnv) {
+		args := []string{"add", "build", "--name", "somename", "--fqbn", "somefqbn", "--sketch", "noop"}
+		err := env.Execute(args)
+		assert.Error(env.T, err)
+	})
+
 	testutil.RunIntegrationTest("errors if project not initialized", t, func(env *testutil.IntegrationTestEnv) {
-		args := []string{"add", "build", "--name", "somename", "--fqbn", "somefqbn", "--sketch", "somesketch"}
+		args := []string{"add", "build", "--name", "somename", "--fqbn", "somefqbn", "--sketch", testutil.PixieProjectDir()}
 		err := env.Execute(args)
 		assert.Error(env.T, err)
 
@@ -445,7 +457,7 @@ func TestAddListRemoveBuild(t *testing.T) {
 
 		name := "pixie"
 		fqbn := "somefqbn"
-		sketch := "somesketch"
+		sketch := testutil.PixieProjectDir()
 
 		args := []string{"add", "build", "--name", name, "--fqbn", fqbn, "--sketch", sketch}
 		err = env.Execute(args)

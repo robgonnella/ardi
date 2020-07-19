@@ -2,6 +2,9 @@ package core
 
 import (
 	"fmt"
+	"os"
+	"os/signal"
+	"syscall"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/tarm/serial"
@@ -20,20 +23,27 @@ type ArdiSerialPort struct {
 	stream *serial.Port
 	name   string
 	baud   int
+	sigs   chan os.Signal
 	logger *log.Logger
 }
 
 // NewArdiSerialPort returns instance of serial port wrapper
 func NewArdiSerialPort(name string, baud int, logger *log.Logger) SerialPort {
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+
 	return &ArdiSerialPort{
 		name:   name,
 		baud:   baud,
+		sigs:   sigs,
 		logger: logger,
 	}
 }
 
 // Watch connects to a serial port and prints any logs received.
 func (p *ArdiSerialPort) Watch() {
+	defer p.Stop()
+
 	logFields := log.Fields{"baud": p.baud, "name": p.name}
 
 	p.Stop()
@@ -47,6 +57,13 @@ func (p *ArdiSerialPort) Watch() {
 	}
 
 	p.stream = stream
+
+	go func() {
+		<-p.sigs
+		fmt.Println()
+		fmt.Println("gracefully shutting down serial port stream")
+		p.Stop()
+	}()
 
 	for {
 		if p.stream == nil {

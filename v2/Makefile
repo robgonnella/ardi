@@ -38,7 +38,11 @@ lint:
 test-unit:
 	mkdir test_artifacts || true
 	rm -rf test_artifacts/unit.out || true
-	go test -v -coverprofile test_artifacts/unit.out github.com/robgonnella/ardi/v2/core
+	go test \
+		-v \
+		-coverprofile test_artifacts/unit.out \
+		github.com/robgonnella/ardi/v2/core \
+		github.com/robgonnella/ardi/v2/util
 
 test-int:
 	mkdir test_artifacts || true

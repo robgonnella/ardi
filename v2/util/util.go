@@ -116,7 +116,7 @@ func GenArdiConfig(logLevel, port string) *types.ArdiConfig {
 		Platforms: make(map[string]string),
 		BoardURLS: []string{},
 		Libraries: make(map[string]string),
-		Builds:    make(map[string]types.ArdiBuildJSON),
+		Builds:    make(map[string]types.ArdiBuild),
 	}
 }
 
@@ -258,6 +258,29 @@ func GetDaemonLogLevel(logger *log.Logger) string {
 // CleanDataDirectory removes directory
 func CleanDataDirectory(dir string) error {
 	return os.RemoveAll(dir)
+}
+
+// GeneratePropsMap returns map of build props from string array
+func GeneratePropsMap(buildProps []string) map[string]string {
+	props := make(map[string]string)
+
+	for _, p := range buildProps {
+		parts := strings.SplitN(p, "=", 2)
+		label := parts[0]
+		instruction := parts[1]
+		props[label] = instruction
+	}
+
+	return props
+}
+
+// GeneratePropsArray returns an arrary of props from props map
+func GeneratePropsArray(props map[string]string) []string {
+	buildProps := []string{}
+	for prop, instruction := range props {
+		buildProps = append(buildProps, fmt.Sprintf("%s=%s", prop, instruction))
+	}
+	return buildProps
 }
 
 // ProcessSketch looks for .ino file in specified directory and parses

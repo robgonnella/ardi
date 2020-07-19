@@ -10,9 +10,9 @@ import (
 // ArdiCore represents the core package of ardi
 type ArdiCore struct {
 	RPCClient rpc.Client
-	Config    *ArdiJSON
+	Config    *ArdiConfig
 	CliConfig *ArdiYAML
-	Watch     *WatchCore
+	Watcher   *WatchCore
 	Board     *BoardCore
 	Compiler  *CompileCore
 	Uploader  *UploadCore
@@ -47,9 +47,9 @@ func NewArdiCore(opts NewArdiCoreOpts) *ArdiCore {
 
 	return &ArdiCore{
 		RPCClient: client,
-		Config:    NewArdiJSON(ardiConf, opts.ArdiConfig, logger),
+		Config:    NewArdiConfig(ardiConf, opts.ArdiConfig, logger),
 		CliConfig: NewArdiYAML(cliConf, opts.ArduinoCliSettings),
-		Watch:     NewWatchCore(client, compiler, uploader, logger),
+		Watcher:   NewWatchCore(compiler, uploader, logger),
 		Board:     NewBoardCore(client, logger),
 		Compiler:  compiler,
 		Uploader:  uploader,

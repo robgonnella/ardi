@@ -2,24 +2,25 @@ package core
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
-	"strings"
 
+	"github.com/robgonnella/ardi/v2/rpc"
 	"github.com/robgonnella/ardi/v2/types"
 	"github.com/robgonnella/ardi/v2/util"
 	log "github.com/sirupsen/logrus"
 )
 
-// ArdiJSON represents core module for ardi.json manipulation
-type ArdiJSON struct {
+// ArdiConfig represents core module for ardi.json manipulation
+type ArdiConfig struct {
 	config   types.ArdiConfig
 	confPath string
 	logger   *log.Logger
 }
 
-// NewArdiJSON returns core json module for handling ardi.json config
-func NewArdiJSON(confPath string, initialConfig types.ArdiConfig, logger *log.Logger) *ArdiJSON {
-	return &ArdiJSON{
+// NewArdiConfig returns core json module for handling ardi.json config
+func NewArdiConfig(confPath string, initialConfig types.ArdiConfig, logger *log.Logger) *ArdiConfig {
+	return &ArdiConfig{
 		config:   initialConfig,
 		confPath: confPath,
 		logger:   logger,
@@ -27,19 +28,21 @@ func NewArdiJSON(confPath string, initialConfig types.ArdiConfig, logger *log.Lo
 }
 
 // AddBuild to ardi.json
-func (a *ArdiJSON) AddBuild(name, path, fqbn string, buildProps []string) error {
-	newBuild := types.ArdiBuildJSON{
-		Path:  path,
-		FQBN:  fqbn,
-		Props: make(map[string]string),
+func (a *ArdiConfig) AddBuild(name, sketch, fqbn string, buildProps []string) error {
+	project, err := util.ProcessSketch(sketch)
+	if err != nil {
+		return err
 	}
 
-	for _, p := range buildProps {
-		parts := strings.SplitN(p, "=", 2)
-		label := parts[0]
-		instruction := parts[1]
-		newBuild.Props[label] = instruction
+	newBuild := types.ArdiBuild{
+		Directory: project.Directory,
+		Sketch:    project.Sketch,
+		Baud:      project.Baud,
+		FQBN:      fqbn,
 	}
+
+	props := util.GeneratePropsMap(buildProps)
+	newBuild.Props = props
 
 	a.logger.Infof("Addding build: %s", name)
 	a.printBuild(name, newBuild)
@@ -47,14 +50,34 @@ func (a *ArdiJSON) AddBuild(name, path, fqbn string, buildProps []string) error 
 	return a.write()
 }
 
+// GetCompileOpts returns appropriate compile options for an ardi build
+func (a *ArdiConfig) GetCompileOpts(buildName string) (*rpc.CompileOpts, error) {
+	build, ok := a.config.Builds[buildName]
+	if !ok {
+		return nil, fmt.Errorf("No builds found for %s", buildName)
+	}
+
+	buildProps := util.GeneratePropsArray(build.Props)
+
+	compileOpts := &rpc.CompileOpts{
+		FQBN:       build.FQBN,
+		SketchDir:  build.Directory,
+		SketchPath: build.Sketch,
+		ExportName: buildName,
+		BuildProps: buildProps,
+	}
+
+	return compileOpts, nil
+}
+
 // RemoveBuild removes specified build from ardi.json
-func (a *ArdiJSON) RemoveBuild(build string) error {
+func (a *ArdiConfig) RemoveBuild(build string) error {
 	delete(a.config.Builds, build)
 	return a.write()
 }
 
 // ListBuilds lists build specifications in ardi.json
-func (a *ArdiJSON) ListBuilds(builds []string) {
+func (a *ArdiConfig) ListBuilds(builds []string) {
 	a.logger.Println("")
 	if len(builds) > 0 {
 		for _, name := range builds {
@@ -69,24 +92,24 @@ func (a *ArdiJSON) ListBuilds(builds []string) {
 }
 
 // GetBuilds returns builds specified in config
-func (a *ArdiJSON) GetBuilds() map[string]types.ArdiBuildJSON {
+func (a *ArdiConfig) GetBuilds() map[string]types.ArdiBuild {
 	return a.config.Builds
 }
 
 // AddLibrary to ardi.json
-func (a *ArdiJSON) AddLibrary(name, version string) error {
+func (a *ArdiConfig) AddLibrary(name, version string) error {
 	a.config.Libraries[name] = version
 	return a.write()
 }
 
 // RemoveLibrary from ardi.json
-func (a *ArdiJSON) RemoveLibrary(name string) error {
+func (a *ArdiConfig) RemoveLibrary(name string) error {
 	delete(a.config.Libraries, name)
 	return a.write()
 }
 
 // ListLibraries lists installed libraries
-func (a *ArdiJSON) ListLibraries() {
+func (a *ArdiConfig) ListLibraries() {
 	a.logger.Println("")
 	for library, version := range a.config.Libraries {
 		a.logger.Printf("%s: %s\n", library, version)
@@ -95,24 +118,24 @@ func (a *ArdiJSON) ListLibraries() {
 }
 
 // GetLibraries returns libraries specired in config
-func (a *ArdiJSON) GetLibraries() map[string]string {
+func (a *ArdiConfig) GetLibraries() map[string]string {
 	return a.config.Libraries
 }
 
 // AddPlatform to ardi.json
-func (a *ArdiJSON) AddPlatform(platform, version string) error {
+func (a *ArdiConfig) AddPlatform(platform, version string) error {
 	a.config.Platforms[platform] = version
 	return a.write()
 }
 
 // RemovePlatform from ardi.json
-func (a *ArdiJSON) RemovePlatform(platform string) error {
+func (a *ArdiConfig) RemovePlatform(platform string) error {
 	delete(a.config.Platforms, platform)
 	return a.write()
 }
 
 // ListPlatforms lists all board urls in config
-func (a *ArdiJSON) ListPlatforms() {
+func (a *ArdiConfig) ListPlatforms() {
 	a.logger.Println("")
 	for platform, vers := range a.config.Platforms {
 		a.logger.Infof("%s: %s", platform, vers)
@@ -121,12 +144,12 @@ func (a *ArdiJSON) ListPlatforms() {
 }
 
 // GetPlatforms returns platforms specified in config
-func (a *ArdiJSON) GetPlatforms() map[string]string {
+func (a *ArdiConfig) GetPlatforms() map[string]string {
 	return a.config.Platforms
 }
 
 // AddBoardURL to ardi.json
-func (a *ArdiJSON) AddBoardURL(url string) error {
+func (a *ArdiConfig) AddBoardURL(url string) error {
 	if !util.ArrayContains(a.config.BoardURLS, url) {
 		a.logger.Infof("Adding board url: %s", url)
 		a.config.BoardURLS = append(a.config.BoardURLS, url)
@@ -137,7 +160,7 @@ func (a *ArdiJSON) AddBoardURL(url string) error {
 }
 
 // RemoveBoardURL from ardi.json
-func (a *ArdiJSON) RemoveBoardURL(url string) error {
+func (a *ArdiConfig) RemoveBoardURL(url string) error {
 	if util.ArrayContains(a.config.BoardURLS, url) {
 		newList := []string{}
 		for _, u := range a.config.BoardURLS {
@@ -153,7 +176,7 @@ func (a *ArdiJSON) RemoveBoardURL(url string) error {
 }
 
 // ListBoardURLS lists all board urls in config
-func (a *ArdiJSON) ListBoardURLS() {
+func (a *ArdiConfig) ListBoardURLS() {
 	a.logger.Info("Board URLS")
 	for _, url := range a.config.BoardURLS {
 		a.logger.Info(url)
@@ -161,11 +184,11 @@ func (a *ArdiJSON) ListBoardURLS() {
 }
 
 // GetBoardURLS returns board urls specified in config
-func (a *ArdiJSON) GetBoardURLS() []string {
+func (a *ArdiConfig) GetBoardURLS() []string {
 	return a.config.BoardURLS
 }
 
-func (a *ArdiJSON) write() error {
+func (a *ArdiConfig) write() error {
 	newData, err := json.MarshalIndent(a.config, "", "  ")
 	if err != nil {
 		return err
@@ -179,10 +202,12 @@ func (a *ArdiJSON) write() error {
 }
 
 // private
-func (a *ArdiJSON) printBuild(name string, b types.ArdiBuildJSON) {
+func (a *ArdiConfig) printBuild(name string, b types.ArdiBuild) {
 	a.logger.Println("")
 	a.logger.Printf("%s:\n", name)
-	a.logger.Printf("  Path: %s\n", b.Path)
+	a.logger.Printf("  Directory: %s\n", b.Directory)
+	a.logger.Printf("  Sketch: %s\n", b.Sketch)
+	a.logger.Printf("  Baud: %d\n", b.Baud)
 	a.logger.Printf("  FQBN: %s\n", b.FQBN)
 	a.logger.Printf("  Props:\n")
 	for prop, instruction := range b.Props {

@@ -1,48 +1,87 @@
 package commands
 
 import (
+	"github.com/robgonnella/ardi/v2/core"
+	"github.com/robgonnella/ardi/v2/rpc"
+	"github.com/robgonnella/ardi/v2/types"
+	"github.com/robgonnella/ardi/v2/util"
 	"github.com/spf13/cobra"
 )
 
-func process(sketchDir string, buildProps []string) error {
-	if err := ardiCore.Watch.Init(port, sketchDir, buildProps); err != nil {
-		logger.WithError(err).Error("Failed to initialize ardi watch core")
+func process(fqbn, sketch string, buildProps []string) error {
+	builds := ardiCore.Config.GetBuilds()
+	compileOpts := &rpc.CompileOpts{}
+	var err error
+
+	connectedBoards := ardiCore.RPCClient.ConnectedBoards()
+	allBoards := ardiCore.RPCClient.AllBoards()
+	targetOpts := core.NewTargetOpts{
+		ConnectedBoards: connectedBoards,
+		AllBoards:       allBoards,
+		OnlyConnected:   false,
+		FQBN:            fqbn,
+		Logger:          logger,
+	}
+
+	target, err := core.NewTarget(targetOpts)
+	if err != nil {
 		return err
 	}
 
-	if err := ardiCore.Watch.Compile(); err != nil {
+	project := &types.Project{}
+
+	if _, ok := builds[sketch]; ok {
+		compileOpts, _ = ardiCore.Config.GetCompileOpts(sketch)
+	} else {
+		project, err = util.ProcessSketch(sketch)
+		if err != nil {
+			return err
+		}
+
+		compileOpts.FQBN = target.Board.FQBN
+		compileOpts.SketchDir = project.Directory
+		compileOpts.SketchPath = project.Sketch
+		compileOpts.ExportName = ""
+		compileOpts.BuildProps = buildProps
+		compileOpts.ShowProps = false
+	}
+
+	if err := ardiCore.Compiler.Compile(*compileOpts); err != nil {
 		logger.WithError(err).Error("Failed to compile")
 		return err
 	}
 
-	if err := ardiCore.Watch.Upload(); err != nil {
+	if err := ardiCore.Uploader.Upload(*target, compileOpts.SketchDir); err != nil {
 		logger.WithError(err).Error("Failed to upload")
 		return err
 	}
 
-	ardiCore.Watch.WatchSketch()
-	return nil
+	return ardiCore.Watcher.Watch(*compileOpts, *target, project.Baud)
 }
 
 func getWatchCmd() *cobra.Command {
+	var fqbn string
 	var buildProps []string
-
-	var goCmd = &cobra.Command{
-		Use:   "watch [sketch]",
-		Short: "Compile, upload, and watch",
-		Long: "\nCompile and upload code to an arduino board. Simply pass the " +
-			"directory containing the .ino file as the first argument. Ardi will " +
-			"automatically watch your sketch file for changes and auto re-compile " +
-			"& re-upload for you. Baud will be automatically be detected from " +
-			"sketch file.",
-		Args: cobra.MinimumNArgs(1),
+	var watchCmd = &cobra.Command{
+		Use:   "attach-and-watch [sketch|build]",
+		Short: "Compile, upload, watch board logs, and watch for sketch changes",
+		Long: "\nCompile, upload, watch board logs, and watch for sketch " +
+			"changes. Updates to .ino file will trigger automatic recompile, " +
+			"reupload, and restarts the board log watcher. If the sketch argument " +
+			"matches a user defined build in ardi.json, the build values will be " +
+			"used for compilation, upload, and watch path",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			sketchDir := args[0]
-			return process(sketchDir, buildProps)
+			sketchDir := "."
+			if len(args) > 0 {
+				sketchDir = args[0]
+			}
+
+			return process(fqbn, sketchDir, buildProps)
 		},
 	}
 
-	goCmd.Flags().StringArrayVarP(&buildProps, "build-prop", "p", []string{}, "Specify build property to compiler")
+	watchCmd.Flags().StringVarP(&fqbn, "fqbn", "f", "", "Specify fully qualified board name")
+	watchCmd.Flags().StringArrayVarP(&buildProps, "build-prop", "p", []string{}, "Specify build property to compiler")
 
-	return goCmd
+	return watchCmd
 }

@@ -46,11 +46,13 @@ type ArduinoCliSettings struct {
 	Telemetry    Telemetry    `yaml:"telemetry"`
 }
 
-// ArdiBuildJSON represents the build properties in ardi.json
-type ArdiBuildJSON struct {
-	Path  string            `json:"path"`
-	FQBN  string            `json:"fqbn"`
-	Props map[string]string `json:"props"`
+// ArdiBuild represents the build properties in ardi.json
+type ArdiBuild struct {
+	Directory string            `json:"directory"`
+	Sketch    string            `json:"sketch"`
+	Baud      int               `json:"baud"`
+	FQBN      string            `json:"fqbn"`
+	Props     map[string]string `json:"props"`
 }
 
 // ArdiDaemonConfig represents daemon config in ardi.json
@@ -61,9 +63,9 @@ type ArdiDaemonConfig struct {
 
 // ArdiConfig represents the ardi.json file
 type ArdiConfig struct {
-	Daemon    ArdiDaemonConfig         `json:"daemon"`
-	Platforms map[string]string        `json:"platforms"`
-	BoardURLS []string                 `json:"boardUrls"`
-	Libraries map[string]string        `json:"libraries"`
-	Builds    map[string]ArdiBuildJSON `json:"builds"`
+	Daemon    ArdiDaemonConfig     `json:"daemon"`
+	Platforms map[string]string    `json:"platforms"`
+	BoardURLS []string             `json:"boardUrls"`
+	Libraries map[string]string    `json:"libraries"`
+	Builds    map[string]ArdiBuild `json:"builds"`
 }
