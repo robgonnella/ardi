@@ -5,10 +5,10 @@ Compile specified sketch
 ### Synopsis
 
 
-Compile sketches for a specified board. You must provide the board FQBN, if left unspecified, a list of available choices will be be printed.
+Compile sketches for a specified board. You must provide the board FQBN, if left unspecified, a list of available choices will be be printed. If the sketch argument matches as user defined build in ardi.json, the values defined in build will be used to compile
 
 ```
-ardi compile [sketch] [flags]
+ardi compile [sketch|build] [flags]
 ```
 
 ### Options
@@ -18,6 +18,7 @@ ardi compile [sketch] [flags]
   -f, --fqbn string              Specify fully qualified board name
   -h, --help                     help for compile
   -s, --show-props               Show all build properties (does not compile)
+  -w, --watch                    Watch sketch file for changes and recompile
 ```
 
 ### Options inherited from parent commands

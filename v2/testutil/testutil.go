@@ -163,6 +163,12 @@ func BlinkProjectDir() string {
 	return path.Join(here, "../test_projects/blink")
 }
 
+// Blink14400ProjectDir returns path to blink14400 project directory
+func Blink14400ProjectDir() string {
+	here, _ := filepath.Abs(".")
+	return path.Join(here, "../test_projects/blink14400")
+}
+
 // PixieProjectDir returns path to blink project directory
 func PixieProjectDir() string {
 	here, _ := filepath.Abs(".")

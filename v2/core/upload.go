@@ -1,6 +1,8 @@
 package core
 
 import (
+	"time"
+
 	"github.com/robgonnella/ardi/v2/rpc"
 	log "github.com/sirupsen/logrus"
 )
@@ -26,6 +28,7 @@ func (u *UploadCore) Upload(target Target, buildDir string) error {
 	fqbn := target.Board.FQBN
 	device := target.Board.Port
 
+	u.waitForUploadsToFinish()
 	u.uploading = true
 	if err := u.client.Upload(fqbn, buildDir, device); err != nil {
 		u.logger.WithError(err).Error("Failed to upload sketch")
@@ -40,4 +43,15 @@ func (u *UploadCore) Upload(target Target, buildDir string) error {
 // IsUploading returns whether or not core is currently uploading
 func (u *UploadCore) IsUploading() bool {
 	return u.uploading
+}
+
+// private
+func (u *UploadCore) waitForUploadsToFinish() {
+	for {
+		if !u.IsUploading() {
+			break
+		}
+		u.logger.Info("Waiting for previous upload to finish...")
+		time.Sleep(time.Second)
+	}
 }

@@ -14,20 +14,12 @@ func buildAll() error {
 		return nil
 	}
 	for buildName, build := range ardiCore.Config.GetBuilds() {
-		project, err := util.ProcessSketch(build.Path)
-		if err != nil {
-			return err
-		}
-		buildProps := []string{}
-		for prop, instruction := range build.Props {
-			buildProps = append(buildProps, fmt.Sprintf("%s=%s", prop, instruction))
-		}
-
-		logger.Infof("Building %s", build.Path)
+		buildProps := util.GeneratePropsArray(build.Props)
+		logger.Infof("Building %s", build.Sketch)
 		opts := rpc.CompileOpts{
 			FQBN:       build.FQBN,
-			SketchDir:  project.Directory,
-			SketchPath: project.Sketch,
+			SketchDir:  build.Directory,
+			SketchPath: build.Sketch,
 			ExportName: buildName,
 			BuildProps: buildProps,
 			ShowProps:  false,
@@ -46,21 +38,13 @@ func build(args []string) error {
 			return fmt.Errorf("No build specification for %s", buildName)
 		}
 
-		project, err := util.ProcessSketch(build.Path)
-		if err != nil {
-			return err
-		}
-
-		buildProps := []string{}
-		for prop, instruction := range build.Props {
-			buildProps = append(buildProps, fmt.Sprintf("%s=%s", prop, instruction))
-		}
+		buildProps := util.GeneratePropsArray(build.Props)
 
 		logger.Infof("Building %s", buildName)
 		opts := rpc.CompileOpts{
 			FQBN:       build.FQBN,
-			SketchDir:  project.Directory,
-			SketchPath: project.Sketch,
+			SketchDir:  build.Directory,
+			SketchPath: build.Sketch,
 			ExportName: buildName,
 			BuildProps: buildProps,
 			ShowProps:  false,
