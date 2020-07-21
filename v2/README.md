@@ -53,23 +53,13 @@ To initialize an ardi project directory run:
 ardi project-init
 ```
 
-## Build Properties
-
-You can specify custom build properties to the `compile` and `go` commands by
-using the `--build-prop` or `-p` flag followed by the build property and value.
-To specify multiple build properties just precede each property with the
-`--build-prop` or `-p` flag.
-
-    ardi compile <sketch_dir> --fqbn <fqbn> \
-    --build-prop build.extra_flags="-DSOME_OPTION" \
-    --build-prop compiler.cpp.extra_flags="-std=c++11"
-
 ## Storing Builds in ardi.json
 
 Ardi enables you to store custom build details in ardi.json which you can
-then easily run via the `ardi project build` command.
+then easily run via the `ardi build`, `ardi compile`, and `ardi upload`
+commands.
 
-To add a build either manually modify ardi.json or use `ardi project add build`
+To add a build either manually modify ardi.json or use `ardi add build`
 
 ```bash
 ardi add build \
@@ -89,6 +79,10 @@ ardi build <name>
 ardi build <name1> <name2> <name3>
 # Run all builds
 ardi build
+# Compile only (skips evaluating dependencies)
+ardi compile <name>
+# Upload only (skips building/compiling)
+ardi upload <name>
 ```
 
 Documentation for all commands can be found in [docs directory][docs]
