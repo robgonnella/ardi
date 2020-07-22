@@ -11,7 +11,6 @@ import (
 )
 
 // SerialPort represents a board port on which to stream logs
-//go:generate mockgen -destination=../mocks/mock_serial.go -package=mocks github.com/robgonnella/ardi/v2/core SerialPort
 type SerialPort interface {
 	Watch()
 	Stop()
