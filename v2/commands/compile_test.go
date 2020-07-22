@@ -1,6 +1,7 @@
 package commands_test
 
 import (
+	"path"
 	"testing"
 
 	"github.com/robgonnella/ardi/v2/testutil"
@@ -27,6 +28,22 @@ func TestCompileCommandGlobal(t *testing.T) {
 			args := []string{"compile", blinkDir, "--fqbn", fqbn, "--global"}
 			err = groupEnv.Execute(args)
 			assert.NoError(st, err)
+		})
+
+		groupEnv.T.Run("compiles ardi.json build", func(st *testing.T) {
+			testutil.CleanBuilds()
+			buildName := "blink"
+			sketchDir := testutil.BlinkProjectDir()
+			buildDir := path.Join(sketchDir, "build")
+
+			args := []string{"add", "build", "-n", buildName, "-f", fqbn, "-s", sketchDir, "--global"}
+			err := groupEnv.Execute(args)
+			assert.NoError(st, err)
+
+			args = []string{"compile", buildName, "--global"}
+			err = groupEnv.Execute(args)
+			assert.NoError(st, err)
+			assert.DirExists(st, buildDir)
 		})
 
 		groupEnv.T.Run("errors if fqbn is missing", func(st *testing.T) {
@@ -89,6 +106,22 @@ func TestCompileCommandProject(t *testing.T) {
 			args := []string{"compile", blinkDir, "--fqbn", fqbn}
 			err = groupEnv.Execute(args)
 			assert.NoError(st, err)
+		})
+
+		groupEnv.T.Run("compiles ardi.json build", func(st *testing.T) {
+			testutil.CleanBuilds()
+			buildName := "blink"
+			sketchDir := testutil.BlinkProjectDir()
+			buildDir := path.Join(sketchDir, "build")
+
+			args := []string{"add", "build", "-n", buildName, "-f", fqbn, "-s", sketchDir}
+			err := groupEnv.Execute(args)
+			assert.NoError(st, err)
+
+			args = []string{"compile", buildName}
+			err = groupEnv.Execute(args)
+			assert.NoError(st, err)
+			assert.DirExists(st, buildDir)
 		})
 
 		groupEnv.T.Run("errors if fqbn is missing", func(st *testing.T) {

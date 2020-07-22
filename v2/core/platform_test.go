@@ -122,21 +122,4 @@ func TestPlatformCore(t *testing.T) {
 			assert.EqualError(env.T, err, errString)
 		}
 	})
-
-	testutil.RunUnitTest("adds all available platforms", t, func(env *testutil.UnitTestEnv) {
-		env.Client.EXPECT().UpdatePlatformIndex().Times(1).Return(nil)
-		env.Client.EXPECT().InstallAllPlatforms().Times(1).Return(nil)
-		err := env.ArdiCore.Platform.AddAll()
-		assert.NoError(env.T, err)
-	})
-
-	testutil.RunUnitTest("returns platform 'install all' error", t, func(env *testutil.UnitTestEnv) {
-		errString := "dummy error"
-		dummyErr := errors.New(errString)
-		env.Client.EXPECT().UpdatePlatformIndex().Times(1).Return(nil)
-		env.Client.EXPECT().InstallAllPlatforms().Times(1).Return(dummyErr)
-		err := env.ArdiCore.Platform.AddAll()
-		assert.Error(env.T, err)
-		assert.EqualError(env.T, err, errString)
-	})
 }

@@ -36,7 +36,6 @@ type Client interface {
 	UpgradePlatform(platform string) error
 	InstallPlatform(platform string) (string, string, error)
 	UninstallPlatform(platform string) (string, error)
-	InstallAllPlatforms() error
 	GetInstalledPlatforms() ([]*rpc.Platform, error)
 	GetPlatforms() ([]*rpc.Platform, error)
 	ConnectedBoards() []*Board
@@ -402,35 +401,6 @@ func (c *ArdiClient) UninstallPlatform(platform string) (string, error) {
 			c.logger.Debugf("TASK: %s", progress)
 		}
 	}
-}
-
-// InstallAllPlatforms installs and upgrades all platforms
-func (c *ArdiClient) InstallAllPlatforms() error {
-
-	searchResp, err := c.client.PlatformSearch(
-		c.ctx,
-		&rpc.PlatformSearchReq{
-			Instance: c.instance,
-		},
-	)
-
-	if err != nil {
-		c.logger.WithError(err).Error("Search error")
-		return err
-	}
-
-	platforms := searchResp.GetSearchOutput()
-
-	for _, plat := range platforms {
-		id := plat.GetID()
-		latest := plat.GetLatest()
-		platform := fmt.Sprintf("%s@%s", id, latest)
-		c.logger.Debugf("Search result: %s", platform)
-		// Ignore individual errors when installing and upgrading all platforms
-		c.InstallPlatform(platform)
-		c.UpgradePlatform(platform)
-	}
-	return nil
 }
 
 // GetInstalledPlatforms lists all installed platforms

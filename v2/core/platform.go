@@ -86,13 +86,6 @@ func (p *PlatformCore) Add(platform string) (string, string, error) {
 	return installed, vers, nil
 }
 
-// AddAll installs all platforms
-func (p *PlatformCore) AddAll() error {
-	p.init()
-
-	return p.client.InstallAllPlatforms()
-}
-
 // Remove uninstalls specified platforms
 func (p *PlatformCore) Remove(platform string) (string, error) {
 	if platform == "" {

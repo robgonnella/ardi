@@ -1,6 +1,8 @@
 package commands
 
 import (
+	"fmt"
+
 	"github.com/spf13/cobra"
 )
 
@@ -12,17 +14,22 @@ func getAddPlatformCmd() *cobra.Command {
 		Short:   "Add platform(s) to project",
 		Aliases: []string{"platform"},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			// TODO: make it so we each platform gets saved in project config when adding all platforms
+			platforms := []string{}
+
 			if len(args) == 0 || all {
 				logger.Info("Adding all platforms")
-				if err := ardiCore.Platform.AddAll(); err != nil {
-					logger.WithError(err).Error("Failed to add arduino platforms")
+				rpcPlatforms, err := ardiCore.RPCClient.GetPlatforms()
+				if err != nil {
 					return err
 				}
-				return nil
+				for _, p := range rpcPlatforms {
+					platforms = append(platforms, fmt.Sprintf("%s@%s", p.GetID(), p.GetLatest()))
+				}
+			} else {
+				platforms = args
 			}
 
-			for _, p := range args {
+			for _, p := range platforms {
 				logger.Infof("Adding platform: %s", p)
 				installed, vers, err := ardiCore.Platform.Add(p)
 				if err != nil {
