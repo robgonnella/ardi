@@ -40,6 +40,16 @@ func (u *UploadCore) Upload(target Target, buildDir string) error {
 	return nil
 }
 
+// Attach attaches to the associated board port and prints logs
+func (u *UploadCore) Attach(device string, baud int, port SerialPort) {
+	if port == nil {
+		port = NewArdiSerialPort(device, baud, u.logger)
+	} else {
+		port.Stop()
+	}
+	port.Watch()
+}
+
 // IsUploading returns whether or not core is currently uploading
 func (u *UploadCore) IsUploading() bool {
 	return u.uploading

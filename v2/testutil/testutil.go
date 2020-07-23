@@ -159,26 +159,28 @@ func GenerateRPCBoards(n int) []*rpc.Board {
 
 // BlinkProjectDir returns path to blink project directory
 func BlinkProjectDir() string {
-	here, _ := filepath.Abs(".")
 	return path.Join(here, "../test_projects/blink")
+}
+
+// BlinkCopyProjectDir returns path to blink project directory
+func BlinkCopyProjectDir() string {
+	return path.Join(here, "../test_projects/blink2")
 }
 
 // Blink14400ProjectDir returns path to blink14400 project directory
 func Blink14400ProjectDir() string {
-	here, _ := filepath.Abs(".")
 	return path.Join(here, "../test_projects/blink14400")
 }
 
 // PixieProjectDir returns path to blink project directory
 func PixieProjectDir() string {
-	here, _ := filepath.Abs(".")
 	return path.Join(here, "../test_projects/pixie")
 }
 
 // RunUnitTest runs an ardi unit test
 func RunUnitTest(name string, t *testing.T, f func(env *UnitTestEnv)) {
 	t.Run(name, func(st *testing.T) {
-		ctrl := gomock.NewController(t)
+		ctrl := gomock.NewController(st)
 		defer ctrl.Finish()
 
 		client := mocks.NewMockClient(ctrl)

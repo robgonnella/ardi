@@ -11,8 +11,9 @@ import (
 )
 
 // SerialPort represents a board port on which to stream logs
+//go:generate mockgen -destination=../mocks/mock_serial.go -package=mocks github.com/robgonnella/ardi/v2/core SerialPort
 type SerialPort interface {
-	Watch()
+	Watch() error
 	Stop()
 	IsStreaming() bool
 }
@@ -40,7 +41,7 @@ func NewArdiSerialPort(name string, baud int, logger *log.Logger) SerialPort {
 }
 
 // Watch connects to a serial port and prints any logs received.
-func (p *ArdiSerialPort) Watch() {
+func (p *ArdiSerialPort) Watch() error {
 	defer p.Stop()
 
 	logFields := log.Fields{"baud": p.baud, "name": p.name}
@@ -52,7 +53,7 @@ func (p *ArdiSerialPort) Watch() {
 	stream, err := serial.OpenPort(config)
 	if err != nil {
 		p.logger.WithError(err).WithFields(logFields).Warn("Failed to read from device")
-		return
+		return err
 	}
 
 	p.stream = stream
@@ -72,10 +73,12 @@ func (p *ArdiSerialPort) Watch() {
 		n, err := stream.Read(buf)
 		if err != nil {
 			p.logger.WithError(err).WithFields(logFields).Warn("Failed to read from serial port")
-			return
+			return err
 		}
 		fmt.Printf("%s", buf[:n])
 	}
+
+	return nil
 }
 
 // Stop printing serial port logs

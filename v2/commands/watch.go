@@ -56,7 +56,7 @@ func process(fqbn, sketch string, buildProps []string) error {
 		return err
 	}
 
-	return ardiCore.Watcher.Watch(*compileOpts, *target, project.Baud)
+	return ardiCore.Watcher.Watch(*compileOpts, *target, project.Baud, nil)
 }
 
 func getWatchCmd() *cobra.Command {

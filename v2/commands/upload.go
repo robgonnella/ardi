@@ -12,9 +12,9 @@ import (
 func getUploadCmd() *cobra.Command {
 	var watchBoardLogs bool
 	var uploadCmd = &cobra.Command{
-		Use:  "upload [sketch-dir|build]",
-		Long: "\nUpload pre-compiled sketch build to a connected board",
-		Short: "Upload pre-compiled sketch build to a connected board. If " +
+		Use:   "upload [sketch-dir|build]",
+		Short: "Upload pre-compiled sketch build to a connected board",
+		Long: "\nUpload pre-compiled sketch build to a connected board. If " +
 			"the sketch argument matches a user defined build in ardi.json, the " +
 			"build values will be used to find the appropraite build to upload",
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -69,8 +69,7 @@ func getUploadCmd() *cobra.Command {
 			logger.Info("Upload successful")
 
 			if watchBoardLogs {
-				port := core.NewArdiSerialPort(target.Board.Port, project.Baud, logger)
-				port.Watch()
+				ardiCore.Uploader.Attach(target.Board.Port, project.Baud, nil)
 			}
 
 			return nil
