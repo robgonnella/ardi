@@ -40,6 +40,7 @@ test-unit:
 	rm -rf test_artifacts/unit.out || true
 	go test \
 		-v \
+		-p 1 \
 		-coverprofile test_artifacts/unit.out \
 		github.com/robgonnella/ardi/v2/core \
 		github.com/robgonnella/ardi/v2/util
