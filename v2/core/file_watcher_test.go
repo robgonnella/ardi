@@ -19,7 +19,10 @@ func TestFileWatcher(t *testing.T) {
 
 		file, err := os.OpenFile(fileName, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 		assert.NoError(env.T, err)
-		defer file.Close()
+		defer func() {
+			file.Close()
+			os.RemoveAll(fileName)
+		}()
 
 		_, err = file.WriteString(data)
 		assert.NoError(env.T, err)
@@ -38,7 +41,6 @@ func TestFileWatcher(t *testing.T) {
 
 		_, err = file.WriteString(moreData)
 		time.Sleep(time.Second)
-		os.RemoveAll(fileName)
 		assert.NoError(env.T, err)
 		assert.Contains(env.T, env.Stdout.String(), successMsg)
 	})

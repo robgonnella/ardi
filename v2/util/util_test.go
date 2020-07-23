@@ -241,8 +241,8 @@ func TestUtilGetAllSettings(t *testing.T) {
 			ArdiConfig:         expectedConfig,
 			ArduinoCliSettings: expectedSettings,
 		}
-		util.WriteAllSettings(writeOpts)
-
+		err := util.WriteAllSettings(writeOpts)
+		assert.NoError(st, err)
 		assert.DirExists(st, dataDir)
 		assert.FileExists(st, paths.ArdiGlobalConfig)
 		assert.FileExists(st, paths.ArduinoCliGlobalConfig)
@@ -332,13 +332,13 @@ func TestUtilGeneratePropsMap(t *testing.T) {
 }
 
 func TestUtilProcessSketch(t *testing.T) {
-	t.Run("errors if dirctory param empty", func(st *testing.T) {
+	t.Run("errors if sketch param empty", func(st *testing.T) {
 		project, err := util.ProcessSketch("")
 		assert.Error(st, err)
 		assert.Nil(st, project)
 	})
 
-	t.Run("errors if dirctory does not contain sketch", func(st *testing.T) {
+	t.Run("errors if path does not contain sketch", func(st *testing.T) {
 		project, err := util.ProcessSketch(".")
 		assert.Error(st, err)
 		assert.Nil(st, project)
@@ -355,7 +355,7 @@ func TestUtilProcessSketch(t *testing.T) {
 		assert.Equal(st, project.Baud, 9600)
 	})
 
-	t.Run("returns project for valid sketch path", func(st *testing.T) {
+	t.Run("returns project for valid sketch file", func(st *testing.T) {
 		dir := testutil.BlinkProjectDir()
 		sketch := path.Join(dir, "blink.ino")
 		project, err := util.ProcessSketch(sketch)
@@ -367,8 +367,8 @@ func TestUtilProcessSketch(t *testing.T) {
 
 	t.Run("reads baud from file", func(st *testing.T) {
 		dir := testutil.Blink14400ProjectDir()
-		sketch := path.Join(dir, "blink.ino")
-		project, err := util.ProcessSketch(dir)
+		sketch := path.Join(dir, "blink14400.ino")
+		project, err := util.ProcessSketch(sketch)
 		assert.NoError(st, err)
 		assert.Equal(st, project.Directory, dir)
 		assert.Equal(st, project.Sketch, sketch)

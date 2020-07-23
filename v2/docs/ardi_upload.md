@@ -1,11 +1,11 @@
 ## ardi upload
 
-Upload pre-compiled sketch build to a connected board. If the sketch argument matches a user defined build in ardi.json, the build values will be used to find the appropraite build to upload
+Upload pre-compiled sketch build to a connected board
 
 ### Synopsis
 
 
-Upload pre-compiled sketch build to a connected board
+Upload pre-compiled sketch build to a connected board. If the sketch argument matches a user defined build in ardi.json, the build values will be used to find the appropraite build to upload
 
 ```
 ardi upload [sketch-dir|build] [flags]

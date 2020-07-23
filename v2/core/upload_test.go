@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/robgonnella/ardi/v2/core"
+	"github.com/robgonnella/ardi/v2/mocks"
 	"github.com/robgonnella/ardi/v2/rpc"
 	"github.com/robgonnella/ardi/v2/testutil"
 	"github.com/stretchr/testify/assert"
@@ -44,5 +45,15 @@ func TestUploadCore(t *testing.T) {
 		env.Client.EXPECT().Upload(target.Board.FQBN, testutil.BlinkProjectDir(), target.Board.Port).Times(1).Return(dummyErr)
 		err = env.ArdiCore.Uploader.Upload(*target, testutil.BlinkProjectDir())
 		assert.EqualError(env.T, err, dummyErr.Error())
+	})
+
+	testutil.RunUnitTest("attaches to board port to print logs", t, func(env *testutil.UnitTestEnv) {
+		device := "/dev/null"
+		baud := 9600
+		port := mocks.NewMockSerialPort(env.Ctrl)
+
+		port.EXPECT().Stop().Times(1)
+		port.EXPECT().Watch().Times(1)
+		env.ArdiCore.Uploader.Attach(device, baud, port)
 	})
 }

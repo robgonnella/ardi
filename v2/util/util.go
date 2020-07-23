@@ -284,28 +284,40 @@ func GeneratePropsArray(props map[string]string) []string {
 }
 
 // ProcessSketch looks for .ino file in specified directory and parses
-func ProcessSketch(sketchDir string) (*types.Project, error) {
-	if sketchDir == "" {
-		err := errors.New("Missing directory argument")
+func ProcessSketch(filePath string) (*types.Project, error) {
+	if filePath == "" {
+		err := errors.New("Missing sketch argument")
 		return nil, err
 	}
 
-	stat, err := os.Stat(sketchDir)
+	stat, err := os.Stat(filePath)
 	if err != nil {
 		return nil, err
 	}
+
+	sketchDir := ""
+	sketchFile := ""
 
 	mode := stat.Mode()
 	if mode.IsRegular() {
-		sketchDir = path.Dir(sketchDir)
-	}
-
-	sketchFile, err := findSketch(sketchDir)
-	if err != nil {
-		return nil, err
+		sketchFile = filePath
+		sketchDir = filepath.Dir(sketchFile)
+	} else {
+		sketchDir = filePath
+		if sketchFile, err = findSketch(sketchDir); err != nil {
+			return nil, err
+		}
 	}
 
 	sketchBaud := parseSketchBaud(sketchFile)
+
+	if sketchFile, err = filepath.Abs(sketchFile); err != nil {
+		return nil, errors.New("Could not resolve sketch file path")
+	}
+
+	if sketchDir, err = filepath.Abs(sketchDir); err != nil {
+		return nil, errors.New("Could not resolve sketch directory")
+	}
 
 	return &types.Project{
 		Directory: sketchDir,
@@ -317,7 +329,17 @@ func ProcessSketch(sketchDir string) (*types.Project, error) {
 // private helpers
 // helpers
 func findSketch(directory string) (string, error) {
+	stat, err := os.Stat(directory)
+	if err != nil {
+		return "", err
+	}
+
+	if !stat.IsDir() {
+		return "", errors.New("Not a directory")
+	}
+
 	sketchFile := ""
+	searchName := fmt.Sprintf("%s.ino", filepath.Base(directory))
 
 	d, err := os.Open(directory)
 	if err != nil {
@@ -331,19 +353,12 @@ func findSketch(directory string) (string, error) {
 	}
 
 	for _, file := range files {
-		if file.Mode().IsRegular() {
-			if filepath.Ext(file.Name()) == ".ino" {
-				sketchFile = path.Join(directory, file.Name())
-			}
+		if file.Mode().IsRegular() && file.Name() == searchName {
+			sketchFile = path.Join(directory, file.Name())
 		}
 	}
 	if sketchFile == "" {
-		msg := fmt.Sprintf("Failed to find .ino file in %s", directory)
-		return "", errors.New(msg)
-	}
-
-	if sketchFile, err = filepath.Abs(sketchFile); err != nil {
-		msg := "Could not resolve sketch file path"
+		msg := fmt.Sprintf("Failed to find %s in %s", searchName, directory)
 		return "", errors.New(msg)
 	}
 
