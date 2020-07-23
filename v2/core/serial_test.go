@@ -3,6 +3,7 @@ package core_test
 import (
 	"bytes"
 	"os/exec"
+	"runtime"
 	"testing"
 	"time"
 
@@ -11,9 +12,16 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func getPort() string {
+	if runtime.GOOS == "linux" {
+		return "/dev/ptmx"
+	}
+	return "/dev/ttywf"
+}
+
 func TestSerialPort(t *testing.T) {
 	t.Run("streams from serial port", func(st *testing.T) {
-		device := "/dev/ttyp0"
+		device := getPort()
 		baud := 9600
 		logger := logrus.New()
 		b := new(bytes.Buffer)

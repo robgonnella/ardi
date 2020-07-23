@@ -45,9 +45,9 @@ func TestWatchCore(t *testing.T) {
 		env.ClearStdout()
 		port := mocks.NewMockSerialPort(env.Ctrl)
 		port.EXPECT().Stop().AnyTimes()
-		port.EXPECT().Watch().Times(2)
-		env.Client.EXPECT().Compile(compileOpts).Times(1).Return(nil)
-		env.Client.EXPECT().Upload(fqbn, sketchDir, target.Board.Port).Times(1).Return(nil)
+		port.EXPECT().Watch().AnyTimes()
+		env.Client.EXPECT().Compile(compileOpts).AnyTimes().Return(nil)
+		env.Client.EXPECT().Upload(fqbn, sketchDir, target.Board.Port).AnyTimes().Return(nil)
 
 		go env.ArdiCore.Watcher.Watch(compileOpts, *target, 9600, port)
 
@@ -79,7 +79,7 @@ func TestWatchCore(t *testing.T) {
 		port := mocks.NewMockSerialPort(env.Ctrl)
 		port.EXPECT().Stop().AnyTimes()
 		port.EXPECT().Watch().Times(1)
-		env.Client.EXPECT().Compile(compileOpts).Times(1).Return(errors.New("dummy errror"))
+		env.Client.EXPECT().Compile(compileOpts).AnyTimes().Return(errors.New("dummy errror"))
 
 		go env.ArdiCore.Watcher.Watch(compileOpts, *target, 9600, port)
 
