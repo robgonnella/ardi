@@ -25,7 +25,7 @@ func NewWatchCore(compiler *CompileCore, uploader *UploadCore, logger *log.Logge
 
 // Watch responds to changes in a given sketch file by automatically
 // recompiling and re-uploading.
-func (w *WatchCore) Watch(compileOpts rpc.CompileOpts, target Target, baud int, port SerialPort) error {
+func (w *WatchCore) Watch(compileOpts rpc.CompileOpts, board *rpc.Board, baud int, port SerialPort) error {
 	if w.watcher != nil {
 		w.watcher.Close()
 		w.watcher = nil
@@ -43,7 +43,7 @@ func (w *WatchCore) Watch(compileOpts rpc.CompileOpts, target Target, baud int, 
 	}
 
 	if port == nil {
-		port = NewArdiSerialPort(target.Board.Port, baud, w.logger)
+		port = NewArdiSerialPort(board.Port, baud, w.logger)
 	} else {
 		port.Stop()
 	}
@@ -54,7 +54,7 @@ func (w *WatchCore) Watch(compileOpts rpc.CompileOpts, target Target, baud int, 
 		err := w.compiler.Compile(compileOpts)
 		if err == nil {
 			w.logger.Info("Reuploading")
-			w.uploader.Upload(target, compileOpts.SketchDir)
+			w.uploader.Upload(board, compileOpts.SketchDir)
 			w.logger.Info("Upload successful")
 			go port.Watch()
 		}

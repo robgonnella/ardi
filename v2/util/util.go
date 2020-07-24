@@ -309,7 +309,7 @@ func ProcessSketch(filePath string) (*types.Project, error) {
 		}
 	}
 
-	sketchBaud := parseSketchBaud(sketchFile)
+	sketchBaud := ParseSketchBaud(sketchFile)
 
 	if sketchFile, err = filepath.Abs(sketchFile); err != nil {
 		return nil, errors.New("Could not resolve sketch file path")
@@ -324,6 +324,31 @@ func ProcessSketch(filePath string) (*types.Project, error) {
 		Sketch:    sketchFile,
 		Baud:      sketchBaud,
 	}, nil
+}
+
+// ParseSketchBaud reads a sketch file and tries to parse baud rate
+func ParseSketchBaud(sketch string) int {
+	var baud = 9600
+	rgx := regexp.MustCompile(`Serial\.begin\((\d+)\);`)
+	file, err := os.Open(sketch)
+	if err != nil {
+		return baud
+	}
+
+	scanner := bufio.NewScanner(file)
+
+	for scanner.Scan() {
+		text := scanner.Text()
+		if match := rgx.MatchString(text); match {
+			stringBaud := strings.TrimSpace(rgx.ReplaceAllString(text, "$1"))
+			if baud, err = strconv.Atoi(stringBaud); err != nil {
+				baud = 9600
+			}
+			break
+		}
+	}
+
+	return baud
 }
 
 // private helpers
@@ -363,28 +388,4 @@ func findSketch(directory string) (string, error) {
 	}
 
 	return sketchFile, nil
-}
-
-func parseSketchBaud(sketch string) int {
-	var baud = 9600
-	rgx := regexp.MustCompile(`Serial\.begin\((\d+)\);`)
-	file, err := os.Open(sketch)
-	if err != nil {
-		return baud
-	}
-
-	scanner := bufio.NewScanner(file)
-
-	for scanner.Scan() {
-		text := scanner.Text()
-		if match := rgx.MatchString(text); match {
-			stringBaud := strings.TrimSpace(rgx.ReplaceAllString(text, "$1"))
-			if baud, err = strconv.Atoi(stringBaud); err != nil {
-				baud = 9600
-			}
-			break
-		}
-	}
-
-	return baud
 }

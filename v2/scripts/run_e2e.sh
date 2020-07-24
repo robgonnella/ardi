@@ -26,4 +26,4 @@ ardi add build \
   --fqbn arduino:avr:mega \
   --sketch $here/../test_projects/pixie
 
-ardi build pixie -v
+ardi compile pixie -v
