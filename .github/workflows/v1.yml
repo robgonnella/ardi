@@ -4,6 +4,8 @@ on:
   push:
     paths-ignore:
       - 'v2/**'
+      - 'README.md'
+      - '.github/**'
 
 jobs:
   test:
