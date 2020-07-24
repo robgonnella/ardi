@@ -1,87 +1,116 @@
 package commands
 
 import (
+	"errors"
+
 	"github.com/robgonnella/ardi/v2/core"
-	"github.com/robgonnella/ardi/v2/rpc"
-	"github.com/robgonnella/ardi/v2/util"
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
 func getCompileCmd() *cobra.Command {
+	var all bool
 	var fqbn string
 	var buildProps []string
 	var showProps bool
 	var watch bool
 	var compileCmd = &cobra.Command{
-		Use: "compile [sketch|build]",
-		Long: "\nCompile sketches for a specified board. You must provide the " +
-			"board FQBN, if left unspecified, a list of available choices will be " +
-			"be printed. If the sketch argument matches as user defined build in " +
-			"ardi.json, the values defined in build will be used to compile",
-		Short: "Compile specified sketch",
+		Use: "compile [sketch|build(s)]",
+		Long: "\nCompile sketches and builds for specified boards. When " +
+			"compileing for a sketch, you must provide the board FQBN. If left " +
+			"unspecified, a list of available choices will be be printed. If the " +
+			"sketch argument matches a user defined build in ardi.json, the values " +
+			"defined in build will be used to compile",
+		Short: "Compile specified sketch or build(s)",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			sketch := "."
+			ardiBuilds := ardiCore.Config.GetBuilds()
 
-			if len(args) > 0 {
-				sketch = args[0]
+			if all {
+				if watch {
+					return errors.New("Cannot watch all builds. You can only watch one build at a time")
+				}
+				for name := range ardiBuilds {
+					buildOpts := core.CompileArdiBuildOpts{
+						BuildName:           name,
+						OnlyConnectedBoards: false,
+					}
+					if _, _, err := ardiCore.CompileArdiBuild(buildOpts); err != nil {
+						return err
+					}
+				}
+				return nil
 			}
 
-			compileOpts := &rpc.CompileOpts{}
-			builds := ardiCore.Config.GetBuilds()
-
-			if _, ok := builds[sketch]; ok {
-				compileOpts, _ = ardiCore.Config.GetCompileOpts(sketch)
-				compileOpts.ShowProps = showProps
-			} else {
-				connectedBoards := ardiCore.RPCClient.ConnectedBoards()
-				allBoards := ardiCore.RPCClient.AllBoards()
-				targetOpts := core.NewTargetOpts{
-					ConnectedBoards: connectedBoards,
-					AllBoards:       allBoards,
-					OnlyConnected:   false,
-					FQBN:            fqbn,
-					Logger:          logger,
+			if len(args) == 0 {
+				sketchOpts := core.CompileSketchOpts{
+					Sketch:              ".",
+					FQBN:                fqbn,
+					BuildPros:           buildProps,
+					ShowProps:           showProps,
+					OnlyConnectedBoards: false,
 				}
-
-				target, err := core.NewTarget(targetOpts)
+				opts, _, err := ardiCore.CompileSketch(sketchOpts)
 				if err != nil {
 					return err
 				}
+				if watch {
+					return ardiCore.Compiler.WatchForChanges(*opts)
+				}
+				return nil
+			}
 
-				project, err := util.ProcessSketch(sketch)
+			if len(args) == 1 {
+				sketch := args[0]
+				if _, ok := ardiBuilds[sketch]; ok {
+					buildOpts := core.CompileArdiBuildOpts{
+						BuildName:           sketch,
+						OnlyConnectedBoards: false,
+					}
+					compileOpts, _, err := ardiCore.CompileArdiBuild(buildOpts)
+					if err != nil {
+						return err
+					}
+					if watch {
+						return ardiCore.Compiler.WatchForChanges(*compileOpts)
+					}
+					return nil
+				}
+
+				sketchOpts := core.CompileSketchOpts{
+					Sketch:              sketch,
+					FQBN:                fqbn,
+					BuildPros:           buildProps,
+					ShowProps:           showProps,
+					OnlyConnectedBoards: false,
+				}
+				compileOpts, _, err := ardiCore.CompileSketch(sketchOpts)
 				if err != nil {
 					return err
 				}
+				if watch {
+					return ardiCore.Compiler.WatchForChanges(*compileOpts)
+				}
 
-				compileOpts.FQBN = target.Board.FQBN
-				compileOpts.SketchDir = project.Directory
-				compileOpts.SketchPath = project.Sketch
-				compileOpts.ExportName = ""
-				compileOpts.BuildProps = buildProps
-				compileOpts.ShowProps = showProps
+				return nil
 			}
-
-			fields := logrus.Fields{
-				"sketch": compileOpts.SketchPath,
-				"fqbn":   compileOpts.FQBN,
-			}
-			logger.WithFields(fields).Info("Compiling...")
-
-			if err := ardiCore.Compiler.Compile(*compileOpts); err != nil {
-				logger.WithError(err).Errorf("Failed to compile %s", sketch)
-				return err
-			}
-
-			logger.WithFields(fields).Info("Compilation successful")
 
 			if watch {
-				return ardiCore.Compiler.WatchForChanges(*compileOpts)
+				return errors.New("Cannot specifify watch with mutiple builds. You can only watch one build at a time")
+			}
+
+			for _, buildName := range args {
+				buildOpts := core.CompileArdiBuildOpts{
+					BuildName:           buildName,
+					OnlyConnectedBoards: false,
+				}
+				if _, _, err := ardiCore.CompileArdiBuild(buildOpts); err != nil {
+					return err
+				}
 			}
 
 			return nil
 		},
 	}
+	compileCmd.Flags().BoolVarP(&all, "all", "a", false, "Compile all builds specified in ardi.json")
 	compileCmd.Flags().StringVarP(&fqbn, "fqbn", "f", "", "Specify fully qualified board name")
 	compileCmd.Flags().StringArrayVarP(&buildProps, "build-prop", "p", []string{}, "Specify build property to compiler")
 	compileCmd.Flags().BoolVarP(&showProps, "show-props", "s", false, "Show all build properties (does not compile)")

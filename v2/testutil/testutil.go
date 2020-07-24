@@ -57,6 +57,8 @@ func CleanGlobalData() {
 // CleanBuilds removes compiled test project builds
 func CleanBuilds() {
 	os.RemoveAll(path.Join(BlinkProjectDir(), "build"))
+	os.RemoveAll(path.Join(BlinkCopyProjectDir(), "build"))
+	os.RemoveAll(path.Join(Blink14400ProjectDir(), "build"))
 	os.RemoveAll(path.Join(PixieProjectDir(), "build"))
 }
 

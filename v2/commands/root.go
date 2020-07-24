@@ -154,7 +154,6 @@ func GetRootCmd(cmdLogger *log.Logger) *cobra.Command {
 	logger = cmdLogger
 	rootCmd := getRootCommand()
 	rootCmd.AddCommand(getAddCmd())
-	rootCmd.AddCommand(getBuildCmd())
 	rootCmd.AddCommand(getCleanCmd())
 	rootCmd.AddCommand(getCompileCmd())
 	rootCmd.AddCommand(getInstallCmd())

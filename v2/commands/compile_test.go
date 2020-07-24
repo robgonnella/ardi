@@ -46,6 +46,82 @@ func TestCompileCommandGlobal(t *testing.T) {
 			assert.DirExists(st, buildDir)
 		})
 
+		groupEnv.T.Run("compiles multiple ardi.json builds", func(st *testing.T) {
+			testutil.CleanBuilds()
+			buildName1 := "blink"
+			sketchDir1 := testutil.BlinkProjectDir()
+			buildDir1 := path.Join(sketchDir1, "build")
+
+			args := []string{"add", "build", "-n", buildName1, "-f", fqbn, "-s", sketchDir1, "--global"}
+			err := groupEnv.Execute(args)
+			assert.NoError(st, err)
+
+			buildName2 := "blink2"
+			sketchDir2 := testutil.BlinkCopyProjectDir()
+			buildDir2 := path.Join(sketchDir2, "build")
+
+			args = []string{"add", "build", "-n", buildName2, "-f", fqbn, "-s", sketchDir2, "--global"}
+			err = groupEnv.Execute(args)
+			assert.NoError(st, err)
+
+			args = []string{"compile", buildName1, buildName2, "--global"}
+			err = groupEnv.Execute(args)
+			assert.NoError(st, err)
+			assert.DirExists(st, buildDir1)
+			assert.DirExists(st, buildDir2)
+		})
+
+		groupEnv.T.Run("errors if attempt to watch multiple builds", func(st *testing.T) {
+			testutil.CleanBuilds()
+			buildName1 := "blink"
+			sketchDir1 := testutil.BlinkProjectDir()
+
+			args := []string{"add", "build", "-n", buildName1, "-f", fqbn, "-s", sketchDir1, "--global"}
+			err := groupEnv.Execute(args)
+			assert.NoError(st, err)
+
+			buildName2 := "blink2"
+			sketchDir2 := testutil.BlinkCopyProjectDir()
+
+			args = []string{"add", "build", "-n", buildName2, "-f", fqbn, "-s", sketchDir2, "--global"}
+			err = groupEnv.Execute(args)
+			assert.NoError(st, err)
+
+			args = []string{"compile", buildName1, buildName2, "--watch", "--global"}
+			err = groupEnv.Execute(args)
+			assert.Error(st, err)
+		})
+
+		groupEnv.T.Run("compiles all ardi.json builds", func(st *testing.T) {
+			testutil.CleanBuilds()
+			buildName := "blink"
+			sketchDir := testutil.BlinkProjectDir()
+			buildDir := path.Join(sketchDir, "build")
+
+			args := []string{"add", "build", "-n", buildName, "-f", fqbn, "-s", sketchDir, "--global"}
+			err := groupEnv.Execute(args)
+			assert.NoError(st, err)
+
+			args = []string{"compile", "--all", "--global"}
+			err = groupEnv.Execute(args)
+			assert.NoError(st, err)
+			assert.DirExists(st, buildDir)
+		})
+
+		groupEnv.T.Run("errors if attempting to watch all builds", func(st *testing.T) {
+			testutil.CleanBuilds()
+			buildName := "blink"
+			sketchDir := testutil.BlinkProjectDir()
+
+			args := []string{"add", "build", "-n", buildName, "-f", fqbn, "-s", sketchDir, "--global"}
+			err := groupEnv.Execute(args)
+			assert.NoError(st, err)
+
+			args = []string{"compile", "--all", "--watch", "--global"}
+			err = groupEnv.Execute(args)
+			assert.Error(st, err)
+		})
+
 		groupEnv.T.Run("errors if fqbn is missing", func(st *testing.T) {
 			testutil.CleanBuilds()
 			blinkDir := testutil.BlinkProjectDir()
@@ -122,6 +198,82 @@ func TestCompileCommandProject(t *testing.T) {
 			err = groupEnv.Execute(args)
 			assert.NoError(st, err)
 			assert.DirExists(st, buildDir)
+		})
+
+		groupEnv.T.Run("compiles multiple ardi.json builds", func(st *testing.T) {
+			testutil.CleanBuilds()
+			buildName1 := "blink"
+			sketchDir1 := testutil.BlinkProjectDir()
+			buildDir1 := path.Join(sketchDir1, "build")
+
+			args := []string{"add", "build", "-n", buildName1, "-f", fqbn, "-s", sketchDir1}
+			err := groupEnv.Execute(args)
+			assert.NoError(st, err)
+
+			buildName2 := "blink2"
+			sketchDir2 := testutil.BlinkCopyProjectDir()
+			buildDir2 := path.Join(sketchDir2, "build")
+
+			args = []string{"add", "build", "-n", buildName2, "-f", fqbn, "-s", sketchDir2}
+			err = groupEnv.Execute(args)
+			assert.NoError(st, err)
+
+			args = []string{"compile", buildName1, buildName2}
+			err = groupEnv.Execute(args)
+			assert.NoError(st, err)
+			assert.DirExists(st, buildDir1)
+			assert.DirExists(st, buildDir2)
+		})
+
+		groupEnv.T.Run("errors if attempt to watch multiple builds", func(st *testing.T) {
+			testutil.CleanBuilds()
+			buildName1 := "blink"
+			sketchDir1 := testutil.BlinkProjectDir()
+
+			args := []string{"add", "build", "-n", buildName1, "-f", fqbn, "-s", sketchDir1}
+			err := groupEnv.Execute(args)
+			assert.NoError(st, err)
+
+			buildName2 := "blink2"
+			sketchDir2 := testutil.BlinkCopyProjectDir()
+
+			args = []string{"add", "build", "-n", buildName2, "-f", fqbn, "-s", sketchDir2}
+			err = groupEnv.Execute(args)
+			assert.NoError(st, err)
+
+			args = []string{"compile", buildName1, buildName2, "--watch"}
+			err = groupEnv.Execute(args)
+			assert.Error(st, err)
+		})
+
+		groupEnv.T.Run("compiles all ardi.json builds", func(st *testing.T) {
+			testutil.CleanBuilds()
+			buildName := "blink"
+			sketchDir := testutil.BlinkProjectDir()
+			buildDir := path.Join(sketchDir, "build")
+
+			args := []string{"add", "build", "-n", buildName, "-f", fqbn, "-s", sketchDir}
+			err := groupEnv.Execute(args)
+			assert.NoError(st, err)
+
+			args = []string{"compile", "--all"}
+			err = groupEnv.Execute(args)
+			assert.NoError(st, err)
+			assert.DirExists(st, buildDir)
+		})
+
+		groupEnv.T.Run("errors if attempting to watch all builds", func(st *testing.T) {
+			testutil.CleanBuilds()
+			buildName := "blink"
+			sketchDir := testutil.BlinkProjectDir()
+
+			args := []string{"add", "build", "-n", buildName, "-f", fqbn, "-s", sketchDir}
+			err := groupEnv.Execute(args)
+			assert.NoError(st, err)
+
+			args = []string{"compile", "--all", "--watch"}
+			err = groupEnv.Execute(args)
+			assert.Error(st, err)
 		})
 
 		groupEnv.T.Run("errors if fqbn is missing", func(st *testing.T) {

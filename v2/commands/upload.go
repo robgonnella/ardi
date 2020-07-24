@@ -1,8 +1,6 @@
 package commands
 
 import (
-	"github.com/robgonnella/ardi/v2/core"
-	"github.com/robgonnella/ardi/v2/rpc"
 	"github.com/robgonnella/ardi/v2/types"
 	"github.com/robgonnella/ardi/v2/util"
 	"github.com/sirupsen/logrus"
@@ -39,29 +37,20 @@ func getUploadCmd() *cobra.Command {
 				}
 			}
 
-			connectedBoards := ardiCore.RPCClient.ConnectedBoards()
-			allBoards := []*rpc.Board{}
-			targetOpts := core.NewTargetOpts{
-				ConnectedBoards: connectedBoards,
-				AllBoards:       allBoards,
-				OnlyConnected:   true,
-				FQBN:            "",
-				Logger:          logger,
-			}
-			target, err := core.NewTarget(targetOpts)
+			board, err := ardiCore.GetTargetBoard("", true)
 			if err != nil {
 				return err
 			}
 
 			fields := logrus.Fields{
 				"build":  project.Directory,
-				"fqbn":   target.Board.FQBN,
-				"device": target.Board.Port,
+				"fqbn":   board.FQBN,
+				"device": board.Port,
 			}
 
 			logger.WithFields(fields).Info("Uploading...")
 
-			if err := ardiCore.Uploader.Upload(*target, project.Directory); err != nil {
+			if err := ardiCore.Uploader.Upload(board, project.Directory); err != nil {
 				logger.WithError(err).Errorf("Failed to upload %s", project.Directory)
 				return err
 			}
@@ -69,7 +58,7 @@ func getUploadCmd() *cobra.Command {
 			logger.Info("Upload successful")
 
 			if watchBoardLogs {
-				ardiCore.Uploader.Attach(target.Board.Port, project.Baud, nil)
+				ardiCore.Uploader.Attach(board.Port, project.Baud, nil)
 			}
 
 			return nil

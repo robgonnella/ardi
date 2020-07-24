@@ -24,7 +24,7 @@ func NewCompileCore(client rpc.Client, logger *log.Logger) *CompileCore {
 	}
 }
 
-// Compile a given project
+// Compile compiles a given project sketch
 func (c *CompileCore) Compile(opts rpc.CompileOpts) error {
 	c.waitForCompilationsToFinish()
 	c.compiling = true
