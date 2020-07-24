@@ -1,4 +1,4 @@
-name: V2
+name: V2Deploy
 
 on:
   push:
