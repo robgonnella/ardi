@@ -18,4 +18,52 @@ jobs:
         with:
           go-version: '^1.14.0'
       - name: build
-        run: 'make'
+        run: 'make release'
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+      - name: Upload Release Assets
+        uses: actions/github-script@v2
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          script: |
+            const fs = require('fs');
+
+            console.log('environment', process.versions);
+
+            const url = core.getInput('upload_url', { required: true });
+            console.log({ upload_url: uploadUrl });
+
+            const contentLength = (filePath) => fs.statSync(filePath).size;
+
+            for (const name of fs.readdirSync('build')) {
+              try {
+                if (name.endsWith('.zip')) {
+                  const filePath = `build/${name}`;
+                  const headers = {
+                    'content-type': 'application/zip',
+                    'content-length': contentLength(filePath),
+                  };
+
+                  console.log('uploading', filePath);
+
+                  await github.repos.uploadReleaseAsset({
+                    url,
+                    headers,
+                    name,
+                    file: fs.readFileSync(filePath),
+                  });
+                }
+              } catch (e) {
+                console.error(e);
+                process.exit(1);
+              }
+            }

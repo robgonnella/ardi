@@ -9,6 +9,10 @@ $(component_path)_linux_arm_6 \
 $(component_path)_linux_arm_7 \
 $(component_path)_linux_arm64
 
+define add_zip_object
+$(eval zips += $(1).zip)
+endef
+
 define get_goos
 $(word 3, $(subst _, ,$1))
 endef
@@ -21,6 +25,8 @@ define get_goarm
 $(word 5, $(subst _, ,$1))
 endef
 
+$(foreach o,$(objects),$(call add_zip_object,$(o)))
+
 all: $(objects)
 
 $(objects): $(shell find . -type f -name "*.go")
@@ -28,6 +34,11 @@ $(objects): $(shell find . -type f -name "*.go")
 	$(eval goarch=$(call get_goarch, $(@)))
 	$(eval goarm=$(call get_goarm, $(@)))
 	GOOS=$(goos) GOARCH=$(goarch) GOARM=$(goarm) go build -ldflags '-s -w' -o $(@)
+
+$(zips): $(objects)
+	zip $(@) $(@:.zip=)
+
+release: $(zips)
 
 mock:
 	go generate ./...
@@ -65,4 +76,4 @@ docs:
 clean:
 	rm -rf build
 
-.PHONY: all mock docs clean
+.PHONY: all release mock docs clean
