@@ -14,7 +14,7 @@ func getWatchCmd() *cobra.Command {
 		Use:   "attach-and-watch [sketch|build]",
 		Short: "Compile, upload, watch board logs, and watch for sketch changes",
 		Long: "\nCompile, upload, watch board logs, and watch for sketch " +
-			"changes. Updates to .ino file will trigger automatic recompile, " +
+			"changes. Updates to the sketch file will trigger automatic recompile, " +
 			"reupload, and restarts the board log watcher. If the sketch argument " +
 			"matches a user defined build in ardi.json, the build values will be " +
 			"used for compilation, upload, and watch path",
