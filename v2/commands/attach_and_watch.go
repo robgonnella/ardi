@@ -22,6 +22,7 @@ func getWatchCmd() *cobra.Command {
 			var compileOpts *rpc.CompileOpts
 			var board *rpc.Board
 			var baud int
+			var err error
 
 			builds := ardiCore.Config.GetBuilds()
 			sketch := "."
@@ -36,7 +37,9 @@ func getWatchCmd() *cobra.Command {
 					BuildName:           sketch,
 					OnlyConnectedBoards: true,
 				}
-				compileOpts, board, _ = ardiCore.CompileArdiBuild(buildOpts)
+				if compileOpts, board, err = ardiCore.CompileArdiBuild(buildOpts); err != nil {
+					return err
+				}
 			} else {
 				baud = util.ParseSketchBaud(sketch)
 				sketchOpts := core.CompileSketchOpts{
@@ -46,10 +49,22 @@ func getWatchCmd() *cobra.Command {
 					ShowProps:           false,
 					OnlyConnectedBoards: true,
 				}
-				compileOpts, board, _ = ardiCore.CompileSketch(sketchOpts)
+				if compileOpts, board, err = ardiCore.CompileSketch(sketchOpts); err != nil {
+					return err
+				}
 			}
 
-			return ardiCore.Watcher.Watch(*compileOpts, board, baud, nil)
+			if err := ardiCore.Uploader.Upload(board, compileOpts.SketchDir); err != nil {
+				return err
+			}
+
+			targets := core.WatchCoreTargets{
+				Board:       board,
+				CompileOpts: compileOpts,
+				Baud:        baud,
+			}
+			ardiCore.Watcher.SetTargets(targets)
+			return ardiCore.Watcher.Watch()
 		},
 	}
 

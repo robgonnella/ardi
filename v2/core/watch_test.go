@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/robgonnella/ardi/v2/core"
 	"github.com/robgonnella/ardi/v2/mocks"
 	"github.com/robgonnella/ardi/v2/rpc"
 	"github.com/robgonnella/ardi/v2/testutil"
@@ -38,7 +39,14 @@ func TestWatchCore(t *testing.T) {
 		env.Client.EXPECT().Compile(compileOpts).AnyTimes().Return(nil)
 		env.Client.EXPECT().Upload(fqbn, sketchDir, board.Port).AnyTimes().Return(nil)
 
-		go env.ArdiCore.Watcher.Watch(compileOpts, board, 9600, port)
+		targets := core.WatchCoreTargets{
+			Board:       board,
+			CompileOpts: &compileOpts,
+			Baud:        9600,
+			Port:        port,
+		}
+		env.ArdiCore.Watcher.SetTargets(targets)
+		go env.ArdiCore.Watcher.Watch()
 
 		time.Sleep(time.Second)
 		err := cpCmd.Run()
@@ -60,7 +68,14 @@ func TestWatchCore(t *testing.T) {
 		port.EXPECT().Watch().Times(1)
 		env.Client.EXPECT().Compile(compileOpts).AnyTimes().Return(errors.New("dummy errror"))
 
-		go env.ArdiCore.Watcher.Watch(compileOpts, board, 9600, port)
+		targets := core.WatchCoreTargets{
+			Board:       board,
+			CompileOpts: &compileOpts,
+			Baud:        9600,
+			Port:        port,
+		}
+		env.ArdiCore.Watcher.SetTargets(targets)
+		go env.ArdiCore.Watcher.Watch()
 
 		time.Sleep(time.Second)
 		err := cpCmd.Run()

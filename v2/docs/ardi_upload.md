@@ -14,8 +14,8 @@ ardi upload [sketch-dir|build] [flags]
 ### Options
 
 ```
-  -h, --help   help for upload
-  -l, --log    Watch board logs after uploading
+  -a, --attach   Attach to board port and print logs
+  -h, --help     help for upload
 ```
 
 ### Options inherited from parent commands

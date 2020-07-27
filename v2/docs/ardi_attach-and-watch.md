@@ -5,7 +5,7 @@ Compile, upload, watch board logs, and watch for sketch changes
 ### Synopsis
 
 
-Compile, upload, watch board logs, and watch for sketch changes. Updates to .ino file will trigger automatic recompile, reupload, and restarts the board log watcher. If the sketch argument matches a user defined build in ardi.json, the build values will be used for compilation, upload, and watch path
+Compile, upload, watch board logs, and watch for sketch changes. Updates to the sketch file will trigger automatic recompile, reupload, and restarts the board log watcher. If the sketch argument matches a user defined build in ardi.json, the build values will be used for compilation, upload, and watch path
 
 ```
 ardi attach-and-watch [sketch|build] [flags]

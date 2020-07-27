@@ -1,7 +1,7 @@
 package core
 
 import (
-	"fmt"
+	"errors"
 	"os"
 	"os/signal"
 	"syscall"
@@ -17,8 +17,9 @@ type Listener = func()
 type FileWatcher struct {
 	file      string
 	watcher   *fsnotify.Watcher
+	destroyed bool
+	pause     chan bool
 	listeners []Listener
-	sigs      chan os.Signal
 	logger    *log.Logger
 }
 
@@ -37,13 +38,23 @@ func NewFileWatcher(file string, logger *log.Logger) (*FileWatcher, error) {
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
-	return &FileWatcher{
+	pause := make(chan bool, 1)
+
+	fileWatcher := &FileWatcher{
 		file:      file,
 		watcher:   watcher,
+		pause:     pause,
 		listeners: []Listener{},
-		sigs:      sigs,
 		logger:    logger,
-	}, nil
+	}
+
+	go func() {
+		<-sigs
+		logger.Debug("gracefully shutting down file watcher")
+		fileWatcher.Close()
+	}()
+
+	return fileWatcher, nil
 }
 
 // AddListener adds an action to run on file change
@@ -52,23 +63,28 @@ func (f *FileWatcher) AddListener(l Listener) {
 }
 
 // Watch watches the file for changes and runs user defined actions
-func (f *FileWatcher) Watch() {
-	defer f.Close()
-
-	go func() {
-		<-f.sigs
-		fmt.Println()
-		fmt.Println("gracefully shutting down file watcher")
-		f.Close()
-	}()
+func (f *FileWatcher) Watch() error {
+	if f.destroyed {
+		f.logger.Debug("file watcher has been destroyed")
+		return nil
+	}
 
 	f.logger.Infof("Watching %s for changes", f.file)
-
 	for {
+		if f.destroyed {
+			f.logger.Debug("file watcher has been destroyed")
+			return nil
+		}
+
 		select {
+		case <-f.pause:
+			f.pause <- true
+			return nil
 		case event, ok := <-f.watcher.Events:
 			if !ok {
-				break
+				err := errors.New("Failed to watch")
+				f.logger.WithError(err).Debug()
+				return err
 			}
 			f.logger.Debugf("event: %+v", event)
 			if event.Op&fsnotify.Write == fsnotify.Write {
@@ -79,16 +95,33 @@ func (f *FileWatcher) Watch() {
 			}
 		case err, ok := <-f.watcher.Errors:
 			if !ok {
-				return
+				return nil
 			}
 			f.logger.WithError(err).Warn("Watch error")
+			return err
 		}
 	}
 }
 
-// Close closes the os watcher
+// Close closes the os watcher, watcher can not be restarted
 func (f *FileWatcher) Close() {
 	if f.watcher != nil {
 		f.watcher.Close()
+		f.watcher.Remove(f.file)
+		f.destroyed = true
 	}
+}
+
+// Stop stops watching file with ability to restart at any time
+func (f *FileWatcher) Stop() {
+	f.pause <- true
+	<-f.pause
+	f.watcher.Remove(f.file)
+	f.logger.WithField("file", f.file).Debug("file watcher paused")
+}
+
+// Restart restarts existing watcher
+func (f *FileWatcher) Restart() {
+	f.watcher.Add(f.file)
+	f.Watch()
 }

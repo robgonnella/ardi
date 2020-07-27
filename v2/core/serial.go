@@ -23,7 +23,6 @@ type ArdiSerialPort struct {
 	stream *serial.Port
 	name   string
 	baud   int
-	sigs   chan os.Signal
 	logger *log.Logger
 }
 
@@ -32,12 +31,19 @@ func NewArdiSerialPort(name string, baud int, logger *log.Logger) SerialPort {
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
-	return &ArdiSerialPort{
+	serialPort := &ArdiSerialPort{
 		name:   name,
 		baud:   baud,
-		sigs:   sigs,
 		logger: logger,
 	}
+
+	go func() {
+		<-sigs
+		logger.Debug("gracefully shutting down serial port stream")
+		serialPort.Stop()
+	}()
+
+	return serialPort
 }
 
 // Watch connects to a serial port and prints any logs received.
@@ -50,6 +56,7 @@ func (p *ArdiSerialPort) Watch() error {
 	p.logger.Info("Watching logs...")
 
 	config := &serial.Config{Name: p.name, Baud: p.baud}
+
 	stream, err := serial.OpenPort(config)
 	if err != nil {
 		p.logger.WithError(err).WithFields(logFields).Warn("Failed to read from device")
@@ -57,13 +64,6 @@ func (p *ArdiSerialPort) Watch() error {
 	}
 
 	p.stream = stream
-
-	go func() {
-		<-p.sigs
-		fmt.Println()
-		fmt.Println("gracefully shutting down serial port stream")
-		p.Stop()
-	}()
 
 	for {
 		if p.stream == nil {
@@ -83,19 +83,21 @@ func (p *ArdiSerialPort) Watch() error {
 
 // Stop printing serial port logs
 func (p *ArdiSerialPort) Stop() {
-	if p.stream != nil {
-		logWithField := p.logger.WithField("name", p.name)
-		logWithField.Info("Closing serial port connection")
+	logWithField := p.logger.WithField("name", p.name)
 
-		if err := p.stream.Close(); err != nil {
-			logWithField.WithError(err).Warn("Failed to close serial port connection")
-		}
+	if p.stream != nil {
+		logWithField.Debug("Closing serial port connection")
 
 		if err := p.stream.Flush(); err != nil {
-			logWithField.WithError(err).Warn("Failed to flush serial port connection")
+			logWithField.WithError(err).Debug("Failed to flush serial port connection")
+		}
+
+		if err := p.stream.Close(); err != nil {
+			logWithField.WithError(err).Debug("Failed to close serial port connection")
 		}
 
 		p.stream = nil
+		logWithField.Debug("Serial port closed")
 	}
 }
 

@@ -23,26 +23,26 @@ void setup() {
   int i;
 
   Serial.begin(9600);
-  Serial.println("Ready to Pixie!");
+  Serial.println("Ready to Pixie");
 
   pixieSerial.begin(115200); // Pixie REQUIRES this baud rate
   // Serial1.begin(115200);  // <- Alt. if using hardware serial port
 
   strip.setBrightness(200);  // Adjust as necessary to avoid blinding
 
-  Serial.println("Red!");
+  Serial.println("Red");
   for(i=0; i< NUMPIXELS; i++)
     strip.setPixelColor(i, 255, 0, 0);
   strip.show();
   delay(300);
 
-  Serial.println("Green!");
+  Serial.println("Green");
   for(i=0; i< NUMPIXELS; i++)
     strip.setPixelColor(i, 0, 255, 0);
   strip.show();
   delay(300);
 
-  Serial.println("Blue!");
+  Serial.println("Blue");
   for(i=0; i< NUMPIXELS; i++)
     strip.setPixelColor(i, 0, 0, 255);
   strip.show();
@@ -50,7 +50,7 @@ void setup() {
 }
 
 void loop() {
-  Serial.println("Rainbow!");
+  Serial.println("Rainbow");
   rainbowCycle(10);
 }
 
