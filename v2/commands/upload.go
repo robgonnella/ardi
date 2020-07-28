@@ -51,7 +51,6 @@ func getUploadCmd() *cobra.Command {
 			logger.WithFields(fields).Info("Uploading...")
 
 			if err := ardiCore.Uploader.Upload(board, project.Directory); err != nil {
-				logger.WithError(err).Errorf("Failed to upload %s", project.Directory)
 				return err
 			}
 

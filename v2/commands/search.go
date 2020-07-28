@@ -11,7 +11,6 @@ func getSearchPlatformCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			logger.Info("Available platforms")
 			if err := ardiCore.Platform.ListAll(); err != nil {
-				logger.WithError(err).Error("Failed to list arduino platforms")
 				return err
 			}
 			return nil
@@ -32,7 +31,6 @@ func getSearchLibCmd() *cobra.Command {
 				searchArg = args[0]
 			}
 			if err := ardiCore.Lib.Search(searchArg); err != nil {
-				logger.WithError(err).Error("Failed to find arduino libraries")
 				return err
 			}
 			return nil

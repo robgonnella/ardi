@@ -18,21 +18,18 @@ func getInstallCmd() *cobra.Command {
 			}
 			for _, url := range ardiCore.Config.GetBoardURLS() {
 				if err := ardiCore.Config.AddBoardURL(url); err != nil {
-					logger.WithError(err).Errorf("Failed add board url %s", url)
 					return err
 				}
 			}
 			for plat, vers := range ardiCore.Config.GetPlatforms() {
 				_, _, err := ardiCore.Platform.Add(fmt.Sprintf("%s@%s", plat, vers))
 				if err != nil {
-					logger.WithError(err).Errorf("Failed to install %s", plat)
 					return err
 				}
 			}
 			for lib, vers := range ardiCore.Config.GetLibraries() {
 				_, _, err := ardiCore.Lib.Add(fmt.Sprintf("%s@%s", lib, vers))
 				if err != nil {
-					logger.WithError(err).Errorf("Failed to install %s", lib)
 					return err
 				}
 			}

@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/robgonnella/ardi/v2/paths"
@@ -22,14 +23,14 @@ func getCleanCmd() *cobra.Command {
 			}
 			logger.Infof("Cleaning ardi data directory: %s", dir)
 			if err := util.CleanDataDirectory(dir); err != nil {
-				logger.WithError(err).Errorf("Failed to clean ardi directory. You can manually clean all data by removing %s", dir)
-				return err
+				errMsg := err.Error()
+				fullErr := fmt.Errorf("%s: You can manually clean all data by removing %s", errMsg, dir)
+				return fullErr
 			}
 
 			if !global {
 				logger.Info("Cleaning ardi build config")
 				if err := os.RemoveAll(paths.ArdiProjectConfig); err != nil {
-					logger.WithError(err).Errorf("Failed to remove %s", paths.ArdiProjectConfig)
 					return err
 				}
 			}

@@ -14,7 +14,6 @@ func getListPlatformCmd() *cobra.Command {
 
 			logger.Info("Installed platforms")
 			if err := ardiCore.Platform.ListInstalled(); err != nil {
-				logger.WithError(err).Error("Failed to list installed arduino platforms")
 				return err
 			}
 
@@ -35,7 +34,6 @@ func getListLibrariesCmd() *cobra.Command {
 			ardiCore.Config.ListLibraries()
 			logger.Info("Installed libraries")
 			if err := ardiCore.Lib.ListInstalled(); err != nil {
-				logger.WithError(err).Error("Failed to list installed arduino libraries")
 				return err
 			}
 			return nil
@@ -74,14 +72,12 @@ func getListBoardFQBNSCmd() *cobra.Command {
 		Use:   "board-fqbns",
 		Long:  "\nList boards with associated fqbns",
 		Short: "List boards with associated fqbns",
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			query := ""
 			if len(args) > 0 {
 				query = args[0]
 			}
-			if err := ardiCore.Board.FQBNS(query); err != nil {
-				logger.WithError(err).Error("Failed to print board fqbns")
-			}
+			return ardiCore.Board.FQBNS(query)
 		},
 	}
 	return listCmd
@@ -92,14 +88,12 @@ func getListBoardPlatformsCmd() *cobra.Command {
 		Use:   "board-platforms",
 		Long:  "\nList boards with their associated platform",
 		Short: "List boards with their associated platform",
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			query := ""
 			if len(args) > 0 {
 				query = args[0]
 			}
-			if err := ardiCore.Board.Platforms(query); err != nil {
-				logger.WithError(err).Error("Failed to print board platforms")
-			}
+			return ardiCore.Board.Platforms(query)
 		},
 	}
 	return listCmd
