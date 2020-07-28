@@ -42,7 +42,7 @@ $(objects): $(shell find . -type f -name "*.go")
 	GOOS=$(goos) GOARCH=$(goarch) GOARM=$(goarm) go build -ldflags '-s -w' -o $(@)
 
 $(zips): $(objects)
-	zip $(@) $(@:.zip=)
+	zip -j $(@) $(@:.zip=)
 
 release: $(zips)
 
