@@ -36,6 +36,9 @@ jobs:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           script: |
             const fs = require('fs');
+            const execSync = require('child_process').execSync
+
+            execSync('ls -la', {encoding: 'utf-8'});
 
             console.log('environment', process.versions);
 
@@ -43,11 +46,12 @@ jobs:
             console.log({ upload_url: url });
 
             const contentLength = (filePath) => fs.statSync(filePath).size;
+            const buildDir = 'v2/build'
 
-            for (const name of fs.readdirSync('build')) {
+            for (const name of fs.readdirSync(buildDir)) {
               try {
                 if (name.endsWith('.zip')) {
-                  const filePath = `build/${name}`;
+                  const filePath = `${buildDir}/${name}`;
                   const headers = {
                     'content-type': 'application/zip',
                     'content-length': contentLength(filePath),
@@ -63,7 +67,6 @@ jobs:
                   });
                 }
               } catch (e) {
-                console.error(e);
-                process.exit(1);
+                core.setFailed(e.message);
               }
             }
