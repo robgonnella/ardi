@@ -1,0 +1,9 @@
+name: 'Upload Release Assets'
+description: 'Uploads Release Assets to Github Release'
+inputs:
+  upload_url: # id of input
+    description: 'the release to upload to'
+    required: true
+runs:
+  using: 'node12'
+  main: 'upload_release.js'

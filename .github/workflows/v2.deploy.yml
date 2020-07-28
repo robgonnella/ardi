@@ -30,37 +30,6 @@ jobs:
           draft: false
           prerelease: false
       - name: Upload Release Assets
-        uses: actions/github-script@v2
+        uses: ./
         with:
-          github-token: ${{secrets.GITHUB_TOKEN}}
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          script: |
-            const fs = require('fs');
-
-            const url = core.getInput('upload_url', { required: true });
-            console.log({ upload_url: url });
-
-            const contentLength = (filePath) => fs.statSync(filePath).size;
-            const buildDir = 'v2/build'
-
-            for (const file of fs.readdirSync(buildDir)) {
-              try {
-                const filePath = `${buildDir}/${file}`;
-                const headers = {
-                  'content-type': 'application/octet-stream',
-                  'content-length': contentLength(filePath),
-                };
-
-                console.log('uploading', filePath);
-
-                await github.repos.uploadReleaseAsset({
-                  url,
-                  headers,
-                  name: file,
-                  file: fs.createReadStream(filePath),
-                });
-
-              } catch (e) {
-                core.setFailed(e.message);
-              }
-            }
