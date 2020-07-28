@@ -58,7 +58,7 @@ jobs:
                     url,
                     headers,
                     name,
-                    file: fs.readFileSync(filePath),
+                    file: filePath,
                   });
                 }
               } catch (e) {
