@@ -41,6 +41,11 @@ $(objects): $(shell find . -type f -name "*.go")
 	$(eval goarm=$(call get_goarm, $(@)))
 	GOOS=$(goos) GOARCH=$(goarch) GOARM=$(goarm) go build -ldflags '-s -w' -o $(@)
 
+$(zips): $(objects)
+	zip -j $(@) $(@:.zip=)
+
+release: $(zips)
+
 mock:
 	go generate ./...
 
