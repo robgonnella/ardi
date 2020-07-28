@@ -18,7 +18,7 @@ jobs:
         with:
           go-version: '^1.14.0'
       - name: build
-        run: 'make release'
+        run: 'make'
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
@@ -43,24 +43,23 @@ jobs:
             const contentLength = (filePath) => fs.statSync(filePath).size;
             const buildDir = 'v2/build'
 
-            for (const name of fs.readdirSync(buildDir)) {
+            for (const file of fs.readdirSync(buildDir)) {
               try {
-                if (name.endsWith('.zip')) {
-                  const filePath = `${buildDir}/${name}`;
-                  const headers = {
-                    'content-type': 'application/zip',
-                    'content-length': contentLength(filePath),
-                  };
+                const filePath = `${buildDir}/${file}`;
+                const headers = {
+                  'content-type': 'application/octet-stream',
+                  'content-length': contentLength(filePath),
+                };
 
-                  console.log('uploading', name, filePath);
+                console.log('uploading', filePath);
 
-                  await github.repos.uploadReleaseAsset({
-                    url,
-                    headers,
-                    name,
-                    file: fs.createReadStream(filePath),
-                  });
-                }
+                await github.repos.uploadReleaseAsset({
+                  url,
+                  headers,
+                  name: file,
+                  file: fs.createReadStream(filePath),
+                });
+
               } catch (e) {
                 core.setFailed(e.message);
               }
