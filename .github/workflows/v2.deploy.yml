@@ -58,7 +58,7 @@ jobs:
                     url,
                     headers,
                     name,
-                    file: fs.createReadStream(filePath);,
+                    file: fs.createReadStream(filePath),
                   });
                 }
               } catch (e) {
