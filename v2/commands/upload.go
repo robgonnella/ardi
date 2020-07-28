@@ -8,7 +8,7 @@ import (
 )
 
 func getUploadCmd() *cobra.Command {
-	var watchBoardLogs bool
+	var attach bool
 	var uploadCmd = &cobra.Command{
 		Use:   "upload [sketch-dir|build]",
 		Short: "Upload pre-compiled sketch build to a connected board",
@@ -57,14 +57,14 @@ func getUploadCmd() *cobra.Command {
 
 			logger.Info("Upload successful")
 
-			if watchBoardLogs {
+			if attach {
 				ardiCore.Uploader.Attach(board.Port, project.Baud, nil)
 			}
 
 			return nil
 		},
 	}
-	uploadCmd.Flags().BoolVarP(&watchBoardLogs, "log", "l", false, "Watch board logs after uploading")
+	uploadCmd.Flags().BoolVarP(&attach, "attach", "a", false, "Attach to board port and print logs")
 
 	return uploadCmd
 }

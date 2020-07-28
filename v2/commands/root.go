@@ -22,11 +22,11 @@ var global bool
 var ardiCore *core.ArdiCore
 
 func setLogger() {
-	logger.Formatter = &log.TextFormatter{
+	logger.SetFormatter(&log.TextFormatter{
 		DisableTimestamp:       true,
 		DisableLevelTruncation: true,
 		PadLevelText:           true,
-	}
+	})
 
 	if verbose {
 		logger.SetLevel(log.DebugLevel)
@@ -164,6 +164,6 @@ func GetRootCmd(cmdLogger *log.Logger) *cobra.Command {
 	rootCmd.AddCommand(getUploadCmd())
 	rootCmd.AddCommand(getVersionCmd())
 	rootCmd.AddCommand(getWatchCmd())
-
+	rootCmd.SetOut(logger.Writer())
 	return rootCmd
 }

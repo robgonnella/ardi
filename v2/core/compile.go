@@ -44,7 +44,6 @@ func (c *CompileCore) WatchForChanges(opts rpc.CompileOpts) error {
 	}
 
 	watcher.AddListener(func() {
-		c.waitForCompilationsToFinish()
 		c.logger.Infof("Recompiling %s", opts.SketchPath)
 		if err := c.Compile(opts); err != nil {
 			c.logger.WithError(err).Error("Compilation failed")
