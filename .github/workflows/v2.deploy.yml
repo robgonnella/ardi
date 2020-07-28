@@ -40,7 +40,7 @@ jobs:
             console.log('environment', process.versions);
 
             const url = core.getInput('upload_url', { required: true });
-            console.log({ upload_url: uploadUrl });
+            console.log({ upload_url: url });
 
             const contentLength = (filePath) => fs.statSync(filePath).size;
 
