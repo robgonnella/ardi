@@ -21,11 +21,27 @@ var quiet bool
 var global bool
 var ardiCore *core.ArdiCore
 
+type ardiLogFormatter struct {
+	log.TextFormatter
+}
+
+func (a *ardiLogFormatter) Format(e *log.Entry) ([]byte, error) {
+	b, err := a.TextFormatter.Format(e)
+	if err != nil {
+		return b, err
+	}
+	str := string(b)
+	str = strings.Replace(str, strings.ToUpper(e.Level.String()), "ardi", 1)
+	return []byte(str), nil
+}
+
 func setLogger() {
-	logger.SetFormatter(&log.TextFormatter{
-		DisableTimestamp:       true,
-		DisableLevelTruncation: true,
-		PadLevelText:           true,
+	logger.SetFormatter(&ardiLogFormatter{
+		TextFormatter: log.TextFormatter{
+			DisableTimestamp:       true,
+			DisableLevelTruncation: true,
+			PadLevelText:           true,
+		},
 	})
 
 	if verbose {
@@ -74,9 +90,7 @@ func preRun(cmd *cobra.Command, args []string) error {
 	daemonLogLevel := util.GetDaemonLogLevel(logger)
 
 	if shouldShowProjectError(cmdPath) {
-		logger.Error("Not an ardi project directory")
-		logger.Error("Try 'ardi project-init', or run with '--global'")
-		return errors.New("Not an ardi project directory")
+		return errors.New("Not an ardi project directory. Try 'ardi project-init' or run with '--global'")
 	}
 
 	getOpts := util.GetAllSettingsOpts{
@@ -116,12 +130,11 @@ func preRun(cmd *cobra.Command, args []string) error {
 		logger.Debug(successMsg)
 	case daemonErr := <-errChan:
 		msg := fmt.Sprintf("arduino-cli daemon error: %s", daemonErr.Error())
-		logger.Errorf(msg)
 		return errors.New(msg)
 	}
 
 	if err := client.Connect(); err != nil {
-		logger.WithError(err).Error("Failed to connect ardi client")
+		logger.Warn("Failed to connect ardi client")
 		return err
 	}
 
@@ -164,6 +177,5 @@ func GetRootCmd(cmdLogger *log.Logger) *cobra.Command {
 	rootCmd.AddCommand(getUploadCmd())
 	rootCmd.AddCommand(getVersionCmd())
 	rootCmd.AddCommand(getWatchCmd())
-	rootCmd.SetOut(logger.Writer())
 	return rootCmd
 }

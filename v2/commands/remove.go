@@ -14,7 +14,6 @@ func getRemovePlatformCmd() *cobra.Command {
 				logger.Infof("Removing platform: %s", p)
 				removed, err := ardiCore.Platform.Remove(p)
 				if err != nil {
-					logger.WithError(err).Errorf("Failed to remove arduino platform %s", p)
 					return err
 				}
 				logger.Infof("Removed %s", removed)
@@ -39,7 +38,6 @@ func getRemoveBuildCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			for _, b := range args {
 				if err := ardiCore.Config.RemoveBuild(b); err != nil {
-					logger.WithError(err).Errorf("Failed to remove build %s", b)
 					return err
 				}
 			}
@@ -60,12 +58,10 @@ func getRemoveLibCmd() *cobra.Command {
 			for _, l := range args {
 				logger.Infof("Removing library: %s", l)
 				if err := ardiCore.Lib.Remove(l); err != nil {
-					logger.WithError(err).Errorf("Failed to uninstall library: %s", l)
 					return err
 				}
 				logger.Infof("Removed %s", l)
 				if err := ardiCore.Config.RemoveLibrary(l); err != nil {
-					logger.WithError(err).Errorf("Failed to remove library from ardi.json: %s", l)
 					return err
 				}
 				logger.Info("Updated config")
