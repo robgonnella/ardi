@@ -36,11 +36,6 @@ jobs:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           script: |
             const fs = require('fs');
-            const execSync = require('child_process').execSync
-
-            execSync('ls -la', {encoding: 'utf-8'});
-
-            console.log('environment', process.versions);
 
             const url = core.getInput('upload_url', { required: true });
             console.log({ upload_url: url });

@@ -12,7 +12,7 @@ $(component_path)_linux_arm64
 darwin = $(component_path)_darwin_amd64
 
 ifneq ($(include_darwin),false)
-objects += darwin
+objects += $(darwin)
 endif
 
 define add_zip_object
