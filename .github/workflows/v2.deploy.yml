@@ -52,13 +52,13 @@ jobs:
                     'content-length': contentLength(filePath),
                   };
 
-                  console.log('uploading', filePath);
+                  console.log('uploading', name, filePath);
 
                   await github.repos.uploadReleaseAsset({
                     url,
                     headers,
                     name,
-                    file: filePath,
+                    file: fs.createReadStream(filePath);,
                   });
                 }
               } catch (e) {
