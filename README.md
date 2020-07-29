@@ -57,7 +57,7 @@ ardi project-init
 ## Storing Builds in ardi.json
 
 Ardi enables you to store custom build details in ardi.json which you can
-then easily run via the `ardi build`, `ardi compile`, and `ardi upload`
+then easily run via the `ardi compile`, and `ardi upload`
 commands.
 
 To add a build either manually modify ardi.json or use `ardi add build`
