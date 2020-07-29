@@ -6,7 +6,7 @@ on:
       - 'v2.[0-9]+.[0-9]+'
 
 jobs:
-  deploy:
+  build_linux:
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -17,6 +17,42 @@ jobs:
       - uses: actions/setup-go@v2
         with:
           go-version: '^1.14.0'
+      - name: Build Linux
+        run: 'make release'
+      - name: Upload Linux Build
+        uses: actions/upload-artifact@v2
+        with:
+          name: linux_build_${{ github.run_id }}
+          path: v2/build
+  build_darwin:
+    runs-on: macos-latest
+    defaults:
+      run:
+        shell: bash
+        working-directory: v2
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v2
+        with:
+          go-version: '^1.14.0'
+      - name: Build Darwin
+        run: 'make release'
+      - name: Upload Darwin Build
+        uses: actions/upload-artifact@v2
+        with:
+          name: darwin_build_${{ github.run_id }}
+          path: v2/build
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Linux Build
+        uses: actions/download-artifact@v2
+        with:
+          name: linux_build_${{ github.run_id }}
+      - name: Download Darwin Build
+        uses: actions/download-artifact@v2
+        with:
+          name: darwin_build_${{ github.run_id }}
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
@@ -27,3 +63,11 @@ jobs:
           release_name: Release ${{ github.ref }}
           draft: false
           prerelease: false
+      - name: Upload Release Assets
+        id: upload_release_assets
+        uses: ./
+        with:
+          repo: ${{ github.repository  }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          release_id: ${{ steps.create_release.outputs.id }}
+          file_pattern: 'linux_build_${{ github.run_id }}/*.zip;darwin_build_${{ github.run_id }}/*.zip'

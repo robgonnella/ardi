@@ -1,0 +1,35 @@
+{
+  "name": "ardi-release-action",
+  "version": "0.0.1",
+  "description": "Custom action for uploading release assets",
+  "main": "dist/index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "build": "rimraf gh_action_dist && ncc build upload_release_files.ts -o gh_action_dist"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/robgonnella/ardi.git"
+  },
+  "author": "Rob Gonnella",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/robgonnella/ardi/issues"
+  },
+  "homepage": "https://github.com/robgonnella/ardi#readme",
+  "dependencies": {
+    "@actions/core": "^1.2.4",
+    "@actions/github": "^4.0.0",
+    "fast-glob": "^3.2.4",
+    "mime-types": "^2.1.27"
+  },
+  "devDependencies": {
+    "@types/mime-types": "^2.1.0",
+    "@zeit/ncc": "^0.22.3",
+    "rimraf": "^3.0.2",
+    "ts-node": "^8.10.2",
+    "typescript": "^3.9.7"
+  }
+}

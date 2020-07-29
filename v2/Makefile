@@ -1,13 +1,15 @@
+platform = $(shell uname -s)
 dest = build
 tag = $(shell git describe --tags $(shell git rev-list --tags --max-count=1))
 component = ardi_$(tag)
 component_path = $(dest)/$(component)
-objects = $(component_path)_darwin_amd64 \
-$(component_path)_linux_amd64 \
+linux_objects = $(component_path)_linux_amd64 \
 $(component_path)_linux_arm_5 \
 $(component_path)_linux_arm_6 \
 $(component_path)_linux_arm_7 \
 $(component_path)_linux_arm64
+
+darwin_object = $(component_path)_darwin_amd64
 
 define add_zip_object
 $(eval zips += $(1).zip)
@@ -24,6 +26,12 @@ endef
 define get_goarm
 $(word 5, $(subst _, ,$1))
 endef
+
+ifeq ($(platform),Linux)
+objects := $(linux_objects)
+else
+objects := $(darwin_object)
+endif
 
 $(foreach o,$(objects),$(call add_zip_object,$(o)))
 
