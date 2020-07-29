@@ -29,7 +29,3 @@ jobs:
           release_name: Release ${{ github.ref }}
           draft: false
           prerelease: false
-      - name: Upload Release Assets
-        uses: ./
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}

@@ -1,19 +1,13 @@
-include_darwin ?= false
 dest = build
 tag = $(shell git describe --tags $(shell git rev-list --tags --max-count=1))
 component = ardi_$(tag)
 component_path = $(dest)/$(component)
-objects = $(component_path)_linux_amd64 \
+objects = $(component_path)_darwin_amd64 \
+$(component_path)_linux_amd64 \
 $(component_path)_linux_arm_5 \
 $(component_path)_linux_arm_6 \
 $(component_path)_linux_arm_7 \
 $(component_path)_linux_arm64
-
-darwin = $(component_path)_darwin_amd64
-
-ifneq ($(include_darwin),false)
-objects += $(darwin)
-endif
 
 define add_zip_object
 $(eval zips += $(1).zip)
