@@ -30,6 +30,13 @@ const run = async function () {
 
     const files = await glob(filePattern.split(';'));
 
+    console.log({ files });
+
+    if (files.length === 0) {
+      console.log('No files to upload');
+      return;
+    }
+
     for (const file of files) {
       const filePath = join(__dirname, file);
       const fileName = basename(filePath);
@@ -37,6 +44,7 @@ const run = async function () {
       if (!contentType) {
         throw new Error(`Unrecognized mime-type for file: ${filePath}`);
       }
+      console.log(`uploading ${filePath}`);
       await github.repos.uploadReleaseAsset({
         owner,
         repo,
@@ -50,7 +58,6 @@ const run = async function () {
       });
     }
   } catch (error) {
-    console.error(error);
     core.setFailed(error.message);
   }
 };

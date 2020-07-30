@@ -7757,6 +7757,11 @@ const run = function () {
                 throw new Error(`invalid release_id: ${releaseId}`);
             }
             const files = yield fast_glob__WEBPACK_IMPORTED_MODULE_4__(filePattern.split(';'));
+            console.log({ files });
+            if (files.length === 0) {
+                console.log('No files to upload');
+                return;
+            }
             for (const file of files) {
                 const filePath = Object(path__WEBPACK_IMPORTED_MODULE_3__.join)(__dirname, file);
                 const fileName = Object(path__WEBPACK_IMPORTED_MODULE_3__.basename)(filePath);
@@ -7764,6 +7769,7 @@ const run = function () {
                 if (!contentType) {
                     throw new Error(`Unrecognized mime-type for file: ${filePath}`);
                 }
+                console.log(`uploading ${filePath}`);
                 yield github.repos.uploadReleaseAsset({
                     owner,
                     repo,
@@ -7778,7 +7784,6 @@ const run = function () {
             }
         }
         catch (error) {
-            console.error(error);
             _actions_core__WEBPACK_IMPORTED_MODULE_0__.setFailed(error.message);
         }
     });
