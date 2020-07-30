@@ -1,6 +1,6 @@
 import * as core from '@actions/core';
 import * as octo from '@actions/github';
-import { createReadStream } from 'fs';
+import { createReadStream, statSync } from 'fs';
 import { join, basename } from 'path';
 import * as glob from 'fast-glob';
 import * as mime from 'mime-types';
@@ -12,6 +12,7 @@ const filePattern = core.getInput('file_pattern', { required: true });
 const github = octo.getOctokit(token);
 
 const repoParts = repoFull.split('/');
+const contentSize = (file: string): number => statSync(file).size;
 
 const run = async function () {
   try {
@@ -50,6 +51,7 @@ const run = async function () {
         name: file,
         data: '',
         file: createReadStream(file),
+        size: contentSize(file),
         headers: {
           'content-type': contentType,
         },

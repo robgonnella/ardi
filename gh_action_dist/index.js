@@ -7741,6 +7741,7 @@ const releaseId = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('release_i
 const filePattern = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('file_pattern', { required: true });
 const github = _actions_github__WEBPACK_IMPORTED_MODULE_1__.getOctokit(token);
 const repoParts = repoFull.split('/');
+const contentSize = (file) => Object(fs__WEBPACK_IMPORTED_MODULE_2__.statSync)(file).size;
 const run = function () {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -7772,6 +7773,7 @@ const run = function () {
                     name: file,
                     data: '',
                     file: Object(fs__WEBPACK_IMPORTED_MODULE_2__.createReadStream)(file),
+                    size: contentSize(file),
                     headers: {
                         'content-type': contentType,
                     },
