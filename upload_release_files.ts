@@ -38,20 +38,18 @@ const run = async function () {
     }
 
     for (const file of files) {
-      const filePath = join(__dirname, file);
-      const fileName = basename(filePath);
-      const contentType = mime.lookup(filePath);
+      const contentType = mime.lookup(file);
       if (!contentType) {
-        throw new Error(`Unrecognized mime-type for file: ${filePath}`);
+        throw new Error(`Unrecognized mime-type for file: ${file}`);
       }
-      console.log(`uploading ${filePath}`);
+      console.log(`uploading ${file}`);
       await github.repos.uploadReleaseAsset({
         owner,
         repo,
         release_id: id,
-        name: fileName,
+        name: file,
         data: '',
-        file: createReadStream(filePath),
+        file: createReadStream(file),
         headers: {
           'content-type': contentType,
         },

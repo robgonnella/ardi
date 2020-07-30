@@ -7717,12 +7717,10 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _actions_github__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_actions_github__WEBPACK_IMPORTED_MODULE_1__);
 /* harmony import */ var fs__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(747);
 /* harmony import */ var fs__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(fs__WEBPACK_IMPORTED_MODULE_2__);
-/* harmony import */ var path__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(622);
-/* harmony import */ var path__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(path__WEBPACK_IMPORTED_MODULE_3__);
-/* harmony import */ var fast_glob__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(406);
-/* harmony import */ var fast_glob__WEBPACK_IMPORTED_MODULE_4___default = /*#__PURE__*/__webpack_require__.n(fast_glob__WEBPACK_IMPORTED_MODULE_4__);
-/* harmony import */ var mime_types__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(779);
-/* harmony import */ var mime_types__WEBPACK_IMPORTED_MODULE_5___default = /*#__PURE__*/__webpack_require__.n(mime_types__WEBPACK_IMPORTED_MODULE_5__);
+/* harmony import */ var fast_glob__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(406);
+/* harmony import */ var fast_glob__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(fast_glob__WEBPACK_IMPORTED_MODULE_3__);
+/* harmony import */ var mime_types__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(779);
+/* harmony import */ var mime_types__WEBPACK_IMPORTED_MODULE_4___default = /*#__PURE__*/__webpack_require__.n(mime_types__WEBPACK_IMPORTED_MODULE_4__);
 var __awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -7732,7 +7730,6 @@ var __awaiter = (undefined && undefined.__awaiter) || function (thisArg, _argume
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-
 
 
 
@@ -7756,27 +7753,25 @@ const run = function () {
             if (isNaN(id)) {
                 throw new Error(`invalid release_id: ${releaseId}`);
             }
-            const files = yield fast_glob__WEBPACK_IMPORTED_MODULE_4__(filePattern.split(';'));
+            const files = yield fast_glob__WEBPACK_IMPORTED_MODULE_3__(filePattern.split(';'));
             console.log({ files });
             if (files.length === 0) {
                 console.log('No files to upload');
                 return;
             }
             for (const file of files) {
-                const filePath = Object(path__WEBPACK_IMPORTED_MODULE_3__.join)(__dirname, file);
-                const fileName = Object(path__WEBPACK_IMPORTED_MODULE_3__.basename)(filePath);
-                const contentType = mime_types__WEBPACK_IMPORTED_MODULE_5__.lookup(filePath);
+                const contentType = mime_types__WEBPACK_IMPORTED_MODULE_4__.lookup(file);
                 if (!contentType) {
-                    throw new Error(`Unrecognized mime-type for file: ${filePath}`);
+                    throw new Error(`Unrecognized mime-type for file: ${file}`);
                 }
-                console.log(`uploading ${filePath}`);
+                console.log(`uploading ${file}`);
                 yield github.repos.uploadReleaseAsset({
                     owner,
                     repo,
                     release_id: id,
-                    name: fileName,
+                    name: file,
                     data: '',
-                    file: Object(fs__WEBPACK_IMPORTED_MODULE_2__.createReadStream)(filePath),
+                    file: Object(fs__WEBPACK_IMPORTED_MODULE_2__.createReadStream)(file),
                     headers: {
                         'content-type': contentType,
                     },
