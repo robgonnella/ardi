@@ -2,8 +2,12 @@ name: V2
 
 on:
   push:
+    branches:
+      - '*'
     paths:
       - 'v2/**'
+    tags:
+      - '!v*'
 
 jobs:
   test:

@@ -2,9 +2,13 @@ name: V1
 
 on:
   push:
+    branches:
+      - '*'
     paths-ignore:
       - 'v2/**'
       - 'README.md'
+    tags:
+      - '!v*'
 
 jobs:
   test:
