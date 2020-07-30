@@ -72,4 +72,4 @@ jobs:
           repo: ${{ github.repository  }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           release_id: ${{ steps.create_release.outputs.id }}
-          file_pattern: 'linux_build_${{ github.run_id }}/*.zip;darwin_build_${{ github.run_id }}/*.zip'
+          file_pattern: '*.zip'
