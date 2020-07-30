@@ -44,6 +44,7 @@ jobs:
           path: v2/build
   release:
     runs-on: ubuntu-latest
+    needs: [build_linux, build_darwin]
     steps:
       - name: Download Linux Build
         uses: actions/download-artifact@v2
