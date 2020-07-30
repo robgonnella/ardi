@@ -2,9 +2,6 @@ name: 'Upload Release Files'
 description: 'Uploads all files matching glob pattern to a specified release'
 author: robgonnella
 inputs:
-  repo:
-    description: 'The value of GITHUB_REPOSITORY env var in any workflow'
-    required: true
   github_token:
     description: 'The token to use to authenticate to the github api'
     required: true

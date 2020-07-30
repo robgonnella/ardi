@@ -69,7 +69,6 @@ jobs:
         id: upload_release_assets
         uses: ./
         with:
-          repo: ${{ github.repository  }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           release_id: ${{ steps.create_release.outputs.id }}
           file_pattern: '*.zip'

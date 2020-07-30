@@ -7735,21 +7735,14 @@ var __awaiter = (undefined && undefined.__awaiter) || function (thisArg, _argume
 
 
 
-const repoFull = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('repo', { required: true });
 const token = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('github_token', { required: true });
 const releaseId = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('release_id', { required: true });
 const filePattern = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('file_pattern', { required: true });
 const github = _actions_github__WEBPACK_IMPORTED_MODULE_1__.getOctokit(token);
-const repoParts = repoFull.split('/');
-const contentSize = (file) => Object(fs__WEBPACK_IMPORTED_MODULE_2__.statSync)(file).size;
+const context = _actions_github__WEBPACK_IMPORTED_MODULE_1__.context;
 const run = function () {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            if (repoParts.length !== 2) {
-                throw new Error("Invalid repo value. Should be of form '<owner>/<repo_name>'");
-            }
-            const owner = repoParts[0];
-            const repo = repoParts[1];
             const id = parseInt(releaseId);
             if (isNaN(id)) {
                 throw new Error(`invalid release_id: ${releaseId}`);
@@ -7765,15 +7758,13 @@ const run = function () {
                 if (!contentType) {
                     throw new Error(`Unrecognized mime-type for file: ${file}`);
                 }
-                console.log(`uploading ${file}`);
+                console.log(`uploading: ${file}`);
                 yield github.repos.uploadReleaseAsset({
-                    owner,
-                    repo,
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
                     release_id: id,
                     name: file,
-                    data: '',
-                    file: Object(fs__WEBPACK_IMPORTED_MODULE_2__.createReadStream)(file),
-                    size: contentSize(file),
+                    data: Object(fs__WEBPACK_IMPORTED_MODULE_2__.readFileSync)(file),
                     headers: {
                         'content-type': contentType,
                     },
