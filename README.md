@@ -89,4 +89,4 @@ Documentation for all commands can be found in [docs directory][docs]
 Documentaion for V1 can be found [here](./docs/README.md)
 
 [arduino-cli]: https://github.com/arduino/arduino-cli
-[docs]: ./docs/ardi.md
+[docs]: ./v2/docs/ardi.md
