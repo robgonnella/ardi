@@ -74,14 +74,12 @@ ardi add build \
 To run stored builds
 
 ```bash
-# Run a single build
-ardi build <name>
-# Run multiple builds
-ardi build <name1> <name2> <name3>
-# Run all builds
-ardi build
-# Compile only (skips evaluating dependencies)
-ardi compile <name>
+# Compile single build in ardi.json
+ardi compile <build_name>
+# Compile multiple builds in ardi.json
+ardi compile <build_name1> <build_name2> <build_name3>
+# Compile all builds in ardi.json
+ardi compile --all
 # Upload only (skips building/compiling)
 ardi upload <name>
 ```
