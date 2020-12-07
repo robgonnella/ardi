@@ -39,6 +39,11 @@ go get github.com/robgonnella/ardi/v2@latest
 You can also download and install the pre-built binaries
 [here](https://github.com/robgonnella/ardi/releases)
 
+**Note: Linux users may need to add their user to the `dialout` group**
+```
+sudo usermod -aG dialout $(whoami)
+```
+
 # Usage
 
 Ardi requires certain packages to be downloaded before it can properly compile
