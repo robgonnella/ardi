@@ -47,9 +47,6 @@ jobs:
     needs: [build_linux, build_darwin]
     steps:
       - uses: actions/checkout@v2
-      - name: Set output
-        id: vars
-        run: echo ::set-output name=tag::${GITHUB_REF#refs/*/}
       - name: Download Linux Build
         uses: actions/download-artifact@v2
         with:
@@ -70,8 +67,10 @@ jobs:
           prerelease: false
       - name: Upload Release Assets
         id: upload_release_assets
-        uses: AButler/upload-release-assets@v2.0
+        uses: svenstaro/upload-release-action@v2
         with:
-          files: '*.zip'
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          release-tag: ${{ steps.vars.outputs.tag }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: '*.zip'
+          tag: ${{ github.ref }}
+          overwrite: true
+          file_glob: true
