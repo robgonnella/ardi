@@ -55,8 +55,8 @@ lint:
 	golint -set_exit_status ./...
 
 test-unit:
-	mkdir test_artifacts || true
-	rm -rf test_artifacts/unit.out || true
+	mkdir -p test_artifacts
+	rm -rf test_artifacts/unit.out
 	go test \
 		-v \
 		-p 1 \
@@ -65,18 +65,29 @@ test-unit:
 		github.com/robgonnella/ardi/v2/util
 
 test-int:
-	mkdir test_artifacts || true
-	rm -rf test_artifacts/int.out || true
-	go test -v -coverprofile test_artifacts/int.out -p 1 github.com/robgonnella/ardi/v2/commands
+	mkdir -p test_artifacts
+	rm -rf test_artifacts/int.out
+	go test \
+		-v \
+		-p 1 \
+		-coverprofile test_artifacts/int.out \
+		github.com/robgonnella/ardi/v2/commands
 
 test-e2e:
 	./scripts/run_e2e.sh
 
 test-all:
-	$(MAKE) test-unit
-	$(MAKE) test-int
+	rm -rf test_artifacts
+	mkdir -p test_artifacts
+	go test \
+		-v \
+		-p 1 \
+		-coverprofile test_artifacts/coverage.out \
+		github.com/robgonnella/ardi/v2/core \
+		github.com/robgonnella/ardi/v2/util \
+		github.com/robgonnella/ardi/v2/commands
+	go tool cover -func test_artifacts/coverage.out
 	$(MAKE) test-e2e
-	./scripts/coverage.sh
 
 docs:
 	go run docs/gen.go

@@ -71,5 +71,5 @@ func getWatchCmd() *cobra.Command {
 	watchCmd.Flags().StringVarP(&fqbn, "fqbn", "f", "", "Specify fully qualified board name")
 	watchCmd.Flags().StringArrayVarP(&buildProps, "build-prop", "p", []string{}, "Specify build property to compiler")
 
-	return watchCmd
+	return withRPCConnectPreRun(watchCmd)
 }

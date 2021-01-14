@@ -116,5 +116,5 @@ func getCompileCmd() *cobra.Command {
 	compileCmd.Flags().BoolVarP(&showProps, "show-props", "s", false, "Show all build properties (does not compile)")
 	compileCmd.Flags().BoolVarP(&watch, "watch", "w", false, "Watch sketch file for changes and recompile")
 
-	return compileCmd
+	return withRPCConnectPreRun(compileCmd)
 }

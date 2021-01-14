@@ -36,5 +36,5 @@ func getInstallCmd() *cobra.Command {
 			return nil
 		},
 	}
-	return installCmd
+	return withRPCConnectPreRun(installCmd)
 }

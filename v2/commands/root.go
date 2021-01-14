@@ -2,7 +2,6 @@ package commands
 
 import (
 	"errors"
-	"fmt"
 	"io/ioutil"
 	"strings"
 
@@ -99,6 +98,7 @@ func preRun(cmd *cobra.Command, args []string) error {
 		Port:     port,
 	}
 	ardiConfig, svrSettings := util.GetAllSettings(getOpts)
+	cliSettingsPath := util.GetCliSettingsPath(getOpts)
 
 	writeOpts := util.WriteSettingsOpts{
 		Global:             useGlobal,
@@ -112,7 +112,7 @@ func preRun(cmd *cobra.Command, args []string) error {
 	}
 
 	ctx := cmd.Context()
-	client := rpc.NewClient(ctx, svrSettings, logger)
+	client := rpc.NewClient(ctx, cliSettingsPath, svrSettings, logger)
 	coreOpts := core.NewArdiCoreOpts{
 		Global:             useGlobal,
 		Logger:             logger,
@@ -122,23 +122,17 @@ func preRun(cmd *cobra.Command, args []string) error {
 	}
 	ardiCore = core.NewArdiCore(coreOpts)
 
-	errChan := make(chan error, 1)
-	successChan := make(chan string, 1)
-	ardiCore.RPCClient.StartDaemon(successChan, errChan)
-	select {
-	case successMsg := <-successChan:
-		logger.Debug(successMsg)
-	case daemonErr := <-errChan:
-		msg := fmt.Sprintf("arduino-cli daemon error: %s", daemonErr.Error())
-		return errors.New(msg)
-	}
-
-	if err := client.Connect(); err != nil {
-		logger.Warn("Failed to connect ardi client")
-		return err
-	}
-
 	return nil
+}
+
+func withRPCConnectPreRun(cmd *cobra.Command) *cobra.Command {
+	cmd.PreRunE = func(cmd *cobra.Command, args []string) error {
+		if err := ardiCore.RPCClient.Connect(); err != nil {
+			return err
+		}
+		return nil
+	}
+	return cmd
 }
 
 func getRootCommand() *cobra.Command {

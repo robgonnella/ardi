@@ -207,18 +207,6 @@ func (mr *MockClientMockRecorder) SearchLibraries(arg0 interface{}) *gomock.Call
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SearchLibraries", reflect.TypeOf((*MockClient)(nil).SearchLibraries), arg0)
 }
 
-// StartDaemon mocks base method
-func (m *MockClient) StartDaemon(arg0 chan string, arg1 chan error) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "StartDaemon", arg0, arg1)
-}
-
-// StartDaemon indicates an expected call of StartDaemon
-func (mr *MockClientMockRecorder) StartDaemon(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StartDaemon", reflect.TypeOf((*MockClient)(nil).StartDaemon), arg0, arg1)
-}
-
 // UninstallLibrary mocks base method
 func (m *MockClient) UninstallLibrary(arg0 string) error {
 	m.ctrl.T.Helper()

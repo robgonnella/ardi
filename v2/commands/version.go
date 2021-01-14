@@ -7,7 +7,7 @@ import (
 )
 
 func getVersionCmd() *cobra.Command {
-	return &cobra.Command{
+	return withRPCConnectPreRun(&cobra.Command{
 		Use:   "version",
 		Long:  "\nPrints current version of ardi",
 		Short: "Prints current version of ardi",
@@ -19,5 +19,5 @@ func getVersionCmd() *cobra.Command {
 			logger.Infof("arduino-cli: %s", arduinoCliVersion)
 			logger.Infoln("")
 		},
-	}
+	})
 }

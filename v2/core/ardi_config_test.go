@@ -132,7 +132,6 @@ func TestArdiConfigCompileOpts(t *testing.T) {
 			SketchPath: path.Join(dir, "blink.ino"),
 			FQBN:       fqbn,
 			BuildProps: buildProps,
-			ExportName: name,
 		}
 
 		err := env.ArdiCore.Config.AddBuild(name, dir, fqbn, buildProps)

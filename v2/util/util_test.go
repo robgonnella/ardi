@@ -113,6 +113,22 @@ func TestUtilArduinoCliSettings(t *testing.T) {
 		assert.Equal(st, expected, data)
 		os.RemoveAll(conf)
 	})
+
+	t.Run("returns project path", func(st *testing.T) {
+		opts := util.GetAllSettingsOpts{
+			Global: false,
+		}
+		settingsPath := util.GetCliSettingsPath(opts)
+		assert.Equal(st, paths.ArduinoCliProjectConfig, settingsPath)
+	})
+
+	t.Run("returns global path", func(st *testing.T) {
+		opts := util.GetAllSettingsOpts{
+			Global: true,
+		}
+		settingsPath := util.GetCliSettingsPath(opts)
+		assert.Equal(st, paths.ArduinoCliGlobalConfig, settingsPath)
+	})
 }
 
 func TestUtilArdiConfig(t *testing.T) {

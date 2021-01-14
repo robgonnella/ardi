@@ -24,6 +24,17 @@ type Directories struct {
 	User      string `yaml:"user"`
 }
 
+// Installation ID
+type Installation struct {
+	ID     string `yaml:"id"`
+	Secret string `yaml:"secret"`
+}
+
+// Library key for arduino-cli
+type Library struct {
+	EnableUnsafeInstall bool `yaml:"enable_unsafe_install"`
+}
+
 // Logging logging configuration
 type Logging struct {
 	File   string `yaml:"file"`
@@ -31,8 +42,8 @@ type Logging struct {
 	Level  string `yaml:"level"`
 }
 
-// Telemetry enable/disable flag for arduino-cli grpc server
-type Telemetry struct {
+// Metrics enable/disable flag for arduino-cli grpc server
+type Metrics struct {
 	Addr    string `yaml:"addr"`
 	Enabled bool   `yaml:"enabled"`
 }
@@ -42,8 +53,10 @@ type ArduinoCliSettings struct {
 	BoardManager BoardManager `yaml:"board_manager"`
 	Daemon       Daemon       `yaml:"daemon"`
 	Directories  Directories  `yaml:"directories"`
+	Installation Installation `yaml:"installation"`
+	Library      Library      `yaml:"library"`
 	Logging      Logging      `yaml:"logging"`
-	Telemetry    Telemetry    `yaml:"telemetry"`
+	Metrics      Metrics      `yaml:"metrics"`
 }
 
 // ArdiBuild represents the build properties in ardi.json

@@ -12,14 +12,15 @@ import (
 
 	"github.com/arduino/arduino-cli/cli/globals"
 	"github.com/arduino/arduino-cli/commands/daemon"
+	"github.com/arduino/arduino-cli/configuration"
 	"github.com/arduino/arduino-cli/rpc/commands"
 	rpc "github.com/arduino/arduino-cli/rpc/commands"
+	"github.com/arduino/arduino-cli/rpc/debug"
+	"github.com/arduino/arduino-cli/rpc/monitor"
 	"github.com/arduino/arduino-cli/rpc/settings"
-	yaml2 "github.com/ghodss/yaml"
 	"github.com/robgonnella/ardi/v2/types"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
-	yaml "gopkg.in/yaml.v2"
 )
 
 const configFile = "arduino-cli.yaml"
@@ -27,7 +28,6 @@ const configFile = "arduino-cli.yaml"
 // Client reprents our wrapper around the arduino-cli rpc client
 //go:generate mockgen -destination=../mocks/mock_rpc.go -package=mocks github.com/robgonnella/ardi/v2/rpc Client
 type Client interface {
-	StartDaemon(s chan string, e chan error)
 	Connect() error
 	Close()
 	UpdateIndexFiles() error
@@ -52,6 +52,7 @@ type Client interface {
 // ArdiClient represents a client connection to arduino-cli grpc daemon
 type ArdiClient struct {
 	ctx              context.Context
+	settingsPath     string
 	svrSettings      *types.ArduinoCliSettings
 	listener         net.Listener
 	grpcServer       *grpc.Server
@@ -69,55 +70,21 @@ type Board struct {
 }
 
 // NewClient return new RPC controller
-func NewClient(ctx context.Context, svrSettings *types.ArduinoCliSettings, logger *log.Logger) Client {
+func NewClient(ctx context.Context, settingsPath string, svrSettings *types.ArduinoCliSettings, logger *log.Logger) Client {
 	return &ArdiClient{
-		ctx:         ctx,
-		svrSettings: svrSettings,
-		logger:      logger,
+		ctx:          ctx,
+		settingsPath: settingsPath,
+		svrSettings:  svrSettings,
+		logger:       logger,
 	}
-}
-
-//StartDaemon starts the arduino-cli grpc server locally
-func (c *ArdiClient) StartDaemon(successChan chan string, errChan chan error) {
-	c.logger.Debug("Creating grpc server")
-	s := grpc.NewServer()
-	c.grpcServer = s
-
-	commands.RegisterArduinoCoreServer(s, &daemon.ArduinoCoreServerImpl{
-		VersionString: globals.VersionInfo.VersionString,
-	})
-
-	byteData, _ := yaml.Marshal(c.svrSettings)
-	jsonData, _ := yaml2.YAMLToJSON(byteData)
-	settingsSvr := &daemon.SettingsService{}
-	if _, err := settingsSvr.Merge(
-		c.ctx,
-		&settings.RawData{
-			JsonData: string(jsonData),
-		},
-	); err != nil {
-		errChan <- err
-		return
-	}
-
-	settings.RegisterSettingsServer(s, settingsSvr)
-
-	go func() {
-		port := c.svrSettings.Daemon.Port
-		c.logger.Debugf("Starting daemon on TCP address 127.0.0.1:%s", port)
-		lis, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%s", port))
-		if err != nil {
-			errChan <- err
-		}
-		c.listener = lis
-		msg := fmt.Sprintf("Daemon is now listening on 127.0.0.1:%s...", port)
-		successChan <- msg
-		s.Serve(lis)
-	}()
 }
 
 // Connect connect client to grpc server
 func (c *ArdiClient) Connect() error {
+	if err := c.startDaemon(); err != nil {
+		return err
+	}
+
 	c.logger.Debug("Connecting to daemon")
 
 	conn, err := c.createServerConnection()
@@ -545,17 +512,13 @@ type CompileOpts struct {
 	FQBN       string
 	SketchDir  string
 	SketchPath string
-	ExportName string
 	BuildProps []string
 	ShowProps  bool
 }
 
 // Compile the specified sketch
 func (c *ArdiClient) Compile(opts CompileOpts) error {
-	exportFile := ""
-	if opts.ExportName != "" {
-		exportFile = path.Join(opts.SketchDir, opts.ExportName)
-	}
+	exportDir := path.Join(opts.SketchDir, "build")
 
 	compRespStream, err := c.client.Compile(
 		c.ctx,
@@ -563,7 +526,7 @@ func (c *ArdiClient) Compile(opts CompileOpts) error {
 			Instance:        c.instance,
 			Fqbn:            opts.FQBN,
 			SketchPath:      opts.SketchPath,
-			ExportFile:      exportFile,
+			ExportDir:       exportDir,
 			BuildProperties: opts.BuildProps,
 			ShowProperties:  opts.ShowProps,
 			Verbose:         true,
@@ -691,7 +654,7 @@ func (c *ArdiClient) UninstallLibrary(name string) error {
 		}
 
 		if uninstallRespStream.GetTaskProgress() != nil {
-			c.logger.Debug("TASK: %s\n", uninstallRespStream.GetTaskProgress())
+			c.logger.Debugf("TASK: %s\n", uninstallRespStream.GetTaskProgress())
 		}
 	}
 }
@@ -726,6 +689,43 @@ func (c *ArdiClient) ClientVersion() string {
 }
 
 // private methods
+// startDaemon starts the arduino-cli grpc server locally
+func (c *ArdiClient) startDaemon() error {
+	c.logger.Debug("Creating grpc server")
+	s := grpc.NewServer()
+
+	commands.RegisterArduinoCoreServer(s, &daemon.ArduinoCoreServerImpl{
+		VersionString: globals.VersionInfo.VersionString,
+	})
+
+	configuration.Settings = configuration.Init(c.settingsPath)
+
+	// Register the monitors service
+	monitor.RegisterMonitorServer(s, &daemon.MonitorService{})
+	// Register the settings service
+	settings.RegisterSettingsServer(s, &daemon.SettingsService{})
+	// Register the debug session service
+	debug.RegisterDebugServer(s, &daemon.DebugService{})
+
+	port := c.svrSettings.Daemon.Port
+	c.logger.Debugf("Starting daemon on TCP address 127.0.0.1:%s", port)
+	lis, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%s", port))
+	if err != nil {
+		return err
+	}
+
+	c.listener = lis
+	c.grpcServer = s
+
+	go func() {
+		if err := s.Serve(lis); err != nil {
+			c.logger.WithError(err).Error("Daemon crash")
+		}
+	}()
+
+	return nil
+}
+
 func (c *ArdiClient) createInstance() (*rpc.Instance, error) {
 	var err error
 	var instance *rpc.Instance

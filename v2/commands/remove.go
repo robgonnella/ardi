@@ -25,7 +25,7 @@ func getRemovePlatformCmd() *cobra.Command {
 			return nil
 		},
 	}
-	return removeCmd
+	return withRPCConnectPreRun(removeCmd)
 }
 
 func getRemoveBuildCmd() *cobra.Command {
@@ -69,7 +69,7 @@ func getRemoveLibCmd() *cobra.Command {
 			return nil
 		},
 	}
-	return removeCmd
+	return withRPCConnectPreRun(removeCmd)
 }
 
 func getRemoveBoardURLCmd() *cobra.Command {
@@ -91,7 +91,7 @@ func getRemoveBoardURLCmd() *cobra.Command {
 			return nil
 		},
 	}
-	return removeCmd
+	return withRPCConnectPreRun(removeCmd)
 }
 
 func getRemoveCmd() *cobra.Command {

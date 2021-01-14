@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"sync"
 
 	"github.com/robgonnella/ardi/v2/rpc"
 	"github.com/robgonnella/ardi/v2/types"
@@ -16,6 +17,7 @@ type ArdiConfig struct {
 	config   types.ArdiConfig
 	confPath string
 	logger   *log.Logger
+	mux      sync.Mutex
 }
 
 // NewArdiConfig returns core json module for handling ardi.json config
@@ -24,6 +26,7 @@ func NewArdiConfig(confPath string, initialConfig types.ArdiConfig, logger *log.
 		config:   initialConfig,
 		confPath: confPath,
 		logger:   logger,
+		mux:      sync.Mutex{},
 	}
 }
 
@@ -63,7 +66,6 @@ func (a *ArdiConfig) GetCompileOpts(buildName string) (*rpc.CompileOpts, error) 
 		FQBN:       build.FQBN,
 		SketchDir:  build.Directory,
 		SketchPath: build.Sketch,
-		ExportName: buildName,
 		BuildProps: buildProps,
 	}
 
@@ -189,6 +191,9 @@ func (a *ArdiConfig) GetBoardURLS() []string {
 }
 
 func (a *ArdiConfig) write() error {
+	a.mux.Lock()
+	defer a.mux.Unlock()
+
 	newData, err := json.MarshalIndent(a.config, "", "  ")
 	if err != nil {
 		return err

@@ -20,7 +20,7 @@ func getListPlatformCmd() *cobra.Command {
 			return nil
 		},
 	}
-	return listCmd
+	return withRPCConnectPreRun(listCmd)
 }
 
 func getListLibrariesCmd() *cobra.Command {
@@ -39,7 +39,7 @@ func getListLibrariesCmd() *cobra.Command {
 			return nil
 		},
 	}
-	return listCmd
+	return withRPCConnectPreRun(listCmd)
 }
 
 func getListBuildsCmd() *cobra.Command {
@@ -80,7 +80,7 @@ func getListBoardFQBNSCmd() *cobra.Command {
 			return ardiCore.Board.FQBNS(query)
 		},
 	}
-	return listCmd
+	return withRPCConnectPreRun(listCmd)
 }
 
 func getListBoardPlatformsCmd() *cobra.Command {
@@ -96,7 +96,7 @@ func getListBoardPlatformsCmd() *cobra.Command {
 			return ardiCore.Board.Platforms(query)
 		},
 	}
-	return listCmd
+	return withRPCConnectPreRun(listCmd)
 }
 
 func getListCmd() *cobra.Command {

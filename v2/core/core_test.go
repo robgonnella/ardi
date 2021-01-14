@@ -154,7 +154,6 @@ func TestArdiCore(t *testing.T) {
 		}
 
 		expectedCompileOpts := rpc.CompileOpts{
-			ExportName: buildName,
 			FQBN:       fqbn,
 			SketchDir:  testutil.BlinkProjectDir(),
 			SketchPath: sketch,
@@ -216,7 +215,6 @@ func TestArdiCore(t *testing.T) {
 		}
 
 		expectedCompileOpts := rpc.CompileOpts{
-			ExportName: "",
 			FQBN:       fqbn,
 			SketchDir:  testutil.BlinkProjectDir(),
 			SketchPath: sketch,
