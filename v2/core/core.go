@@ -121,7 +121,6 @@ func (c *ArdiCore) CompileSketch(sketchOpts CompileSketchOpts) (*rpc.CompileOpts
 		FQBN:       board.FQBN,
 		SketchDir:  project.Directory,
 		SketchPath: project.Sketch,
-		ExportName: "",
 		BuildProps: sketchOpts.BuildPros,
 		ShowProps:  sketchOpts.ShowProps,
 	}

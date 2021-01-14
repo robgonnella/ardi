@@ -46,7 +46,7 @@ func getAddPlatformCmd() *cobra.Command {
 		},
 	}
 	addCmd.Flags().BoolVarP(&all, "all", "a", false, "Add all available platforms")
-	return addCmd
+	return withRPCConnectPreRun(addCmd)
 }
 
 func getAddBuildCmd() *cobra.Command {
@@ -73,7 +73,7 @@ func getAddBuildCmd() *cobra.Command {
 	addCmd.MarkFlagRequired("fqbn")
 	addCmd.MarkFlagRequired("sketch")
 
-	return addCmd
+	return withRPCConnectPreRun(addCmd)
 }
 
 func getAddLibCmd() *cobra.Command {
@@ -101,7 +101,7 @@ func getAddLibCmd() *cobra.Command {
 			return nil
 		},
 	}
-	return addCmd
+	return withRPCConnectPreRun(addCmd)
 }
 
 func getAddBoardURLCmd() *cobra.Command {
@@ -123,7 +123,7 @@ func getAddBoardURLCmd() *cobra.Command {
 			return nil
 		},
 	}
-	return addCmd
+	return withRPCConnectPreRun(addCmd)
 }
 
 func getAddCmd() *cobra.Command {

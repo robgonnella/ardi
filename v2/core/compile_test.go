@@ -29,7 +29,6 @@ func TestCompileCore(t *testing.T) {
 			SketchPath: expectedSketch,
 			BuildProps: expectedBuildProps,
 			ShowProps:  expectedShowProps,
-			ExportName: "",
 		}
 		env.Client.EXPECT().Compile(compileOpts).Times(1).Return(nil)
 
@@ -53,7 +52,6 @@ func TestCompileCore(t *testing.T) {
 			SketchPath: expectedSketch,
 			BuildProps: expectedBuildProps,
 			ShowProps:  expectedShowProps,
-			ExportName: "",
 		}
 
 		env.Client.EXPECT().Compile(compileOpts).Times(1).Return(dummyErr)
@@ -88,7 +86,6 @@ func TestCompileCore(t *testing.T) {
 			SketchPath: expectedSketch,
 			BuildProps: expectedBuildProps,
 			ShowProps:  expectedShowProps,
-			ExportName: "",
 		}
 
 		env.Client.EXPECT().Compile(compileOpts).Times(1).Return(nil)

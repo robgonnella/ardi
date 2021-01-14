@@ -27,7 +27,6 @@ func TestWatchCore(t *testing.T) {
 		SketchPath: sketch,
 		BuildProps: buildProps,
 		ShowProps:  false,
-		ExportName: "",
 	}
 
 	testutil.RunUnitTest("recompiles and reuploads on file change", t, func(env *testutil.UnitTestEnv) {

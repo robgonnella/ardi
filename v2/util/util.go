@@ -94,12 +94,19 @@ func GenArduinoCliSettings(logLevel, port, dataDir string) *types.ArduinoCliSett
 			Downloads: path.Join(dataDir, "staging"),
 			User:      path.Join(dataDir, "Arduino"),
 		},
+		Installation: types.Installation{
+			ID:     "somefancyid",
+			Secret: "somefancysecret",
+		},
+		Library: types.Library{
+			EnableUnsafeInstall: false,
+		},
 		Logging: types.Logging{
 			Level:  logLevel,
 			Format: "text",
 			File:   "",
 		},
-		Telemetry: types.Telemetry{
+		Metrics: types.Metrics{
 			Addr:    ":9090",
 			Enabled: false,
 		},
@@ -182,6 +189,17 @@ func GetAllSettings(opts GetAllSettingsOpts) (*types.ArdiConfig, *types.ArduinoC
 	cliSettings.Logging.Level = ardiConfig.Daemon.LogLevel
 
 	return ardiConfig, cliSettings
+}
+
+// GetCliSettingsPath returns path to arduino-cli.yaml based on scope
+func GetCliSettingsPath(opts GetAllSettingsOpts) string {
+	cliConf := paths.ArduinoCliProjectConfig
+
+	if opts.Global {
+		cliConf = paths.ArduinoCliGlobalConfig
+	}
+
+	return cliConf
 }
 
 // WriteAllSettings writes all settings files

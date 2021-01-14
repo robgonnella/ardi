@@ -2,6 +2,7 @@ package core
 
 import (
 	"io/ioutil"
+	"sync"
 
 	"github.com/robgonnella/ardi/v2/types"
 	"github.com/robgonnella/ardi/v2/util"
@@ -12,6 +13,7 @@ import (
 type ArdiYAML struct {
 	Config   types.ArduinoCliSettings
 	confPath string
+	mux      sync.Mutex
 }
 
 // NewArdiYAML returns core yaml module for handling data config file
@@ -19,6 +21,7 @@ func NewArdiYAML(confPath string, initalConfig types.ArduinoCliSettings) *ArdiYA
 	return &ArdiYAML{
 		Config:   initalConfig,
 		confPath: confPath,
+		mux:      sync.Mutex{},
 	}
 }
 
@@ -48,6 +51,9 @@ func (a *ArdiYAML) RemoveBoardURL(url string) error {
 
 // private methods
 func (a *ArdiYAML) write() error {
+	a.mux.Lock()
+	a.mux.Unlock()
+
 	newData, err := yaml.Marshal(a.Config)
 	if err != nil {
 		return err

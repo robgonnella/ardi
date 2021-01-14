@@ -1,4 +1,3 @@
-![V1](https://github.com/robgonnella/ardi/workflows/V1/badge.svg)<br/>
 ![V2](https://github.com/robgonnella/ardi/workflows/V2/badge.svg)
 
 # Ardi
@@ -90,8 +89,6 @@ ardi upload <name>
 ```
 
 Documentation for all commands can be found in [docs directory][docs]
-
-Documentaion for V1 can be found [here](./docs/README.md)
 
 [arduino-cli]: https://github.com/arduino/arduino-cli
 [docs]: ./v2/docs/ardi.md

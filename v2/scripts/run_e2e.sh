@@ -5,8 +5,8 @@ set -ex
 here="$( cd "$( dirname "${BASH_SOURCE[0]}" )" > /dev/null 2>&1 && pwd )"
 
 function clean_up {
-  rm -rf $here/../test_projects/pixie/build || true
-  rm -rf $here/../.ardi $here/../ardi.json || true
+  rm -rf $here/../test_projects/pixie/build
+  rm -rf $here/../.ardi $here/../ardi.json
 }
 
 trap "clean_up" EXIT
@@ -17,7 +17,7 @@ go install $here/../
 
 ardi project-init -v
 
-ardi add platforms --all -v
+ardi add platforms arduino:avr -v
 
 ardi add lib "Adafruit Pixie" -v
 
