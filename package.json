@@ -20,7 +20,7 @@
   },
   "homepage": "https://github.com/robgonnella/ardi#readme",
   "dependencies": {
-    "@actions/core": "^1.2.4",
+    "@actions/core": "^1.2.6",
     "@actions/github": "^4.0.0",
     "fast-glob": "^3.2.4",
     "mime-types": "^2.1.27"
