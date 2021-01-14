@@ -47,14 +47,6 @@ jobs:
     needs: [build_linux, build_darwin]
     steps:
       - uses: actions/checkout@v2
-      - name: Download Linux Build
-        uses: actions/download-artifact@v2
-        with:
-          name: linux_build_${{ github.run_id }}
-      - name: Download Darwin Build
-        uses: actions/download-artifact@v2
-        with:
-          name: darwin_build_${{ github.run_id }}
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
@@ -65,6 +57,14 @@ jobs:
           release_name: Release ${{ github.ref }}
           draft: false
           prerelease: false
+      - name: Download Linux Build
+        uses: actions/download-artifact@v2
+        with:
+          name: linux_build_${{ github.run_id }}
+      - name: Download Darwin Build
+        uses: actions/download-artifact@v2
+        with:
+          name: darwin_build_${{ github.run_id }}
       - name: Upload Release Assets
         id: upload_release_assets
         uses: svenstaro/upload-release-action@v2
