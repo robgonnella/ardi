@@ -67,8 +67,8 @@ jobs:
           prerelease: false
       - name: Upload Release Assets
         id: upload_release_assets
-        uses: ./
+        uses: AButler/upload-release-assets@v2.0
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          release_id: ${{ steps.create_release.outputs.id }}
-          file_pattern: '*.zip'
+          files: '*.zip'
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          release-tag: ${{ github.ref }}
