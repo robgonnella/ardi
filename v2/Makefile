@@ -76,7 +76,7 @@ test-int:
 test-e2e:
 	./scripts/run_e2e.sh
 
-test-all:
+test-all: lint
 	rm -rf test_artifacts
 	mkdir -p test_artifacts
 	go test \
@@ -86,8 +86,8 @@ test-all:
 		github.com/robgonnella/ardi/v2/core \
 		github.com/robgonnella/ardi/v2/util \
 		github.com/robgonnella/ardi/v2/commands
-	go tool cover -func test_artifacts/coverage.out
 	$(MAKE) test-e2e
+	go tool cover -func test_artifacts/coverage.out
 
 docs:
 	go run docs/gen.go

@@ -22,7 +22,7 @@ import (
 )
 
 // DefaultDaemonPort default port to run arduino-cli daemon
-const DefaultDaemonPort = "50051"
+const DefaultDaemonPort = "50052"
 
 // DefaultDaemonLogLevel default arduino-cli daemon log level
 const DefaultDaemonLogLevel = "fatal"
