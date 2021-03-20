@@ -8,18 +8,18 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/robgonnella/ardi/v2/rpc"
+	cli "github.com/robgonnella/ardi/v2/cli-wrapper"
 )
 
 // PlatformCore module for platform commands
 type PlatformCore struct {
 	logger      *log.Logger
-	client      rpc.Client
+	client      cli.Client
 	initialized bool
 }
 
 // NewPlatformCore platform module instance
-func NewPlatformCore(client rpc.Client, logger *log.Logger) *PlatformCore {
+func NewPlatformCore(client cli.Client, logger *log.Logger) *PlatformCore {
 	return &PlatformCore{
 		logger:      logger,
 		client:      client,

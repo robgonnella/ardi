@@ -23,10 +23,10 @@ func TestSearchLibCommandGlobal(t *testing.T) {
 		assert.Error(env.T, err)
 	})
 
-	testutil.RunIntegrationTest("errors if search arg not provided", t, func(env *testutil.IntegrationTestEnv) {
+	testutil.RunIntegrationTest("does not error if search arg not provided", t, func(env *testutil.IntegrationTestEnv) {
 		args := []string{"search", "libraries", "--global"}
 		err := env.Execute(args)
-		assert.Error(env.T, err)
+		assert.NoError(env.T, err)
 	})
 }
 
@@ -52,13 +52,13 @@ func TestSearchLibCommand(t *testing.T) {
 		assert.Error(env.T, err)
 	})
 
-	testutil.RunIntegrationTest("errors if search arg not provided", t, func(env *testutil.IntegrationTestEnv) {
+	testutil.RunIntegrationTest("does not error if search arg not provided", t, func(env *testutil.IntegrationTestEnv) {
 		err := env.RunProjectInit()
 		assert.NoError(env.T, err)
 
 		args := []string{"search", "libs"}
 		err = env.Execute(args)
-		assert.Error(env.T, err)
+		assert.NoError(env.T, err)
 	})
 
 	testutil.RunIntegrationTest("errors if project not initialized", t, func(env *testutil.IntegrationTestEnv) {

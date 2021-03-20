@@ -7,9 +7,9 @@ import (
 	"testing"
 	"time"
 
+	cli "github.com/robgonnella/ardi/v2/cli-wrapper"
 	"github.com/robgonnella/ardi/v2/core"
 	"github.com/robgonnella/ardi/v2/mocks"
-	"github.com/robgonnella/ardi/v2/rpc"
 	"github.com/robgonnella/ardi/v2/testutil"
 	"github.com/stretchr/testify/assert"
 )
@@ -21,7 +21,7 @@ func TestWatchCore(t *testing.T) {
 	fqbn := testutil.ArduinoMegaFQBN()
 	buildProps := []string{}
 	board := testutil.GenerateRPCBoard("arduino:avr:mega", fqbn)
-	compileOpts := rpc.CompileOpts{
+	compileOpts := cli.CompileOpts{
 		FQBN:       fqbn,
 		SketchDir:  sketchDir,
 		SketchPath: sketch,

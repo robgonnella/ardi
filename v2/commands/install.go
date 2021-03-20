@@ -13,7 +13,7 @@ func getInstallCmd() *cobra.Command {
 		Short: "Install all project dependencies",
 		Long:  "\nInstall all project dependencies",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := util.InitProjectDirectory(port); err != nil {
+			if err := util.InitProjectDirectory(); err != nil {
 				return err
 			}
 			for _, url := range ardiCore.Config.GetBoardURLS() {
@@ -36,5 +36,5 @@ func getInstallCmd() *cobra.Command {
 			return nil
 		},
 	}
-	return withRPCConnectPreRun(installCmd)
+	return installCmd
 }

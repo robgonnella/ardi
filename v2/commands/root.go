@@ -5,16 +5,14 @@ import (
 	"io/ioutil"
 	"strings"
 
+	cli "github.com/robgonnella/ardi/v2/cli-wrapper"
 	"github.com/robgonnella/ardi/v2/core"
-	"github.com/robgonnella/ardi/v2/rpc"
 	"github.com/robgonnella/ardi/v2/util"
-	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
 var logger *log.Logger
-var port string
 var verbose bool
 var quiet bool
 var global bool
@@ -54,7 +52,7 @@ func setLogger() {
 		logger.SetLevel(log.InfoLevel)
 	}
 
-	logrus.SetOutput(ioutil.Discard)
+	log.SetOutput(ioutil.Discard)
 }
 
 func cmdIsProjectInit(cmd string) bool {
@@ -89,13 +87,12 @@ func preRun(cmd *cobra.Command, args []string) error {
 	daemonLogLevel := util.GetDaemonLogLevel(logger)
 
 	if shouldShowProjectError(cmdPath) {
-		return errors.New("Not an ardi project directory. Try 'ardi project-init' or run with '--global'")
+		return errors.New("not an ardi project directory. Try 'ardi project-init' or run with '--global'")
 	}
 
 	getOpts := util.GetAllSettingsOpts{
 		Global:   useGlobal,
 		LogLevel: daemonLogLevel,
-		Port:     port,
 	}
 	ardiConfig, svrSettings := util.GetAllSettings(getOpts)
 	cliSettingsPath := util.GetCliSettingsPath(getOpts)
@@ -112,7 +109,7 @@ func preRun(cmd *cobra.Command, args []string) error {
 	}
 
 	ctx := cmd.Context()
-	client := rpc.NewClient(ctx, cliSettingsPath, svrSettings, logger)
+	client := cli.NewClient(ctx, cliSettingsPath, svrSettings, logger)
 	coreOpts := core.NewArdiCoreOpts{
 		Global:             useGlobal,
 		Logger:             logger,
@@ -125,16 +122,6 @@ func preRun(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func withRPCConnectPreRun(cmd *cobra.Command) *cobra.Command {
-	cmd.PreRunE = func(cmd *cobra.Command, args []string) error {
-		if err := ardiCore.RPCClient.Connect(); err != nil {
-			return err
-		}
-		return nil
-	}
-	return cmd
-}
-
 func getRootCommand() *cobra.Command {
 	rootCmd := &cobra.Command{
 		Use:   "ardi",
@@ -144,15 +131,11 @@ func getRootCommand() *cobra.Command {
 			"- Compile & upload sketches to connected boards\n- Watch log output from connected boards in terminal\n" +
 			"- Auto recompile / reupload on save",
 		PersistentPreRunE: preRun,
-		PersistentPostRun: func(cmd *cobra.Command, args []string) {
-			ardiCore.RPCClient.Close()
-		},
 		DisableAutoGenTag: true,
 	}
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "Print all logs")
 	rootCmd.PersistentFlags().BoolVarP(&quiet, "quiet", "q", false, "Silence all logs")
 	rootCmd.PersistentFlags().BoolVarP(&global, "global", "g", false, "Use global data directory")
-	rootCmd.PersistentFlags().StringVar(&port, "port", "", "Set port for cli daemon")
 	return rootCmd
 }
 

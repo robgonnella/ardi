@@ -16,11 +16,10 @@ Ardi is a build tool that allows you to completely manage your arduino project f
 ### Options
 
 ```
-  -g, --global        Use global data directory
-  -h, --help          help for ardi
-      --port string   Set port for cli daemon
-  -q, --quiet         Silence all logs
-  -v, --verbose       Print all logs
+  -g, --global    Use global data directory
+  -h, --help      help for ardi
+  -q, --quiet     Silence all logs
+  -v, --verbose   Print all logs
 ```
 
 ### SEE ALSO

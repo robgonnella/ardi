@@ -3,19 +3,19 @@ package core
 import (
 	"time"
 
-	"github.com/robgonnella/ardi/v2/rpc"
+	cli "github.com/robgonnella/ardi/v2/cli-wrapper"
 	log "github.com/sirupsen/logrus"
 )
 
 // UploadCore represents core module for ardi upload commands
 type UploadCore struct {
 	logger    *log.Logger
-	client    rpc.Client
+	client    cli.Client
 	uploading bool
 }
 
 // NewUploadCore returns new ardi upload core
-func NewUploadCore(client rpc.Client, logger *log.Logger) *UploadCore {
+func NewUploadCore(client cli.Client, logger *log.Logger) *UploadCore {
 	return &UploadCore{
 		client:    client,
 		logger:    logger,
@@ -24,7 +24,7 @@ func NewUploadCore(client rpc.Client, logger *log.Logger) *UploadCore {
 }
 
 // Upload compiled sketches to the specified board
-func (u *UploadCore) Upload(board *rpc.Board, buildDir string) error {
+func (u *UploadCore) Upload(board *cli.Board, buildDir string) error {
 	fqbn := board.FQBN
 	device := board.Port
 

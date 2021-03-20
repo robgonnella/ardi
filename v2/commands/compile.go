@@ -20,13 +20,14 @@ func getCompileCmd() *cobra.Command {
 			"unspecified, a list of available choices will be be printed. If the " +
 			"sketch argument matches a user defined build in ardi.json, the values " +
 			"defined in build will be used to compile",
-		Short: "Compile specified sketch or build(s)",
+		Short:   "Compile specified sketch or build(s)",
+		Aliases: []string{"build"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ardiBuilds := ardiCore.Config.GetBuilds()
 
 			if all {
 				if watch {
-					return errors.New("Cannot watch all builds. You can only watch one build at a time")
+					return errors.New("cannot watch all builds. You can only watch one build at a time")
 				}
 				for name := range ardiBuilds {
 					buildOpts := core.CompileArdiBuildOpts{
@@ -94,7 +95,7 @@ func getCompileCmd() *cobra.Command {
 			}
 
 			if watch {
-				return errors.New("Cannot specifify watch with mutiple builds. You can only watch one build at a time")
+				return errors.New("cannot specifify watch with mutiple builds. You can only watch one build at a time")
 			}
 
 			for _, buildName := range args {
@@ -116,5 +117,5 @@ func getCompileCmd() *cobra.Command {
 	compileCmd.Flags().BoolVarP(&showProps, "show-props", "s", false, "Show all build properties (does not compile)")
 	compileCmd.Flags().BoolVarP(&watch, "watch", "w", false, "Watch sketch file for changes and recompile")
 
-	return withRPCConnectPreRun(compileCmd)
+	return compileCmd
 }

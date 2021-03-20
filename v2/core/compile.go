@@ -5,18 +5,18 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/robgonnella/ardi/v2/rpc"
+	cli "github.com/robgonnella/ardi/v2/cli-wrapper"
 )
 
 // CompileCore represents core module for compile commands
 type CompileCore struct {
 	logger    *log.Logger
-	client    rpc.Client
+	client    cli.Client
 	compiling bool
 }
 
 // NewCompileCore instance of core module for compile commands
-func NewCompileCore(client rpc.Client, logger *log.Logger) *CompileCore {
+func NewCompileCore(client cli.Client, logger *log.Logger) *CompileCore {
 	return &CompileCore{
 		logger:    logger,
 		client:    client,
@@ -25,7 +25,7 @@ func NewCompileCore(client rpc.Client, logger *log.Logger) *CompileCore {
 }
 
 // Compile compiles a given project sketch
-func (c *CompileCore) Compile(opts rpc.CompileOpts) error {
+func (c *CompileCore) Compile(opts cli.CompileOpts) error {
 	c.waitForCompilationsToFinish()
 	c.compiling = true
 	if err := c.client.Compile(opts); err != nil {
@@ -37,7 +37,7 @@ func (c *CompileCore) Compile(opts rpc.CompileOpts) error {
 }
 
 // WatchForChanges watches sketch for changes and recompiles
-func (c *CompileCore) WatchForChanges(opts rpc.CompileOpts) error {
+func (c *CompileCore) WatchForChanges(opts cli.CompileOpts) error {
 	watcher, err := NewFileWatcher(opts.SketchPath, c.logger)
 	if err != nil {
 		return nil

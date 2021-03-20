@@ -11,7 +11,7 @@ import (
 
 func TestArduinoCliConfig(t *testing.T) {
 	testutil.RunUnitTest("adds and removes board urls", t, func(env *testutil.UnitTestEnv) {
-		util.InitProjectDirectory("2222")
+		util.InitProjectDirectory()
 
 		boardURL := "https://somefakeboardurl.com"
 		err := env.ArdiCore.CliConfig.AddBoardURL(boardURL)

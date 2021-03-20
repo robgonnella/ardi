@@ -16,7 +16,7 @@ func getSearchPlatformCmd() *cobra.Command {
 			return nil
 		},
 	}
-	return withRPCConnectPreRun(searchCmd)
+	return searchCmd
 }
 
 func getSearchLibCmd() *cobra.Command {
@@ -36,7 +36,7 @@ func getSearchLibCmd() *cobra.Command {
 			return nil
 		},
 	}
-	return withRPCConnectPreRun(searchCmd)
+	return searchCmd
 }
 
 func getSearchCmd() *cobra.Command {

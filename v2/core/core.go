@@ -6,8 +6,8 @@ import (
 	"sort"
 	"text/tabwriter"
 
+	cli "github.com/robgonnella/ardi/v2/cli-wrapper"
 	"github.com/robgonnella/ardi/v2/paths"
-	"github.com/robgonnella/ardi/v2/rpc"
 	"github.com/robgonnella/ardi/v2/types"
 	"github.com/robgonnella/ardi/v2/util"
 	"github.com/sirupsen/logrus"
@@ -16,7 +16,7 @@ import (
 
 // ArdiCore represents the core package of ardi
 type ArdiCore struct {
-	RPCClient rpc.Client
+	RPCClient cli.Client
 	Config    *ArdiConfig
 	CliConfig *ArdiYAML
 	Watcher   *WatchCore
@@ -33,7 +33,7 @@ type NewArdiCoreOpts struct {
 	Global             bool
 	ArdiConfig         types.ArdiConfig
 	ArduinoCliSettings types.ArduinoCliSettings
-	Client             rpc.Client
+	Client             cli.Client
 	Logger             *log.Logger
 }
 
@@ -83,7 +83,7 @@ func NewArdiCore(opts NewArdiCoreOpts) *ArdiCore {
 }
 
 // CompileArdiBuild compiles specified build from ardi.json
-func (c *ArdiCore) CompileArdiBuild(buildOpts CompileArdiBuildOpts) (*rpc.CompileOpts, *rpc.Board, error) {
+func (c *ArdiCore) CompileArdiBuild(buildOpts CompileArdiBuildOpts) (*cli.CompileOpts, *cli.Board, error) {
 	compileOpts, err := c.Config.GetCompileOpts(buildOpts.BuildName)
 	if err != nil {
 		return nil, nil, err
@@ -105,7 +105,7 @@ func (c *ArdiCore) CompileArdiBuild(buildOpts CompileArdiBuildOpts) (*rpc.Compil
 }
 
 // CompileSketch compiles specified sketch directory or sketch file
-func (c *ArdiCore) CompileSketch(sketchOpts CompileSketchOpts) (*rpc.CompileOpts, *rpc.Board, error) {
+func (c *ArdiCore) CompileSketch(sketchOpts CompileSketchOpts) (*cli.CompileOpts, *cli.Board, error) {
 
 	board, err := c.GetTargetBoard(sketchOpts.FQBN, sketchOpts.OnlyConnectedBoards)
 	if err != nil {
@@ -117,7 +117,7 @@ func (c *ArdiCore) CompileSketch(sketchOpts CompileSketchOpts) (*rpc.CompileOpts
 		return nil, nil, err
 	}
 
-	compileOpts := rpc.CompileOpts{
+	compileOpts := cli.CompileOpts{
 		FQBN:       board.FQBN,
 		SketchDir:  project.Directory,
 		SketchPath: project.Sketch,
@@ -137,7 +137,7 @@ func (c *ArdiCore) CompileSketch(sketchOpts CompileSketchOpts) (*rpc.CompileOpts
 }
 
 // GetTargetBoard returns target info for a connected & disconnected boards
-func (c *ArdiCore) GetTargetBoard(fqbn string, onlyConnected bool) (*rpc.Board, error) {
+func (c *ArdiCore) GetTargetBoard(fqbn string, onlyConnected bool) (*cli.Board, error) {
 	fqbnErr := errors.New("you must specify a board fqbn to compile - you can find a list of board fqbns for installed platforms above")
 	connectedBoardsErr := errors.New("No connected boards detected")
 	connectedBoards := c.RPCClient.ConnectedBoards()
@@ -152,7 +152,7 @@ func (c *ArdiCore) GetTargetBoard(fqbn string, onlyConnected bool) (*rpc.Board, 
 			}
 			return nil, connectedBoardsErr
 		}
-		return &rpc.Board{FQBN: fqbn}, nil
+		return &cli.Board{FQBN: fqbn}, nil
 	}
 
 	if len(connectedBoards) == 0 {
@@ -176,7 +176,7 @@ func (c *ArdiCore) GetTargetBoard(fqbn string, onlyConnected bool) (*rpc.Board, 
 }
 
 // private helpers
-func (c *ArdiCore) printFQBNs(boardList []*rpc.Board, logger *log.Logger) {
+func (c *ArdiCore) printFQBNs(boardList []*cli.Board, logger *log.Logger) {
 	sort.Slice(boardList, func(i, j int) bool {
 		return boardList[i].Name < boardList[j].Name
 	})
@@ -184,7 +184,7 @@ func (c *ArdiCore) printFQBNs(boardList []*rpc.Board, logger *log.Logger) {
 	c.printBoardsWithIndices(boardList, logger)
 }
 
-func (c *ArdiCore) printBoardsWithIndices(boards []*rpc.Board, logger *log.Logger) {
+func (c *ArdiCore) printBoardsWithIndices(boards []*cli.Board, logger *log.Logger) {
 	w := tabwriter.NewWriter(logger.Out, 0, 0, 8, ' ', 0)
 	defer w.Flush()
 	w.Write([]byte("No.\tName\tFQBN\n"))

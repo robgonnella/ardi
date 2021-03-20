@@ -15,14 +15,13 @@ import (
 	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 
+	cli "github.com/robgonnella/ardi/v2/cli-wrapper"
 	"github.com/robgonnella/ardi/v2/commands"
 	"github.com/robgonnella/ardi/v2/core"
 	"github.com/robgonnella/ardi/v2/mocks"
-	"github.com/robgonnella/ardi/v2/rpc"
 	"github.com/robgonnella/ardi/v2/util"
 )
 
-var port = 3000
 var here string
 var userHome string
 
@@ -137,11 +136,11 @@ func GenerateCmdPlatform(name string, boards []*rpccommands.Board) *rpccommands.
 }
 
 // GenerateRPCBoard returns a single ardi rpc Board
-func GenerateRPCBoard(name, fqbn string) *rpc.Board {
+func GenerateRPCBoard(name, fqbn string) *cli.Board {
 	if fqbn == "" {
 		fqbn = fmt.Sprintf("%s-fqbn", name)
 	}
-	return &rpc.Board{
+	return &cli.Board{
 		Name: name,
 		FQBN: fqbn,
 		Port: "/dev/null",
@@ -149,8 +148,8 @@ func GenerateRPCBoard(name, fqbn string) *rpc.Board {
 }
 
 // GenerateRPCBoards generate a list of ardi rpc boards
-func GenerateRPCBoards(n int) []*rpc.Board {
-	var boards []*rpc.Board
+func GenerateRPCBoards(n int) []*cli.Board {
+	var boards []*cli.Board
 	for i := 0; i < n; i++ {
 		name := fmt.Sprintf("test-board-%02d", i)
 		b := GenerateRPCBoard(name, "")
@@ -197,7 +196,6 @@ func RunUnitTest(name string, t *testing.T, f func(env *UnitTestEnv)) {
 		opts := util.GetAllSettingsOpts{
 			Global:   false,
 			LogLevel: "debug",
-			Port:     "2222",
 		}
 		ardiConfig, svrSettings := util.GetAllSettings(opts)
 
@@ -239,7 +237,7 @@ func RunIntegrationTest(name string, t *testing.T, f func(env *IntegrationTestEn
 		var b bytes.Buffer
 		logger := log.New()
 		logger.Out = &b
-		logger.SetLevel(log.DebugLevel)
+		logger.SetLevel(log.InfoLevel)
 
 		env := IntegrationTestEnv{
 			T:      st,
@@ -262,11 +260,6 @@ func (e *IntegrationTestEnv) RunProjectInit() error {
 func (e *IntegrationTestEnv) Execute(args []string) error {
 	rootCmd := commands.GetRootCmd(e.logger)
 	rootCmd.SetOut(e.logger.Out)
-
-	port = port + 1
-	args = append(args, "--verbose")
-	args = append(args, "--port")
-	args = append(args, fmt.Sprintf("%d", port))
 	rootCmd.SetArgs(args)
 
 	ctx, cancel := context.WithCancel(context.Background())

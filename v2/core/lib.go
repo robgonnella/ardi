@@ -8,18 +8,18 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/robgonnella/ardi/v2/rpc"
+	cli "github.com/robgonnella/ardi/v2/cli-wrapper"
 )
 
 // LibCore core module for lib commands
 type LibCore struct {
 	logger      *log.Logger
-	client      rpc.Client
+	client      cli.Client
 	initialized bool
 }
 
 // NewLibCore Lib instance
-func NewLibCore(client rpc.Client, logger *log.Logger) *LibCore {
+func NewLibCore(client cli.Client, logger *log.Logger) *LibCore {
 	return &LibCore{
 		logger:      logger,
 		client:      client,

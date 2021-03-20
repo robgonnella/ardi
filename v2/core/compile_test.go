@@ -10,7 +10,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/robgonnella/ardi/v2/rpc"
+	cli "github.com/robgonnella/ardi/v2/cli-wrapper"
 	"github.com/robgonnella/ardi/v2/testutil"
 )
 
@@ -23,7 +23,7 @@ func TestCompileCore(t *testing.T) {
 		expectedBuildProps := []string{"build.extra_flags='-DSOME_OPTION'"}
 		expectedShowProps := false
 
-		compileOpts := rpc.CompileOpts{
+		compileOpts := cli.CompileOpts{
 			FQBN:       expectedFqbn,
 			SketchDir:  projectDir,
 			SketchPath: expectedSketch,
@@ -46,7 +46,7 @@ func TestCompileCore(t *testing.T) {
 		expectedBuildProps := []string{"build.extra_flags='-DSOME_OPTION'"}
 		expectedShowProps := false
 
-		compileOpts := rpc.CompileOpts{
+		compileOpts := cli.CompileOpts{
 			FQBN:       expectedFqbn,
 			SketchDir:  projectDir,
 			SketchPath: expectedSketch,
@@ -80,7 +80,7 @@ func TestCompileCore(t *testing.T) {
 		expectedBuildProps := []string{"build.extra_flags='-DSOME_OPTION'"}
 		expectedShowProps := false
 
-		compileOpts := rpc.CompileOpts{
+		compileOpts := cli.CompileOpts{
 			FQBN:       expectedFqbn,
 			SketchDir:  projectDir,
 			SketchPath: expectedSketch,
