@@ -65,5 +65,5 @@ func getUploadCmd() *cobra.Command {
 	}
 	uploadCmd.Flags().BoolVarP(&attach, "attach", "a", false, "Attach to board port and print logs")
 
-	return withRPCConnectPreRun(uploadCmd)
+	return uploadCmd
 }

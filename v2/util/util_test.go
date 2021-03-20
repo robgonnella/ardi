@@ -94,11 +94,9 @@ func TestUtilArduinoCliSettings(t *testing.T) {
 	t.Run("returns settings from file", func(st *testing.T) {
 		conf := "success-conf"
 		level := "debug"
-		port := "1234"
 		dataDir := "."
-		expected := util.GenArduinoCliSettings(level, port, dataDir)
+		expected := util.GenArduinoCliSettings(level, dataDir)
 		assert.Equal(st, expected.Logging.Level, level)
-		assert.Equal(st, expected.Daemon.Port, port)
 		assert.Equal(st, expected.Directories.Data, dataDir)
 		assert.Equal(st, expected.Directories.Downloads, path.Join(dataDir, "staging"))
 		assert.Equal(st, expected.Directories.User, path.Join(dataDir, "Arduino"))
@@ -153,10 +151,8 @@ func TestUtilArdiConfig(t *testing.T) {
 	t.Run("returns settings from file", func(st *testing.T) {
 		conf := "ardi-success-conf"
 		level := "debug"
-		port := "4321"
-		expected := util.GenArdiConfig(level, port)
+		expected := util.GenArdiConfig(level)
 		assert.Equal(st, expected.Daemon.LogLevel, level)
-		assert.Equal(st, expected.Daemon.Port, port)
 
 		byteData, err := json.Marshal(expected)
 		assert.NoError(st, err)
@@ -174,16 +170,14 @@ func TestUtilGetAllSettings(t *testing.T) {
 	t.Run("returns default settings if project files not found", func(st *testing.T) {
 		dataDir := paths.ArdiProjectDataDir
 		level := "fancy-log-level"
-		port := "fancy-port"
 		os.RemoveAll(dataDir)
 
-		expectedConfig := util.GenArdiConfig(level, port)
-		expectedSettings := util.GenArduinoCliSettings(level, port, dataDir)
+		expectedConfig := util.GenArdiConfig(level)
+		expectedSettings := util.GenArduinoCliSettings(level, dataDir)
 
 		opts := util.GetAllSettingsOpts{
 			Global:   false,
 			LogLevel: level,
-			Port:     port,
 		}
 		config, settings := util.GetAllSettings(opts)
 		assert.Equal(st, expectedConfig, config)
@@ -193,9 +187,8 @@ func TestUtilGetAllSettings(t *testing.T) {
 	t.Run("returns settings from project files", func(st *testing.T) {
 		dataDir := paths.ArdiProjectDataDir
 		level := "fancy-log-level"
-		port := "fancy-port"
-		expectedConfig := util.GenArdiConfig(level, port)
-		expectedSettings := util.GenArduinoCliSettings(level, port, dataDir)
+		expectedConfig := util.GenArdiConfig(level)
+		expectedSettings := util.GenArduinoCliSettings(level, dataDir)
 
 		os.RemoveAll(dataDir)
 
@@ -213,7 +206,6 @@ func TestUtilGetAllSettings(t *testing.T) {
 		opts := util.GetAllSettingsOpts{
 			Global:   false,
 			LogLevel: level,
-			Port:     port,
 		}
 
 		config, settings := util.GetAllSettings(opts)
@@ -227,16 +219,14 @@ func TestUtilGetAllSettings(t *testing.T) {
 	t.Run("returns default settings if global files not found", func(st *testing.T) {
 		dataDir := paths.ArdiGlobalDataDir
 		level := "fancy-log-level"
-		port := "fancy-port"
 		os.RemoveAll(dataDir)
 
-		expectedConfig := util.GenArdiConfig(level, port)
-		expectedSettings := util.GenArduinoCliSettings(level, port, dataDir)
+		expectedConfig := util.GenArdiConfig(level)
+		expectedSettings := util.GenArduinoCliSettings(level, dataDir)
 
 		opts := util.GetAllSettingsOpts{
 			Global:   true,
 			LogLevel: level,
-			Port:     port,
 		}
 		config, settings := util.GetAllSettings(opts)
 		assert.Equal(st, expectedConfig, config)
@@ -246,9 +236,8 @@ func TestUtilGetAllSettings(t *testing.T) {
 	t.Run("returns settings from global files", func(st *testing.T) {
 		dataDir := paths.ArdiGlobalDataDir
 		level := "fancy-log-level"
-		port := "fancy-port"
-		expectedConfig := util.GenArdiConfig(level, port)
-		expectedSettings := util.GenArduinoCliSettings(level, port, dataDir)
+		expectedConfig := util.GenArdiConfig(level)
+		expectedSettings := util.GenArduinoCliSettings(level, dataDir)
 
 		os.RemoveAll(dataDir)
 
@@ -266,7 +255,6 @@ func TestUtilGetAllSettings(t *testing.T) {
 		opts := util.GetAllSettingsOpts{
 			Global:   true,
 			LogLevel: level,
-			Port:     port,
 		}
 		config, settings := util.GetAllSettings(opts)
 		assert.Equal(st, expectedConfig, config)
@@ -281,8 +269,7 @@ func TestUtilInitProjectDirectory(t *testing.T) {
 		os.RemoveAll(paths.ArdiProjectDataDir)
 		os.RemoveAll(paths.ArdiProjectConfig)
 
-		port := "8393"
-		err := util.InitProjectDirectory(port)
+		err := util.InitProjectDirectory()
 		assert.NoError(st, err)
 		assert.DirExists(st, paths.ArdiProjectDataDir)
 		assert.FileExists(st, paths.ArdiProjectConfig)

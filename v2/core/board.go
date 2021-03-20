@@ -9,17 +9,17 @@ import (
 	"github.com/arduino/arduino-cli/rpc/commands"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/robgonnella/ardi/v2/rpc"
+	cli "github.com/robgonnella/ardi/v2/cli-wrapper"
 )
 
 // BoardCore module for board commands
 type BoardCore struct {
-	client rpc.Client
+	client cli.Client
 	logger *log.Logger
 }
 
 // NewBoardCore module instance for board commands
-func NewBoardCore(client rpc.Client, logger *log.Logger) *BoardCore {
+func NewBoardCore(client cli.Client, logger *log.Logger) *BoardCore {
 	return &BoardCore{
 		logger: logger,
 		client: client,

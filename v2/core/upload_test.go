@@ -4,8 +4,8 @@ import (
 	"errors"
 	"testing"
 
+	cli "github.com/robgonnella/ardi/v2/cli-wrapper"
 	"github.com/robgonnella/ardi/v2/mocks"
-	"github.com/robgonnella/ardi/v2/rpc"
 	"github.com/robgonnella/ardi/v2/testutil"
 	"github.com/stretchr/testify/assert"
 )
@@ -13,10 +13,10 @@ import (
 func TestUploadCore(t *testing.T) {
 	testutil.RunUnitTest("returns nil on success ", t, func(env *testutil.UnitTestEnv) {
 		connectedBoard := testutil.GenerateRPCBoard("someboard", "somefqbn")
-		connectedBoards := []*rpc.Board{connectedBoard}
+		connectedBoards := []*cli.Board{connectedBoard}
 
 		env.Client.EXPECT().ConnectedBoards().Times(1).Return(connectedBoards)
-		env.Client.EXPECT().AllBoards().Times(1).Return([]*rpc.Board{})
+		env.Client.EXPECT().AllBoards().Times(1).Return([]*cli.Board{})
 
 		env.ClearStdout()
 		board, err := env.ArdiCore.GetTargetBoard("", true)
@@ -31,10 +31,10 @@ func TestUploadCore(t *testing.T) {
 	testutil.RunUnitTest("returns upload error", t, func(env *testutil.UnitTestEnv) {
 		dummyErr := errors.New("dummy error")
 		connectedBoard := testutil.GenerateRPCBoard("someboard", "somefqbn")
-		connectedBoards := []*rpc.Board{connectedBoard}
+		connectedBoards := []*cli.Board{connectedBoard}
 
 		env.Client.EXPECT().ConnectedBoards().Times(1).Return(connectedBoards)
-		env.Client.EXPECT().AllBoards().Times(1).Return([]*rpc.Board{})
+		env.Client.EXPECT().AllBoards().Times(1).Return([]*cli.Board{})
 
 		env.ClearStdout()
 		board, err := env.ArdiCore.GetTargetBoard("", true)

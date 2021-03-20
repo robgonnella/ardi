@@ -31,7 +31,6 @@ const DefaultDaemonLogLevel = "fatal"
 type GetAllSettingsOpts struct {
 	Global   bool
 	LogLevel string
-	Port     string
 }
 
 // WriteSettingsOpts options for writing all settings to file
@@ -83,11 +82,11 @@ func ReadArduinoCliSettings(confPath string) (*types.ArduinoCliSettings, error) 
 }
 
 // GenArduinoCliSettings generated data config file with default values
-func GenArduinoCliSettings(logLevel, port, dataDir string) *types.ArduinoCliSettings {
+func GenArduinoCliSettings(logLevel, dataDir string) *types.ArduinoCliSettings {
 	return &types.ArduinoCliSettings{
 		BoardManager: types.BoardManager{AdditionalUrls: []string{}},
 		Daemon: types.Daemon{
-			Port: port,
+			Port: "",
 		},
 		Directories: types.Directories{
 			Data:      dataDir,
@@ -114,10 +113,10 @@ func GenArduinoCliSettings(logLevel, port, dataDir string) *types.ArduinoCliSett
 }
 
 // GenArdiConfig returns default ardi.json in current directory
-func GenArdiConfig(logLevel, port string) *types.ArdiConfig {
+func GenArdiConfig(logLevel string) *types.ArdiConfig {
 	return &types.ArdiConfig{
 		Daemon: types.ArdiDaemonConfig{
-			Port:     port,
+			Port:     "",
 			LogLevel: logLevel,
 		},
 		Platforms: make(map[string]string),
@@ -153,7 +152,6 @@ func GetAllSettings(opts GetAllSettingsOpts) (*types.ArdiConfig, *types.ArduinoC
 	var ardiConfig *types.ArdiConfig
 	var cliSettings *types.ArduinoCliSettings
 	logLevel := opts.LogLevel
-	port := opts.Port
 
 	dataDir := paths.ArdiProjectDataDir
 	ardiConf := paths.ArdiProjectConfig
@@ -166,24 +164,15 @@ func GetAllSettings(opts GetAllSettingsOpts) (*types.ArdiConfig, *types.ArduinoC
 	}
 
 	if _, err := os.Stat(ardiConf); os.IsNotExist(err) {
-		ardiConfig = GenArdiConfig(logLevel, port)
+		ardiConfig = GenArdiConfig(logLevel)
 	} else if ardiConfig, err = ReadArdiConfig(ardiConf); err != nil {
-		ardiConfig = GenArdiConfig(logLevel, port)
-	}
-	if port != "" {
-		ardiConfig.Daemon.Port = port
-	}
-	if ardiConfig.Daemon.Port == "" {
-		ardiConfig.Daemon.Port = DefaultDaemonPort
-	}
-	if ardiConfig.Daemon.LogLevel == "" {
-		ardiConfig.Daemon.LogLevel = DefaultDaemonLogLevel
+		ardiConfig = GenArdiConfig(logLevel)
 	}
 
 	if _, err := os.Stat(cliConf); os.IsNotExist(err) {
-		cliSettings = GenArduinoCliSettings(ardiConfig.Daemon.LogLevel, ardiConfig.Daemon.Port, dataDir)
+		cliSettings = GenArduinoCliSettings(ardiConfig.Daemon.LogLevel, dataDir)
 	} else if cliSettings, err = ReadArduinoCliSettings(cliConf); err != nil {
-		cliSettings = GenArduinoCliSettings(ardiConfig.Daemon.LogLevel, ardiConfig.Daemon.Port, dataDir)
+		cliSettings = GenArduinoCliSettings(ardiConfig.Daemon.LogLevel, dataDir)
 	}
 	cliSettings.Daemon.Port = ardiConfig.Daemon.Port
 	cliSettings.Logging.Level = ardiConfig.Daemon.LogLevel
@@ -236,11 +225,10 @@ func WriteAllSettings(opts WriteSettingsOpts) error {
 }
 
 // InitProjectDirectory initializes a directory as an ardi project
-func InitProjectDirectory(port string) error {
+func InitProjectDirectory() error {
 	getOpts := GetAllSettingsOpts{
 		Global:   false,
 		LogLevel: "fatal",
-		Port:     port,
 	}
 	ardiConfig, cliSettings := GetAllSettings(getOpts)
 

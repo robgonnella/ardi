@@ -11,7 +11,7 @@ func getProjectInitCmd() *cobra.Command {
 		Short: "Initialize directory as an ardi project",
 		Long:  "\nInitialize directory as an ardi project",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return util.InitProjectDirectory(port)
+			return util.InitProjectDirectory()
 		},
 	}
 

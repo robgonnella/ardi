@@ -4,7 +4,7 @@ import (
 	"path"
 	"testing"
 
-	"github.com/robgonnella/ardi/v2/rpc"
+	cli "github.com/robgonnella/ardi/v2/cli-wrapper"
 	"github.com/robgonnella/ardi/v2/testutil"
 	"github.com/robgonnella/ardi/v2/util"
 	"github.com/stretchr/testify/assert"
@@ -12,7 +12,7 @@ import (
 
 func TestArdiConfigBuilds(t *testing.T) {
 	testutil.RunUnitTest("adds, lists, and removes builds", t, func(env *testutil.UnitTestEnv) {
-		util.InitProjectDirectory("2222")
+		util.InitProjectDirectory()
 		name := "somename"
 		dir := testutil.BlinkProjectDir()
 		fqbn := "somefqbn"
@@ -48,7 +48,7 @@ func TestArdiConfigBuilds(t *testing.T) {
 
 func TestArdiConfigBoardURLS(t *testing.T) {
 	testutil.RunUnitTest("adds, lists, and removes board urls", t, func(env *testutil.UnitTestEnv) {
-		util.InitProjectDirectory("2222")
+		util.InitProjectDirectory()
 		url := "https://someboardurl.com"
 
 		err := env.ArdiCore.Config.AddBoardURL(url)
@@ -70,7 +70,7 @@ func TestArdiConfigBoardURLS(t *testing.T) {
 
 func TestArdiConfigPlatform(t *testing.T) {
 	testutil.RunUnitTest("adds, lists, and removes platforms", t, func(env *testutil.UnitTestEnv) {
-		util.InitProjectDirectory("2222")
+		util.InitProjectDirectory()
 		platform := "someplatform"
 		vers := "1.4.3"
 
@@ -96,7 +96,7 @@ func TestArdiConfigPlatform(t *testing.T) {
 
 func TestArdiConfigLibraries(t *testing.T) {
 	testutil.RunUnitTest("adds, lists, and removes libraries", t, func(env *testutil.UnitTestEnv) {
-		util.InitProjectDirectory("2222")
+		util.InitProjectDirectory()
 		lib := "somelibrary"
 		vers := "1.2.3"
 
@@ -122,12 +122,12 @@ func TestArdiConfigLibraries(t *testing.T) {
 
 func TestArdiConfigCompileOpts(t *testing.T) {
 	testutil.RunUnitTest("returns compile options for build", t, func(env *testutil.UnitTestEnv) {
-		util.InitProjectDirectory("2222")
+		util.InitProjectDirectory()
 		name := "somename"
 		dir := testutil.BlinkProjectDir()
 		fqbn := "somefqbn"
 		buildProps := []string{"someprop=somevalue"}
-		expectedOpts := &rpc.CompileOpts{
+		expectedOpts := &cli.CompileOpts{
 			SketchDir:  dir,
 			SketchPath: path.Join(dir, "blink.ino"),
 			FQBN:       fqbn,

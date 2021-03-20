@@ -4,16 +4,16 @@ import (
 	"path"
 	"testing"
 
+	cli "github.com/robgonnella/ardi/v2/cli-wrapper"
 	"github.com/robgonnella/ardi/v2/core"
-	"github.com/robgonnella/ardi/v2/rpc"
 	"github.com/robgonnella/ardi/v2/testutil"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestArdiCore(t *testing.T) {
 	testutil.RunUnitTest("returns target if fqbn provided and onlyConnected false", t, func(env *testutil.UnitTestEnv) {
-		connectedBoards := []*rpc.Board{}
-		allBoards := []*rpc.Board{}
+		connectedBoards := []*cli.Board{}
+		allBoards := []*cli.Board{}
 		fqbn := "someboardfqbn"
 
 		env.Client.EXPECT().ConnectedBoards().Times(1).Return(connectedBoards)
@@ -28,8 +28,8 @@ func TestArdiCore(t *testing.T) {
 		boardName := "someboardname"
 		fqbn := "someboardfqbn"
 		connectedBoard := testutil.GenerateRPCBoard(boardName, fqbn)
-		connectedBoards := []*rpc.Board{connectedBoard}
-		allBoards := []*rpc.Board{}
+		connectedBoards := []*cli.Board{connectedBoard}
+		allBoards := []*cli.Board{}
 
 		env.Client.EXPECT().ConnectedBoards().Times(1).Return(connectedBoards)
 		env.Client.EXPECT().AllBoards().Times(1).Return(allBoards)
@@ -41,8 +41,8 @@ func TestArdiCore(t *testing.T) {
 
 	testutil.RunUnitTest("errors if fqbn provided and onlyConnected true and board not connected", t, func(env *testutil.UnitTestEnv) {
 		fqbn := "someboardfqbn"
-		connectedBoards := []*rpc.Board{}
-		allBoards := []*rpc.Board{}
+		connectedBoards := []*cli.Board{}
+		allBoards := []*cli.Board{}
 
 		env.Client.EXPECT().ConnectedBoards().Times(1).Return(connectedBoards)
 		env.Client.EXPECT().AllBoards().Times(1).Return(allBoards)
@@ -56,8 +56,8 @@ func TestArdiCore(t *testing.T) {
 		boardName := "somboardname"
 		boardFQBN := "someboardfqbn"
 		connectedBoard := testutil.GenerateRPCBoard(boardName, boardFQBN)
-		connectedBoards := []*rpc.Board{connectedBoard}
-		allBoards := []*rpc.Board{}
+		connectedBoards := []*cli.Board{connectedBoard}
+		allBoards := []*cli.Board{}
 
 		env.Client.EXPECT().ConnectedBoards().Times(1).Return(connectedBoards)
 		env.Client.EXPECT().AllBoards().Times(1).Return(allBoards)
@@ -75,8 +75,8 @@ func TestArdiCore(t *testing.T) {
 		board2FQBN := "someotherboardfqbn"
 		connectedBoard1 := testutil.GenerateRPCBoard(board1Name, board1FQBN)
 		connectedBoard2 := testutil.GenerateRPCBoard(board2Name, board2FQBN)
-		connectedBoards := []*rpc.Board{connectedBoard1, connectedBoard2}
-		allBoards := []*rpc.Board{}
+		connectedBoards := []*cli.Board{connectedBoard1, connectedBoard2}
+		allBoards := []*cli.Board{}
 
 		env.Client.EXPECT().ConnectedBoards().Times(1).Return(connectedBoards)
 		env.Client.EXPECT().AllBoards().Times(1).Return(allBoards)
@@ -96,10 +96,10 @@ func TestArdiCore(t *testing.T) {
 	testutil.RunUnitTest("returns error and prints all available boards if no connected boards found", t, func(env *testutil.UnitTestEnv) {
 		otherBoardName := "someotherboardname"
 		otherBoardFQBN := "someotherboardfqbn"
-		connectedBoards := []*rpc.Board{}
+		connectedBoards := []*cli.Board{}
 
 		otherBoard := testutil.GenerateRPCBoard(otherBoardName, otherBoardFQBN)
-		allBoards := []*rpc.Board{otherBoard}
+		allBoards := []*cli.Board{otherBoard}
 
 		env.Client.EXPECT().ConnectedBoards().Times(1).Return(connectedBoards)
 		env.Client.EXPECT().AllBoards().Times(1).Return(allBoards)
@@ -115,12 +115,12 @@ func TestArdiCore(t *testing.T) {
 	})
 
 	testutil.RunUnitTest("returns error and does not print available boards if only connected specified", t, func(env *testutil.UnitTestEnv) {
-		connectedBoards := []*rpc.Board{}
+		connectedBoards := []*cli.Board{}
 
 		otherBoardName := "someotherboardname"
 		otherBoardFQBN := "someotherboardfqbn"
 		otherBoard := testutil.GenerateRPCBoard(otherBoardName, otherBoardFQBN)
-		allBoards := []*rpc.Board{otherBoard}
+		allBoards := []*cli.Board{otherBoard}
 
 		env.Client.EXPECT().ConnectedBoards().Times(1).Return(connectedBoards)
 		env.Client.EXPECT().AllBoards().Times(1).Return(allBoards)
@@ -136,8 +136,8 @@ func TestArdiCore(t *testing.T) {
 	})
 
 	testutil.RunUnitTest("compiles ardi build", t, func(env *testutil.UnitTestEnv) {
-		connectedBoards := []*rpc.Board{}
-		allBoards := []*rpc.Board{}
+		connectedBoards := []*cli.Board{}
+		allBoards := []*cli.Board{}
 		buildName := "somebuild"
 		sketch := path.Join(testutil.BlinkProjectDir(), "blink.ino")
 		fqbn := "someboardfqbn"
@@ -153,7 +153,7 @@ func TestArdiCore(t *testing.T) {
 			OnlyConnectedBoards: false,
 		}
 
-		expectedCompileOpts := rpc.CompileOpts{
+		expectedCompileOpts := cli.CompileOpts{
 			FQBN:       fqbn,
 			SketchDir:  testutil.BlinkProjectDir(),
 			SketchPath: sketch,
@@ -170,8 +170,8 @@ func TestArdiCore(t *testing.T) {
 	})
 
 	testutil.RunUnitTest("errors compiling ardi build when onlyConnectedBoards is true", t, func(env *testutil.UnitTestEnv) {
-		connectedBoards := []*rpc.Board{}
-		allBoards := []*rpc.Board{}
+		connectedBoards := []*cli.Board{}
+		allBoards := []*cli.Board{}
 		buildName := "somebuild"
 		sketch := path.Join(testutil.BlinkProjectDir(), "blink.ino")
 		fqbn := "someboardfqbn"
@@ -194,8 +194,8 @@ func TestArdiCore(t *testing.T) {
 	})
 
 	testutil.RunUnitTest("compiles sketch", t, func(env *testutil.UnitTestEnv) {
-		connectedBoards := []*rpc.Board{}
-		allBoards := []*rpc.Board{}
+		connectedBoards := []*cli.Board{}
+		allBoards := []*cli.Board{}
 		buildName := "somebuild"
 		sketch := path.Join(testutil.BlinkProjectDir(), "blink.ino")
 		fqbn := "someboardfqbn"
@@ -214,7 +214,7 @@ func TestArdiCore(t *testing.T) {
 			OnlyConnectedBoards: false,
 		}
 
-		expectedCompileOpts := rpc.CompileOpts{
+		expectedCompileOpts := cli.CompileOpts{
 			FQBN:       fqbn,
 			SketchDir:  testutil.BlinkProjectDir(),
 			SketchPath: sketch,
@@ -231,8 +231,8 @@ func TestArdiCore(t *testing.T) {
 	})
 
 	testutil.RunUnitTest("errors compiling sketch when onlyConnectedBoards is true", t, func(env *testutil.UnitTestEnv) {
-		connectedBoards := []*rpc.Board{}
-		allBoards := []*rpc.Board{}
+		connectedBoards := []*cli.Board{}
+		allBoards := []*cli.Board{}
 		buildName := "somebuild"
 		sketch := path.Join(testutil.BlinkProjectDir(), "blink.ino")
 		fqbn := "someboardfqbn"

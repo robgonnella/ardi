@@ -3,7 +3,7 @@ package core
 import (
 	"errors"
 
-	"github.com/robgonnella/ardi/v2/rpc"
+	cli "github.com/robgonnella/ardi/v2/cli-wrapper"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -14,15 +14,15 @@ type WatchCore struct {
 	compiler    *CompileCore
 	port        SerialPort
 	watcher     *FileWatcher
-	board       *rpc.Board
-	compileOpts *rpc.CompileOpts
+	board       *cli.Board
+	compileOpts *cli.CompileOpts
 	baud        int
 }
 
 // WatchCoreTargets targets for watching, recompiling, and reuploading
 type WatchCoreTargets struct {
-	Board       *rpc.Board
-	CompileOpts *rpc.CompileOpts
+	Board       *cli.Board
+	CompileOpts *cli.CompileOpts
 	Baud        int
 	Port        SerialPort
 }

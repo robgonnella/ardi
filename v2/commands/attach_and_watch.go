@@ -1,8 +1,8 @@
 package commands
 
 import (
+	cli "github.com/robgonnella/ardi/v2/cli-wrapper"
 	"github.com/robgonnella/ardi/v2/core"
-	"github.com/robgonnella/ardi/v2/rpc"
 	"github.com/robgonnella/ardi/v2/util"
 	"github.com/spf13/cobra"
 )
@@ -19,8 +19,8 @@ func getWatchCmd() *cobra.Command {
 			"matches a user defined build in ardi.json, the build values will be " +
 			"used for compilation, upload, and watch path",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			var compileOpts *rpc.CompileOpts
-			var board *rpc.Board
+			var compileOpts *cli.CompileOpts
+			var board *cli.Board
 			var baud int
 			var err error
 
@@ -71,5 +71,5 @@ func getWatchCmd() *cobra.Command {
 	watchCmd.Flags().StringVarP(&fqbn, "fqbn", "f", "", "Specify fully qualified board name")
 	watchCmd.Flags().StringArrayVarP(&buildProps, "build-prop", "p", []string{}, "Specify build property to compiler")
 
-	return withRPCConnectPreRun(watchCmd)
+	return watchCmd
 }
