@@ -2,7 +2,6 @@ package commands
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/robgonnella/ardi/v2/paths"
 	"github.com/robgonnella/ardi/v2/util"
@@ -26,13 +25,6 @@ func getCleanCmd() *cobra.Command {
 				errMsg := err.Error()
 				fullErr := fmt.Errorf("%s: You can manually clean all data by removing %s", errMsg, dir)
 				return fullErr
-			}
-
-			if !global {
-				logger.Info("Cleaning ardi build config")
-				if err := os.RemoveAll(paths.ArdiProjectConfig); err != nil {
-					return err
-				}
 			}
 
 			logger.Infof("Successfully removed all data from %s", dir)

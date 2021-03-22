@@ -23,12 +23,11 @@ func TestCleanCommand(t *testing.T) {
 		assert.NoError(env.T, err)
 
 		_, dirErr := os.Stat(paths.ArdiProjectDataDir)
-		_, file1Err := os.Stat(paths.ArdiProjectConfig)
-		_, file2Err := os.Stat(paths.ArduinoCliProjectConfig)
+		_, cliConfErr := os.Stat(paths.ArduinoCliProjectConfig)
 
 		assert.True(env.T, os.IsNotExist(dirErr))
-		assert.True(env.T, os.IsNotExist(file1Err))
-		assert.True(env.T, os.IsNotExist(file2Err))
+		assert.True(env.T, os.IsNotExist(cliConfErr))
+		assert.FileExists(env.T, paths.ArdiProjectConfig)
 	})
 
 	testutil.RunIntegrationTest("deletes global level .ardi directory and ardi.json file", t, func(env *testutil.IntegrationTestEnv) {
@@ -46,11 +45,10 @@ func TestCleanCommand(t *testing.T) {
 		assert.NoError(env.T, err)
 
 		_, dirErr := os.Stat(paths.ArdiGlobalDataDir)
-		_, file1Err := os.Stat(paths.ArdiGlobalConfig)
-		_, file2Err := os.Stat(paths.ArduinoCliGlobalConfig)
+		_, cliConfErr := os.Stat(paths.ArduinoCliGlobalConfig)
 
 		assert.True(env.T, os.IsNotExist(dirErr))
-		assert.True(env.T, os.IsNotExist(file1Err))
-		assert.True(env.T, os.IsNotExist(file2Err))
+		assert.True(env.T, os.IsNotExist(cliConfErr))
+		assert.FileExists(env.T, paths.ArdiGlobalConfig)
 	})
 }
