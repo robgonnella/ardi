@@ -34,7 +34,7 @@ func getCompileCmd() *cobra.Command {
 						BuildName:           name,
 						OnlyConnectedBoards: false,
 					}
-					if _, _, err := ardiCore.CompileArdiBuild(buildOpts); err != nil {
+					if _, err := ardiCore.CompileArdiBuild(buildOpts); err != nil {
 						return err
 					}
 				}
@@ -49,7 +49,7 @@ func getCompileCmd() *cobra.Command {
 					ShowProps:           showProps,
 					OnlyConnectedBoards: false,
 				}
-				opts, _, err := ardiCore.CompileSketch(sketchOpts)
+				opts, err := ardiCore.CompileSketch(sketchOpts)
 				if err != nil {
 					return err
 				}
@@ -66,7 +66,7 @@ func getCompileCmd() *cobra.Command {
 						BuildName:           sketch,
 						OnlyConnectedBoards: false,
 					}
-					compileOpts, _, err := ardiCore.CompileArdiBuild(buildOpts)
+					compileOpts, err := ardiCore.CompileArdiBuild(buildOpts)
 					if err != nil {
 						return err
 					}
@@ -83,7 +83,7 @@ func getCompileCmd() *cobra.Command {
 					ShowProps:           showProps,
 					OnlyConnectedBoards: false,
 				}
-				compileOpts, _, err := ardiCore.CompileSketch(sketchOpts)
+				compileOpts, err := ardiCore.CompileSketch(sketchOpts)
 				if err != nil {
 					return err
 				}
@@ -103,7 +103,7 @@ func getCompileCmd() *cobra.Command {
 					BuildName:           buildName,
 					OnlyConnectedBoards: false,
 				}
-				if _, _, err := ardiCore.CompileArdiBuild(buildOpts); err != nil {
+				if _, err := ardiCore.CompileArdiBuild(buildOpts); err != nil {
 					return err
 				}
 			}

@@ -14,8 +14,9 @@ ardi upload [sketch-dir|build] [flags]
 ### Options
 
 ```
-  -a, --attach   Attach to board port and print logs
-  -h, --help     help for upload
+  -a, --attach        Attach to board port and print logs
+  -h, --help          help for upload
+  -p, --port string   The port your arduino board is connected to
 ```
 
 ### Options inherited from parent commands

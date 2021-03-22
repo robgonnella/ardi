@@ -19,7 +19,7 @@ func TestUploadCore(t *testing.T) {
 		env.Cli.EXPECT().AllBoards().Times(1).Return([]*cli.Board{})
 
 		env.ClearStdout()
-		board, err := env.ArdiCore.GetTargetBoard("", true)
+		board, err := env.ArdiCore.GetTargetBoard("", "", true)
 		assert.NoError(env.T, err)
 
 		env.Cli.EXPECT().Upload(board.FQBN, testutil.BlinkProjectDir(), board.Port).Times(1).Return(nil)
@@ -37,7 +37,7 @@ func TestUploadCore(t *testing.T) {
 		env.Cli.EXPECT().AllBoards().Times(1).Return([]*cli.Board{})
 
 		env.ClearStdout()
-		board, err := env.ArdiCore.GetTargetBoard("", true)
+		board, err := env.ArdiCore.GetTargetBoard("", "", true)
 		assert.NoError(env.T, err)
 
 		env.Cli.EXPECT().Upload(board.FQBN, testutil.BlinkProjectDir(), board.Port).Times(1).Return(dummyErr)

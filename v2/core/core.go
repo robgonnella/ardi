@@ -82,61 +82,62 @@ func NewArdiCore(opts NewArdiCoreOpts) *ArdiCore {
 }
 
 // CompileArdiBuild compiles specified build from ardi.json
-func (c *ArdiCore) CompileArdiBuild(buildOpts CompileArdiBuildOpts) (*cli.CompileOpts, *cli.Board, error) {
+func (c *ArdiCore) CompileArdiBuild(buildOpts CompileArdiBuildOpts) (*cli.CompileOpts, error) {
 	compileOpts, err := c.Config.GetCompileOpts(buildOpts.BuildName)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	board, err := c.GetTargetBoard(compileOpts.FQBN, buildOpts.OnlyConnectedBoards)
-	if err != nil {
-		return nil, nil, err
-	}
+
 	fields := log.Fields{
 		"sketch": compileOpts.SketchPath,
 		"fqbn":   compileOpts.FQBN,
 	}
 	c.logger.WithFields(fields).Info("Compiling...")
+
 	if err := c.Compiler.Compile(*compileOpts); err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	return compileOpts, board, nil
+	return compileOpts, nil
 }
 
 // CompileSketch compiles specified sketch directory or sketch file
-func (c *ArdiCore) CompileSketch(sketchOpts CompileSketchOpts) (*cli.CompileOpts, *cli.Board, error) {
-
-	board, err := c.GetTargetBoard(sketchOpts.FQBN, sketchOpts.OnlyConnectedBoards)
-	if err != nil {
-		return nil, nil, err
-	}
-
+func (c *ArdiCore) CompileSketch(sketchOpts CompileSketchOpts) (*cli.CompileOpts, error) {
 	project, err := util.ProcessSketch(sketchOpts.Sketch)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	compileOpts := cli.CompileOpts{
-		FQBN:       board.FQBN,
+		FQBN:       sketchOpts.FQBN,
 		SketchDir:  project.Directory,
 		SketchPath: project.Sketch,
 		BuildProps: sketchOpts.BuildPros,
 		ShowProps:  sketchOpts.ShowProps,
 	}
+
 	fields := log.Fields{
 		"sketch": compileOpts.SketchPath,
 		"fqbn":   compileOpts.FQBN,
 	}
 	c.logger.WithFields(fields).Info("Compiling...")
+
 	if err := c.Compiler.Compile(compileOpts); err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	return &compileOpts, board, nil
+	return &compileOpts, nil
 }
 
 // GetTargetBoard returns target info for a connected & disconnected boards
-func (c *ArdiCore) GetTargetBoard(fqbn string, onlyConnected bool) (*cli.Board, error) {
+func (c *ArdiCore) GetTargetBoard(fqbn, port string, onlyConnected bool) (*cli.Board, error) {
+	if fqbn != "" && port != "" {
+		return &cli.Board{
+			FQBN: fqbn,
+			Port: port,
+		}, nil
+	}
+
 	fqbnErr := errors.New("you must specify a board fqbn to compile - you can find a list of board fqbns for installed platforms above")
 	connectedBoardsErr := errors.New("no connected boards detected")
 	connectedBoards := c.Cli.ConnectedBoards()

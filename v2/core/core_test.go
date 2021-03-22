@@ -19,7 +19,7 @@ func TestArdiCore(t *testing.T) {
 		env.Cli.EXPECT().ConnectedBoards().Times(1).Return(connectedBoards)
 		env.Cli.EXPECT().AllBoards().Times(1).Return(allBoards)
 
-		board, err := env.ArdiCore.GetTargetBoard(fqbn, false)
+		board, err := env.ArdiCore.GetTargetBoard(fqbn, "", false)
 		assert.NoError(env.T, err)
 		assert.Equal(env.T, board.FQBN, fqbn)
 	})
@@ -34,7 +34,7 @@ func TestArdiCore(t *testing.T) {
 		env.Cli.EXPECT().ConnectedBoards().Times(1).Return(connectedBoards)
 		env.Cli.EXPECT().AllBoards().Times(1).Return(allBoards)
 
-		board, err := env.ArdiCore.GetTargetBoard(fqbn, true)
+		board, err := env.ArdiCore.GetTargetBoard(fqbn, "", true)
 		assert.NoError(env.T, err)
 		assert.Equal(env.T, board.FQBN, fqbn)
 	})
@@ -47,7 +47,7 @@ func TestArdiCore(t *testing.T) {
 		env.Cli.EXPECT().ConnectedBoards().Times(1).Return(connectedBoards)
 		env.Cli.EXPECT().AllBoards().Times(1).Return(allBoards)
 
-		board, err := env.ArdiCore.GetTargetBoard(fqbn, true)
+		board, err := env.ArdiCore.GetTargetBoard(fqbn, "", true)
 		assert.Error(env.T, err)
 		assert.Nil(env.T, board)
 	})
@@ -62,7 +62,7 @@ func TestArdiCore(t *testing.T) {
 		env.Cli.EXPECT().ConnectedBoards().Times(1).Return(connectedBoards)
 		env.Cli.EXPECT().AllBoards().Times(1).Return(allBoards)
 
-		board, err := env.ArdiCore.GetTargetBoard("", false)
+		board, err := env.ArdiCore.GetTargetBoard("", "", false)
 		assert.NoError(env.T, err)
 		assert.Equal(env.T, board.Name, boardName)
 		assert.Equal(env.T, board.FQBN, boardFQBN)
@@ -82,7 +82,7 @@ func TestArdiCore(t *testing.T) {
 		env.Cli.EXPECT().AllBoards().Times(1).Return(allBoards)
 
 		env.ClearStdout()
-		board, err := env.ArdiCore.GetTargetBoard("", false)
+		board, err := env.ArdiCore.GetTargetBoard("", "", false)
 		assert.Error(env.T, err)
 		assert.Nil(env.T, board)
 
@@ -105,7 +105,7 @@ func TestArdiCore(t *testing.T) {
 		env.Cli.EXPECT().AllBoards().Times(1).Return(allBoards)
 
 		env.ClearStdout()
-		board, err := env.ArdiCore.GetTargetBoard("", false)
+		board, err := env.ArdiCore.GetTargetBoard("", "", false)
 		assert.Error(env.T, err)
 		assert.Nil(env.T, board)
 
@@ -126,7 +126,7 @@ func TestArdiCore(t *testing.T) {
 		env.Cli.EXPECT().AllBoards().Times(1).Return(allBoards)
 
 		env.ClearStdout()
-		board, err := env.ArdiCore.GetTargetBoard("", true)
+		board, err := env.ArdiCore.GetTargetBoard("", "", true)
 		assert.Error(env.T, err)
 		assert.Nil(env.T, board)
 
@@ -163,9 +163,8 @@ func TestArdiCore(t *testing.T) {
 
 		env.Cli.EXPECT().Compile(expectedCompileOpts).Times(1).Return(nil)
 
-		compileOpts, board, err := env.ArdiCore.CompileArdiBuild(buildOpts)
+		compileOpts, err := env.ArdiCore.CompileArdiBuild(buildOpts)
 		assert.NoError(env.T, err)
-		assert.Equal(env.T, board.FQBN, fqbn)
 		assert.Equal(env.T, &expectedCompileOpts, compileOpts)
 	})
 
@@ -187,10 +186,9 @@ func TestArdiCore(t *testing.T) {
 			OnlyConnectedBoards: true,
 		}
 
-		compileOpts, board, err := env.ArdiCore.CompileArdiBuild(buildOpts)
+		compileOpts, err := env.ArdiCore.CompileArdiBuild(buildOpts)
 		assert.Error(env.T, err)
 		assert.Nil(env.T, compileOpts)
-		assert.Nil(env.T, board)
 	})
 
 	testutil.RunUnitTest("compiles sketch", t, func(env *testutil.UnitTestEnv) {
@@ -224,9 +222,8 @@ func TestArdiCore(t *testing.T) {
 
 		env.Cli.EXPECT().Compile(expectedCompileOpts).Times(1).Return(nil)
 
-		compileOpts, board, err := env.ArdiCore.CompileSketch(sketchOpts)
+		compileOpts, err := env.ArdiCore.CompileSketch(sketchOpts)
 		assert.NoError(env.T, err)
-		assert.Equal(env.T, board.FQBN, fqbn)
 		assert.Equal(env.T, &expectedCompileOpts, compileOpts)
 	})
 
@@ -251,9 +248,8 @@ func TestArdiCore(t *testing.T) {
 			OnlyConnectedBoards: true,
 		}
 
-		compileOpts, board, err := env.ArdiCore.CompileSketch(sketchOpts)
+		compileOpts, err := env.ArdiCore.CompileSketch(sketchOpts)
 		assert.Error(env.T, err)
 		assert.Nil(env.T, compileOpts)
-		assert.Nil(env.T, board)
 	})
 }

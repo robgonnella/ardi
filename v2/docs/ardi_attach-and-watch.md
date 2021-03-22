@@ -17,6 +17,7 @@ ardi attach-and-watch [sketch|build] [flags]
   -p, --build-prop stringArray   Specify build property to compiler
   -f, --fqbn string              Specify fully qualified board name
   -h, --help                     help for attach-and-watch
+      --port string              The port your arduino board is connected to
 ```
 
 ### Options inherited from parent commands
