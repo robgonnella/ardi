@@ -15,6 +15,7 @@ ardi upload [sketch-dir|build] [flags]
 
 ```
   -a, --attach        Attach to board port and print logs
+  -f, --fqbn string   The FQBN of the board you want to upload to
   -h, --help          help for upload
   -p, --port string   The port your arduino board is connected to
 ```

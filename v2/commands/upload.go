@@ -9,6 +9,7 @@ import (
 
 func getUploadCmd() *cobra.Command {
 	var attach bool
+	var fqbn string
 	var port string
 	var uploadCmd = &cobra.Command{
 		Use:   "upload [sketch-dir|build]",
@@ -31,6 +32,9 @@ func getUploadCmd() *cobra.Command {
 				project.Directory = ardiBuild.Directory
 				project.Sketch = ardiBuild.Sketch
 				project.Baud = ardiBuild.Baud
+				if fqbn == "" {
+					fqbn = ardiBuild.FQBN
+				}
 			} else {
 				project, err = util.ProcessSketch(build)
 				if err != nil {
@@ -38,7 +42,7 @@ func getUploadCmd() *cobra.Command {
 				}
 			}
 
-			board, err := ardiCore.GetTargetBoard("", port, true)
+			board, err := ardiCore.GetTargetBoard(fqbn, port, true)
 			if err != nil {
 				return err
 			}
@@ -65,6 +69,7 @@ func getUploadCmd() *cobra.Command {
 		},
 	}
 	uploadCmd.Flags().BoolVarP(&attach, "attach", "a", false, "Attach to board port and print logs")
+	uploadCmd.Flags().StringVarP(&fqbn, "fqbn", "f", "", "The FQBN of the board you want to upload to")
 	uploadCmd.Flags().StringVarP(&port, "port", "p", "", "The port your arduino board is connected to")
 
 	return uploadCmd
