@@ -46,11 +46,9 @@ sudo usermod -aG dialout $(whoami)
 # Usage
 
 Ardi requires certain packages to be downloaded before it can properly compile
-sketches, detect connected boards, and perform other tasks. These packages can
-be stored in a project data directory to isolate version specific dependencies
-for multiple projects, or in a global data directory available to all projects.
-Ardi defaults to a "project level" data directory, use the "--global" flag
-to use the global data directory.
+sketches, detect connected boards, and perform other tasks. These packages are
+stored in a project data directory to isolate version specific dependencies
+for multiple projects.
 
 To initialize an ardi project directory run:
 
