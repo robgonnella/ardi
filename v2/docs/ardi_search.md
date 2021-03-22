@@ -16,7 +16,6 @@ Search for arduino platforms, libraries, and boards
 ### Options inherited from parent commands
 
 ```
-  -g, --global    Use global data directory
   -q, --quiet     Silence all logs
   -v, --verbose   Print all logs
 ```

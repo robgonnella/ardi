@@ -136,22 +136,12 @@ func TestArdiCore(t *testing.T) {
 	})
 
 	testutil.RunUnitTest("compiles ardi build", t, func(env *testutil.UnitTestEnv) {
-		connectedBoards := []*cli.Board{}
-		allBoards := []*cli.Board{}
 		buildName := "somebuild"
 		sketch := path.Join(testutil.BlinkProjectDir(), "blink.ino")
 		fqbn := "someboardfqbn"
 
 		err := env.ArdiCore.Config.AddBuild(buildName, sketch, fqbn, []string{})
 		assert.NoError(env.T, err)
-
-		env.Cli.EXPECT().ConnectedBoards().Times(1).Return(connectedBoards)
-		env.Cli.EXPECT().AllBoards().Times(1).Return(allBoards)
-
-		buildOpts := core.CompileArdiBuildOpts{
-			BuildName:           "somebuild",
-			OnlyConnectedBoards: false,
-		}
 
 		expectedCompileOpts := cli.CompileOpts{
 			FQBN:       fqbn,
@@ -163,37 +153,12 @@ func TestArdiCore(t *testing.T) {
 
 		env.Cli.EXPECT().Compile(expectedCompileOpts).Times(1).Return(nil)
 
-		compileOpts, err := env.ArdiCore.CompileArdiBuild(buildOpts)
+		compileOpts, err := env.ArdiCore.CompileArdiBuild(buildName)
 		assert.NoError(env.T, err)
 		assert.Equal(env.T, &expectedCompileOpts, compileOpts)
-	})
-
-	testutil.RunUnitTest("errors compiling ardi build when onlyConnectedBoards is true", t, func(env *testutil.UnitTestEnv) {
-		connectedBoards := []*cli.Board{}
-		allBoards := []*cli.Board{}
-		buildName := "somebuild"
-		sketch := path.Join(testutil.BlinkProjectDir(), "blink.ino")
-		fqbn := "someboardfqbn"
-
-		err := env.ArdiCore.Config.AddBuild(buildName, sketch, fqbn, []string{})
-		assert.NoError(env.T, err)
-
-		env.Cli.EXPECT().ConnectedBoards().Times(1).Return(connectedBoards)
-		env.Cli.EXPECT().AllBoards().Times(1).Return(allBoards)
-
-		buildOpts := core.CompileArdiBuildOpts{
-			BuildName:           "somebuild",
-			OnlyConnectedBoards: true,
-		}
-
-		compileOpts, err := env.ArdiCore.CompileArdiBuild(buildOpts)
-		assert.Error(env.T, err)
-		assert.Nil(env.T, compileOpts)
 	})
 
 	testutil.RunUnitTest("compiles sketch", t, func(env *testutil.UnitTestEnv) {
-		connectedBoards := []*cli.Board{}
-		allBoards := []*cli.Board{}
 		buildName := "somebuild"
 		sketch := path.Join(testutil.BlinkProjectDir(), "blink.ino")
 		fqbn := "someboardfqbn"
@@ -201,15 +166,11 @@ func TestArdiCore(t *testing.T) {
 		err := env.ArdiCore.Config.AddBuild(buildName, sketch, fqbn, []string{})
 		assert.NoError(env.T, err)
 
-		env.Cli.EXPECT().ConnectedBoards().Times(1).Return(connectedBoards)
-		env.Cli.EXPECT().AllBoards().Times(1).Return(allBoards)
-
 		sketchOpts := core.CompileSketchOpts{
-			Sketch:              sketch,
-			FQBN:                fqbn,
-			BuildPros:           []string{},
-			ShowProps:           false,
-			OnlyConnectedBoards: false,
+			Sketch:    sketch,
+			FQBN:      fqbn,
+			BuildPros: []string{},
+			ShowProps: false,
 		}
 
 		expectedCompileOpts := cli.CompileOpts{
@@ -225,31 +186,5 @@ func TestArdiCore(t *testing.T) {
 		compileOpts, err := env.ArdiCore.CompileSketch(sketchOpts)
 		assert.NoError(env.T, err)
 		assert.Equal(env.T, &expectedCompileOpts, compileOpts)
-	})
-
-	testutil.RunUnitTest("errors compiling sketch when onlyConnectedBoards is true", t, func(env *testutil.UnitTestEnv) {
-		connectedBoards := []*cli.Board{}
-		allBoards := []*cli.Board{}
-		buildName := "somebuild"
-		sketch := path.Join(testutil.BlinkProjectDir(), "blink.ino")
-		fqbn := "someboardfqbn"
-
-		err := env.ArdiCore.Config.AddBuild(buildName, sketch, fqbn, []string{})
-		assert.NoError(env.T, err)
-
-		env.Cli.EXPECT().ConnectedBoards().Times(1).Return(connectedBoards)
-		env.Cli.EXPECT().AllBoards().Times(1).Return(allBoards)
-
-		sketchOpts := core.CompileSketchOpts{
-			Sketch:              sketch,
-			FQBN:                fqbn,
-			BuildPros:           []string{},
-			ShowProps:           false,
-			OnlyConnectedBoards: true,
-		}
-
-		compileOpts, err := env.ArdiCore.CompileSketch(sketchOpts)
-		assert.Error(env.T, err)
-		assert.Nil(env.T, compileOpts)
 	})
 }

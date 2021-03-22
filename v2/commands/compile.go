@@ -30,11 +30,7 @@ func getCompileCmd() *cobra.Command {
 					return errors.New("cannot watch all builds. You can only watch one build at a time")
 				}
 				for name := range ardiBuilds {
-					buildOpts := core.CompileArdiBuildOpts{
-						BuildName:           name,
-						OnlyConnectedBoards: false,
-					}
-					if _, err := ardiCore.CompileArdiBuild(buildOpts); err != nil {
+					if _, err := ardiCore.CompileArdiBuild(name); err != nil {
 						return err
 					}
 				}
@@ -43,11 +39,10 @@ func getCompileCmd() *cobra.Command {
 
 			if len(args) == 0 {
 				sketchOpts := core.CompileSketchOpts{
-					Sketch:              ".",
-					FQBN:                fqbn,
-					BuildPros:           buildProps,
-					ShowProps:           showProps,
-					OnlyConnectedBoards: false,
+					Sketch:    ".",
+					FQBN:      fqbn,
+					BuildPros: buildProps,
+					ShowProps: showProps,
 				}
 				opts, err := ardiCore.CompileSketch(sketchOpts)
 				if err != nil {
@@ -62,11 +57,7 @@ func getCompileCmd() *cobra.Command {
 			if len(args) == 1 {
 				sketch := args[0]
 				if _, ok := ardiBuilds[sketch]; ok {
-					buildOpts := core.CompileArdiBuildOpts{
-						BuildName:           sketch,
-						OnlyConnectedBoards: false,
-					}
-					compileOpts, err := ardiCore.CompileArdiBuild(buildOpts)
+					compileOpts, err := ardiCore.CompileArdiBuild(sketch)
 					if err != nil {
 						return err
 					}
@@ -77,11 +68,10 @@ func getCompileCmd() *cobra.Command {
 				}
 
 				sketchOpts := core.CompileSketchOpts{
-					Sketch:              sketch,
-					FQBN:                fqbn,
-					BuildPros:           buildProps,
-					ShowProps:           showProps,
-					OnlyConnectedBoards: false,
+					Sketch:    sketch,
+					FQBN:      fqbn,
+					BuildPros: buildProps,
+					ShowProps: showProps,
 				}
 				compileOpts, err := ardiCore.CompileSketch(sketchOpts)
 				if err != nil {
@@ -99,11 +89,7 @@ func getCompileCmd() *cobra.Command {
 			}
 
 			for _, buildName := range args {
-				buildOpts := core.CompileArdiBuildOpts{
-					BuildName:           buildName,
-					OnlyConnectedBoards: false,
-				}
-				if _, err := ardiCore.CompileArdiBuild(buildOpts); err != nil {
+				if _, err := ardiCore.CompileArdiBuild(buildName); err != nil {
 					return err
 				}
 			}

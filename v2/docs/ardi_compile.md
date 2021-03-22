@@ -25,7 +25,6 @@ ardi compile [sketch|build(s)] [flags]
 ### Options inherited from parent commands
 
 ```
-  -g, --global    Use global data directory
   -q, --quiet     Silence all logs
   -v, --verbose   Print all logs
 ```

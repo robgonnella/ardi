@@ -113,19 +113,9 @@ func TestUtilArduinoCliSettings(t *testing.T) {
 	})
 
 	t.Run("returns project path", func(st *testing.T) {
-		opts := util.GetAllSettingsOpts{
-			Global: false,
-		}
+		opts := util.GetAllSettingsOpts{}
 		settingsPath := util.GetCliSettingsPath(opts)
 		assert.Equal(st, paths.ArduinoCliProjectConfig, settingsPath)
-	})
-
-	t.Run("returns global path", func(st *testing.T) {
-		opts := util.GetAllSettingsOpts{
-			Global: true,
-		}
-		settingsPath := util.GetCliSettingsPath(opts)
-		assert.Equal(st, paths.ArduinoCliGlobalConfig, settingsPath)
 	})
 }
 
@@ -176,7 +166,6 @@ func TestUtilGetAllSettings(t *testing.T) {
 		expectedSettings := util.GenArduinoCliSettings(level, dataDir)
 
 		opts := util.GetAllSettingsOpts{
-			Global:   false,
 			LogLevel: level,
 		}
 		config, settings := util.GetAllSettings(opts)
@@ -193,7 +182,6 @@ func TestUtilGetAllSettings(t *testing.T) {
 		os.RemoveAll(dataDir)
 
 		writeOpts := util.WriteSettingsOpts{
-			Global:             false,
 			ArdiConfig:         expectedConfig,
 			ArduinoCliSettings: expectedSettings,
 		}
@@ -204,7 +192,6 @@ func TestUtilGetAllSettings(t *testing.T) {
 		assert.FileExists(st, paths.ArduinoCliProjectConfig)
 
 		opts := util.GetAllSettingsOpts{
-			Global:   false,
 			LogLevel: level,
 		}
 
@@ -214,53 +201,6 @@ func TestUtilGetAllSettings(t *testing.T) {
 
 		os.RemoveAll(dataDir)
 		os.RemoveAll(paths.ArdiProjectConfig)
-	})
-
-	t.Run("returns default settings if global files not found", func(st *testing.T) {
-		dataDir := paths.ArdiGlobalDataDir
-		level := "fancy-log-level"
-		os.RemoveAll(dataDir)
-
-		expectedConfig := util.GenArdiConfig(level)
-		expectedSettings := util.GenArduinoCliSettings(level, dataDir)
-
-		opts := util.GetAllSettingsOpts{
-			Global:   true,
-			LogLevel: level,
-		}
-		config, settings := util.GetAllSettings(opts)
-		assert.Equal(st, expectedConfig, config)
-		assert.Equal(st, expectedSettings, settings)
-	})
-
-	t.Run("returns settings from global files", func(st *testing.T) {
-		dataDir := paths.ArdiGlobalDataDir
-		level := "fancy-log-level"
-		expectedConfig := util.GenArdiConfig(level)
-		expectedSettings := util.GenArduinoCliSettings(level, dataDir)
-
-		os.RemoveAll(dataDir)
-
-		writeOpts := util.WriteSettingsOpts{
-			Global:             true,
-			ArdiConfig:         expectedConfig,
-			ArduinoCliSettings: expectedSettings,
-		}
-		err := util.WriteAllSettings(writeOpts)
-		assert.NoError(st, err)
-		assert.DirExists(st, dataDir)
-		assert.FileExists(st, paths.ArdiGlobalConfig)
-		assert.FileExists(st, paths.ArduinoCliGlobalConfig)
-
-		opts := util.GetAllSettingsOpts{
-			Global:   true,
-			LogLevel: level,
-		}
-		config, settings := util.GetAllSettings(opts)
-		assert.Equal(st, expectedConfig, config)
-		assert.Equal(st, expectedSettings, settings)
-
-		os.RemoveAll(dataDir)
 	})
 }
 
@@ -296,18 +236,18 @@ func TestUtilIsProjectDirectory(t *testing.T) {
 	})
 }
 
-func TestUtilGetDaemonLogLevel(t *testing.T) {
+func TestUtilGetLogLevel(t *testing.T) {
 	t.Run("returns debug for logger level", func(st *testing.T) {
 		logger := logrus.New()
 		logger.SetLevel(logrus.DebugLevel)
-		level := util.GetDaemonLogLevel(logger)
+		level := util.GetLogLevel(logger)
 		assert.Equal(st, "debug", level)
 	})
 
 	t.Run("returns fata for other logger levels", func(st *testing.T) {
 		logger := logrus.New()
 		logger.SetLevel(logrus.InfoLevel)
-		level := util.GetDaemonLogLevel(logger)
+		level := util.GetLogLevel(logger)
 		assert.Equal(st, "fatal", level)
 	})
 }

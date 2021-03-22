@@ -7,61 +7,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestAddListRemovePlatformGlobally(t *testing.T) {
-	testutil.RunIntegrationTest("adding, listing, and removing platform", t, func(env *testutil.IntegrationTestEnv) {
-		platform := "arduino:avr"
-		args := []string{"add", "platform", platform, "--global"}
-		err := env.Execute(args)
-		assert.NoError(env.T, err)
-
-		env.ClearStdout()
-		args = []string{"list", "platforms", "--global"}
-		err = env.Execute(args)
-		assert.NoError(env.T, err)
-		assert.Contains(env.T, env.Stdout.String(), platform)
-
-		env.ClearStdout()
-		args = []string{"list", "board-fqbns", "--global"}
-		err = env.Execute(args)
-		assert.NoError(env.T, err)
-		assert.Contains(env.T, env.Stdout.String(), "arduino:avr:mega")
-
-		env.ClearStdout()
-		args = []string{"list", "board-platforms", "--global"}
-		err = env.Execute(args)
-		assert.NoError(env.T, err)
-		assert.Contains(env.T, env.Stdout.String(), "arduino:avr")
-
-		args = []string{"remove", "platform", platform, "--global"}
-		err = env.Execute(args)
-		assert.NoError(env.T, err)
-
-		env.ClearStdout()
-		args = []string{"list", "platforms", "--global"}
-		err = env.Execute(args)
-		assert.NoError(env.T, err)
-		assert.NotContains(env.T, env.Stdout.String(), platform)
-	})
-
-	testutil.RunIntegrationTest("does not error listing if no platforms installed", t, func(env *testutil.IntegrationTestEnv) {
-		args := []string{"list", "platforms", "--global"}
-		err := env.Execute(args)
-		assert.NoError(env.T, err)
-	})
-
-	testutil.RunIntegrationTest("errors when adding invalid platform", t, func(env *testutil.IntegrationTestEnv) {
-		args := []string{"add", "platform", "noop", "--global"}
-		err := env.Execute(args)
-		assert.Error(env.T, err)
-	})
-
-	testutil.RunIntegrationTest("errors removing when platform not installed", t, func(env *testutil.IntegrationTestEnv) {
-		args := []string{"remove", "platform", "arduino:avr", "--global"}
-		err := env.Execute(args)
-		assert.Error(env.T, err)
-	})
-}
-
 func TestAddListRemovePlatform(t *testing.T) {
 	testutil.RunIntegrationTest("errors if project not initialized", t, func(env *testutil.IntegrationTestEnv) {
 		args := []string{"add", "platforms", "arduino:avr"}
@@ -144,51 +89,6 @@ func TestAddListRemovePlatform(t *testing.T) {
 	})
 }
 
-func TestAddListRemoveLibraryGlobally(t *testing.T) {
-	testutil.RunIntegrationTest("adding, listing, and removing library", t, func(env *testutil.IntegrationTestEnv) {
-		library := "Adafruit Pixie"
-		installedLib := "Adafruit_Pixie"
-
-		args := []string{"add", "library", library, "--global"}
-		err := env.Execute(args)
-		assert.NoError(env.T, err)
-
-		env.ClearStdout()
-		args = []string{"list", "libraries", "--global"}
-		err = env.Execute(args)
-		assert.NoError(env.T, err)
-		assert.Contains(env.T, env.Stdout.String(), installedLib)
-
-		args = []string{"remove", "library", installedLib, "--global"}
-		err = env.Execute(args)
-		assert.NoError(env.T, err)
-
-		env.ClearStdout()
-		args = []string{"list", "libraries", "--global"}
-		err = env.Execute(args)
-		assert.NoError(env.T, err)
-		assert.NotContains(env.T, env.Stdout.String(), installedLib)
-	})
-
-	testutil.RunIntegrationTest("does not error listing if no libraries installed", t, func(env *testutil.IntegrationTestEnv) {
-		args := []string{"list", "libs", "--global"}
-		err := env.Execute(args)
-		assert.NoError(env.T, err)
-	})
-
-	testutil.RunIntegrationTest("errors when adding invalid library", t, func(env *testutil.IntegrationTestEnv) {
-		args := []string{"add", "lib", "noop", "--global"}
-		err := env.Execute(args)
-		assert.Error(env.T, err)
-	})
-
-	testutil.RunIntegrationTest("does not error removing if library not installed", t, func(env *testutil.IntegrationTestEnv) {
-		args := []string{"remove", "lib", "Adafruit_Pixie", "--global"}
-		err := env.Execute(args)
-		assert.NoError(env.T, err)
-	})
-}
-
 func TestAddListRemoveLibrary(t *testing.T) {
 	testutil.RunIntegrationTest("errors if project not initialized", t, func(env *testutil.IntegrationTestEnv) {
 		args := []string{"add", "libraries", "Adafruit Pixie"}
@@ -261,44 +161,6 @@ func TestAddListRemoveLibrary(t *testing.T) {
 	})
 }
 
-func TestAddListRemoveBoardURLGlobally(t *testing.T) {
-	testutil.RunIntegrationTest("adding, listing, and removing board urls", t, func(env *testutil.IntegrationTestEnv) {
-		url := "https://someboardurl.com"
-
-		args := []string{"add", "board-urls", url, "--global"}
-		err := env.Execute(args)
-		assert.NoError(env.T, err)
-
-		env.ClearStdout()
-		args = []string{"list", "board-urls", "--global"}
-		err = env.Execute(args)
-		assert.NoError(env.T, err)
-		assert.Contains(env.T, env.Stdout.String(), url)
-
-		args = []string{"remove", "board-urls", url, "--global"}
-		err = env.Execute(args)
-		assert.NoError(env.T, err)
-
-		env.ClearStdout()
-		args = []string{"list", "board-urls", "--global"}
-		err = env.Execute(args)
-		assert.NoError(env.T, err)
-		assert.NotContains(env.T, env.Stdout.String(), url)
-	})
-
-	testutil.RunIntegrationTest("does not error listing if no board urls added", t, func(env *testutil.IntegrationTestEnv) {
-		args := []string{"list", "board-urls", "--global"}
-		err := env.Execute(args)
-		assert.NoError(env.T, err)
-	})
-
-	testutil.RunIntegrationTest("does not error removing if board url not added", t, func(env *testutil.IntegrationTestEnv) {
-		args := []string{"remove", "board-url", "https://someboardurl.com", "--global"}
-		err := env.Execute(args)
-		assert.NoError(env.T, err)
-	})
-}
-
 func TestAddListRemoveBoardURL(t *testing.T) {
 	testutil.RunIntegrationTest("errors if project not initialized", t, func(env *testutil.IntegrationTestEnv) {
 		args := []string{"add", "board-urls", "https://someboardurl.com"}
@@ -357,74 +219,6 @@ func TestAddListRemoveBoardURL(t *testing.T) {
 
 		args := []string{"remove", "board-url", "https://someboardurl.com"}
 		err = env.Execute(args)
-		assert.NoError(env.T, err)
-	})
-}
-
-func TestAddListRemoveBuildGlobally(t *testing.T) {
-	testutil.RunIntegrationTest("errors if not a valid sketch path", t, func(env *testutil.IntegrationTestEnv) {
-		args := []string{"add", "build", "--name", "somename", "--fqbn", "somefqbn", "--sketch", "noop", "--global"}
-		err := env.Execute(args)
-		assert.Error(env.T, err)
-	})
-
-	testutil.RunIntegrationTest("adding, listing, and removing builds", t, func(env *testutil.IntegrationTestEnv) {
-		name := "pixie"
-		fqbn := "somefqbn"
-		sketch := testutil.PixieProjectDir()
-
-		args := []string{"add", "build", "--name", name, "--fqbn", fqbn, "--sketch", sketch, "--global"}
-		err := env.Execute(args)
-		assert.NoError(env.T, err)
-
-		env.ClearStdout()
-		args = []string{"list", "builds", "--global"}
-		err = env.Execute(args)
-		assert.NoError(env.T, err)
-		assert.Contains(env.T, env.Stdout.String(), name)
-		assert.Contains(env.T, env.Stdout.String(), fqbn)
-		assert.Contains(env.T, env.Stdout.String(), sketch)
-
-		args = []string{"remove", "builds", name, "--global"}
-		err = env.Execute(args)
-		assert.NoError(env.T, err)
-
-		env.ClearStdout()
-		args = []string{"list", "builds", "--global"}
-		err = env.Execute(args)
-		assert.NoError(env.T, err)
-		assert.NotContains(env.T, env.Stdout.String(), name)
-		assert.NotContains(env.T, env.Stdout.String(), fqbn)
-		assert.NotContains(env.T, env.Stdout.String(), sketch)
-	})
-
-	testutil.RunIntegrationTest("errors adding if name missing", t, func(env *testutil.IntegrationTestEnv) {
-		args := []string{"add", "build", "--fqbn", "somefqbn", "--sketch", ".", "--global"}
-		err := env.Execute(args)
-		assert.Error(env.T, err)
-	})
-
-	testutil.RunIntegrationTest("errors adding if fqbn missing", t, func(env *testutil.IntegrationTestEnv) {
-		args := []string{"add", "build", "--name", "pixie", "--sketch", ".", "--global"}
-		err := env.Execute(args)
-		assert.Error(env.T, err)
-	})
-
-	testutil.RunIntegrationTest("errors adding if sketch missing", t, func(env *testutil.IntegrationTestEnv) {
-		args := []string{"add", "build", "--name", "pixie", "--fqbn", "somefqbn", "--global"}
-		err := env.Execute(args)
-		assert.Error(env.T, err)
-	})
-
-	testutil.RunIntegrationTest("does not error listing if no builds added", t, func(env *testutil.IntegrationTestEnv) {
-		args := []string{"list", "builds", "--global"}
-		err := env.Execute(args)
-		assert.NoError(env.T, err)
-	})
-
-	testutil.RunIntegrationTest("does not error removing if build not added", t, func(env *testutil.IntegrationTestEnv) {
-		args := []string{"remove", "build", "noop", "--global"}
-		err := env.Execute(args)
 		assert.NoError(env.T, err)
 	})
 }

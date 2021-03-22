@@ -29,7 +29,6 @@ type ArdiCore struct {
 
 // NewArdiCoreOpts options fore creating new ardi core
 type NewArdiCoreOpts struct {
-	Global             bool
 	ArdiConfig         types.ArdiConfig
 	ArduinoCliSettings types.ArduinoCliSettings
 	Cli                cli.Cli
@@ -38,28 +37,16 @@ type NewArdiCoreOpts struct {
 
 // CompileSketchOpts options for compiling sketch directory or file
 type CompileSketchOpts struct {
-	Sketch              string
-	FQBN                string
-	BuildPros           []string
-	ShowProps           bool
-	OnlyConnectedBoards bool
-}
-
-// CompileArdiBuildOpts options for compiling a build specified in ardi.json
-type CompileArdiBuildOpts struct {
-	BuildName           string
-	OnlyConnectedBoards bool
+	Sketch    string
+	FQBN      string
+	BuildPros []string
+	ShowProps bool
 }
 
 // NewArdiCore returns a new ardi core
 func NewArdiCore(opts NewArdiCoreOpts) *ArdiCore {
 	ardiConf := paths.ArdiProjectConfig
 	cliConf := paths.ArduinoCliProjectConfig
-
-	if opts.Global {
-		ardiConf = paths.ArdiGlobalConfig
-		cliConf = paths.ArduinoCliGlobalConfig
-	}
 
 	cli := opts.Cli
 	logger := opts.Logger
@@ -82,8 +69,8 @@ func NewArdiCore(opts NewArdiCoreOpts) *ArdiCore {
 }
 
 // CompileArdiBuild compiles specified build from ardi.json
-func (c *ArdiCore) CompileArdiBuild(buildOpts CompileArdiBuildOpts) (*cli.CompileOpts, error) {
-	compileOpts, err := c.Config.GetCompileOpts(buildOpts.BuildName)
+func (c *ArdiCore) CompileArdiBuild(buildName string) (*cli.CompileOpts, error) {
+	compileOpts, err := c.Config.GetCompileOpts(buildName)
 	if err != nil {
 		return nil, err
 	}

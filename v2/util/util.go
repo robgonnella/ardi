@@ -21,21 +21,13 @@ import (
 	"github.com/robgonnella/ardi/v2/types"
 )
 
-// DefaultDaemonPort default port to run arduino-cli daemon
-const DefaultDaemonPort = "50052"
-
-// DefaultDaemonLogLevel default arduino-cli daemon log level
-const DefaultDaemonLogLevel = "fatal"
-
 // GetAllSettingsOpts options for retrieving all settings
 type GetAllSettingsOpts struct {
-	Global   bool
 	LogLevel string
 }
 
 // WriteSettingsOpts options for writing all settings to file
 type WriteSettingsOpts struct {
-	Global             bool
 	ArdiConfig         *types.ArdiConfig
 	ArduinoCliSettings *types.ArduinoCliSettings
 }
@@ -157,12 +149,6 @@ func GetAllSettings(opts GetAllSettingsOpts) (*types.ArdiConfig, *types.ArduinoC
 	ardiConf := paths.ArdiProjectConfig
 	cliConf := paths.ArduinoCliProjectConfig
 
-	if opts.Global {
-		dataDir = paths.ArdiGlobalDataDir
-		ardiConf = paths.ArdiGlobalConfig
-		cliConf = paths.ArduinoCliGlobalConfig
-	}
-
 	if _, err := os.Stat(ardiConf); os.IsNotExist(err) {
 		ardiConfig = GenArdiConfig(logLevel)
 	} else if ardiConfig, err = ReadArdiConfig(ardiConf); err != nil {
@@ -183,11 +169,6 @@ func GetAllSettings(opts GetAllSettingsOpts) (*types.ArdiConfig, *types.ArduinoC
 // GetCliSettingsPath returns path to arduino-cli.yaml based on scope
 func GetCliSettingsPath(opts GetAllSettingsOpts) string {
 	cliConf := paths.ArduinoCliProjectConfig
-
-	if opts.Global {
-		cliConf = paths.ArduinoCliGlobalConfig
-	}
-
 	return cliConf
 }
 
@@ -196,12 +177,6 @@ func WriteAllSettings(opts WriteSettingsOpts) error {
 	dataDir := paths.ArdiProjectDataDir
 	ardiConf := paths.ArdiProjectConfig
 	cliConf := paths.ArduinoCliProjectConfig
-
-	if opts.Global {
-		dataDir = paths.ArdiGlobalDataDir
-		ardiConf = paths.ArdiGlobalConfig
-		cliConf = paths.ArduinoCliGlobalConfig
-	}
 
 	if err := CreateDataDir(dataDir); err != nil {
 		return err
@@ -227,13 +202,11 @@ func WriteAllSettings(opts WriteSettingsOpts) error {
 // InitProjectDirectory initializes a directory as an ardi project
 func InitProjectDirectory() error {
 	getOpts := GetAllSettingsOpts{
-		Global:   false,
 		LogLevel: "fatal",
 	}
 	ardiConfig, cliSettings := GetAllSettings(getOpts)
 
 	writeOpts := WriteSettingsOpts{
-		Global:             false,
 		ArdiConfig:         ardiConfig,
 		ArduinoCliSettings: cliSettings,
 	}
@@ -247,14 +220,11 @@ func InitProjectDirectory() error {
 // IsProjectDirectory returns whether or not currect directory has been initialized as an ardi project
 func IsProjectDirectory() bool {
 	_, buildErr := os.Stat(paths.ArdiProjectConfig)
-	if os.IsNotExist(buildErr) {
-		return false
-	}
-	return true
+	return !os.IsNotExist(buildErr)
 }
 
-// GetDaemonLogLevel returns daemon log level string based on logger settings
-func GetDaemonLogLevel(logger *log.Logger) string {
+// GetLogLevel returns daemon log level string based on logger settings
+func GetLogLevel(logger *log.Logger) string {
 	if logger.GetLevel() == log.DebugLevel {
 		return "debug"
 	}
@@ -292,7 +262,7 @@ func GeneratePropsArray(props map[string]string) []string {
 // ProcessSketch looks for .ino file in specified directory and parses
 func ProcessSketch(filePath string) (*types.Project, error) {
 	if filePath == "" {
-		err := errors.New("Missing sketch argument")
+		err := errors.New("missing sketch argument")
 		return nil, err
 	}
 
@@ -318,11 +288,11 @@ func ProcessSketch(filePath string) (*types.Project, error) {
 	sketchBaud := ParseSketchBaud(sketchFile)
 
 	if sketchFile, err = filepath.Abs(sketchFile); err != nil {
-		return nil, errors.New("Could not resolve sketch file path")
+		return nil, errors.New("could not resolve sketch file path")
 	}
 
 	if sketchDir, err = filepath.Abs(sketchDir); err != nil {
-		return nil, errors.New("Could not resolve sketch directory")
+		return nil, errors.New("could not resolve sketch directory")
 	}
 
 	return &types.Project{
@@ -366,7 +336,7 @@ func findSketch(directory string) (string, error) {
 	}
 
 	if !stat.IsDir() {
-		return "", errors.New("Not a directory")
+		return "", errors.New("not a directory")
 	}
 
 	sketchFile := ""

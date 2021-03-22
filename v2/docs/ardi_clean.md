@@ -1,11 +1,11 @@
 ## ardi clean
 
-Delete project, or global, data directory
+Delete project data directory
 
 ### Synopsis
 
 
-Removes all installed platforms and libraries from project data directory. If run with "--global" all data will be removed from ~/.ardi
+Removes all installed platforms and libraries from project data directory.
 
 ```
 ardi clean [flags]
@@ -20,7 +20,6 @@ ardi clean [flags]
 ### Options inherited from parent commands
 
 ```
-  -g, --global    Use global data directory
   -q, --quiet     Silence all logs
   -v, --verbose   Print all logs
 ```

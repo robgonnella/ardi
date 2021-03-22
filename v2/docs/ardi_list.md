@@ -16,7 +16,6 @@ List platforms, libraries, board urls, and builds
 ### Options inherited from parent commands
 
 ```
-  -g, --global    Use global data directory
   -q, --quiet     Silence all logs
   -v, --verbose   Print all logs
 ```

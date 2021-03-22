@@ -46,12 +46,6 @@ func CleanCommandsDir() {
 	os.Remove(projectJSONFile)
 }
 
-// CleanGlobalData removes global data directory
-func CleanGlobalData() {
-	globalDataDir := path.Join(userHome, ".ardi")
-	os.RemoveAll(globalDataDir)
-}
-
 // CleanBuilds removes compiled test project builds
 func CleanBuilds() {
 	os.RemoveAll(path.Join(BlinkProjectDir(), "build"))
@@ -64,7 +58,6 @@ func CleanBuilds() {
 func CleanAll() {
 	CleanCoreDir()
 	CleanCommandsDir()
-	CleanGlobalData()
 	CleanBuilds()
 }
 
@@ -193,13 +186,11 @@ func RunUnitTest(name string, t *testing.T, f func(env *UnitTestEnv)) {
 		logger.SetLevel(log.DebugLevel)
 
 		opts := util.GetAllSettingsOpts{
-			Global:   false,
 			LogLevel: "debug",
 		}
 		ardiConfig, svrSettings := util.GetAllSettings(opts)
 
 		coreOpts := core.NewArdiCoreOpts{
-			Global:             false,
 			Logger:             logger,
 			Cli:                cli,
 			ArdiConfig:         *ardiConfig,

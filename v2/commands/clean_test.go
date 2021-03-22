@@ -29,26 +29,4 @@ func TestCleanCommand(t *testing.T) {
 		assert.True(env.T, os.IsNotExist(cliConfErr))
 		assert.FileExists(env.T, paths.ArdiProjectConfig)
 	})
-
-	testutil.RunIntegrationTest("deletes global level .ardi directory and ardi.json file", t, func(env *testutil.IntegrationTestEnv) {
-		args := []string{"version"}
-		err := env.Execute(args)
-		assert.NoError(env.T, err)
-
-		assert.DirExists(env.T, paths.ArdiGlobalDataDir)
-		assert.FileExists(env.T, paths.ArdiGlobalConfig)
-		assert.FileExists(env.T, paths.ArduinoCliGlobalConfig)
-
-		args = []string{"clean", "--global"}
-		err = env.Execute(args)
-
-		assert.NoError(env.T, err)
-
-		_, dirErr := os.Stat(paths.ArdiGlobalDataDir)
-		_, cliConfErr := os.Stat(paths.ArduinoCliGlobalConfig)
-
-		assert.True(env.T, os.IsNotExist(dirErr))
-		assert.True(env.T, os.IsNotExist(cliConfErr))
-		assert.FileExists(env.T, paths.ArdiGlobalConfig)
-	})
 }

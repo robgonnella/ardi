@@ -89,7 +89,7 @@ func (c *LibCore) Add(lib string) (string, string, error) {
 	return library, installedVersion, nil
 }
 
-// Remove library either globally or for project
+// Remove library from project
 func (c *LibCore) Remove(library string) error {
 	c.logger.Infof("Removing library: %s", library)
 	if err := c.cli.UninstallLibrary(library); err != nil {

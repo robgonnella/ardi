@@ -15,7 +15,6 @@ import (
 var logger *log.Logger
 var verbose bool
 var quiet bool
-var global bool
 var ardiCore *core.ArdiCore
 
 type ardiLogFormatter struct {
@@ -68,41 +67,33 @@ func cmdIsVersion(cmd string) bool {
 }
 
 func shouldShowProjectError(cmd string) bool {
-	return !global &&
-		!util.IsProjectDirectory() &&
+	return !util.IsProjectDirectory() &&
 		!cmdIsProjectInit(cmd) &&
 		!cmdIsHelp(cmd) &&
 		!cmdIsVersion(cmd)
-}
-
-func useGlobalData(cmd string) bool {
-	return global || cmdIsVersion(cmd) || cmdIsHelp(cmd)
 }
 
 func preRun(cmd *cobra.Command, args []string) error {
 	setLogger()
 
 	cmdPath := cmd.CommandPath()
-	useGlobal := useGlobalData(cmdPath)
-	daemonLogLevel := util.GetDaemonLogLevel(logger)
+	daemonLogLevel := util.GetLogLevel(logger)
 
 	if shouldShowProjectError(cmdPath) {
-		return errors.New("not an ardi project directory. Try 'ardi project-init' or run with '--global'")
+		return errors.New("not an ardi project directory, run 'ardi project-init' first")
 	}
 
 	getOpts := util.GetAllSettingsOpts{
-		Global:   useGlobal,
 		LogLevel: daemonLogLevel,
 	}
 	ardiConfig, svrSettings := util.GetAllSettings(getOpts)
 	cliSettingsPath := util.GetCliSettingsPath(getOpts)
 
 	writeOpts := util.WriteSettingsOpts{
-		Global:             useGlobal,
 		ArdiConfig:         ardiConfig,
 		ArduinoCliSettings: svrSettings,
 	}
-	if useGlobal || util.IsProjectDirectory() {
+	if util.IsProjectDirectory() {
 		if err := util.WriteAllSettings(writeOpts); err != nil {
 			return err
 		}
@@ -111,7 +102,6 @@ func preRun(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
 	cli := cli.NewCli(ctx, cliSettingsPath, svrSettings, logger)
 	coreOpts := core.NewArdiCoreOpts{
-		Global:             useGlobal,
 		Logger:             logger,
 		Cli:                cli,
 		ArdiConfig:         *ardiConfig,
@@ -135,7 +125,6 @@ func getRootCommand() *cobra.Command {
 	}
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "Print all logs")
 	rootCmd.PersistentFlags().BoolVarP(&quiet, "quiet", "q", false, "Silence all logs")
-	rootCmd.PersistentFlags().BoolVarP(&global, "global", "g", false, "Use global data directory")
 	return rootCmd
 }
 

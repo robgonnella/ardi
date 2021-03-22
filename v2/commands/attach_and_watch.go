@@ -33,21 +33,16 @@ func getWatchCmd() *cobra.Command {
 
 			if build, ok := builds[sketch]; ok {
 				baud = util.ParseSketchBaud(build.Sketch)
-				buildOpts := core.CompileArdiBuildOpts{
-					BuildName:           sketch,
-					OnlyConnectedBoards: true,
-				}
-				if compileOpts, err = ardiCore.CompileArdiBuild(buildOpts); err != nil {
+				if compileOpts, err = ardiCore.CompileArdiBuild(sketch); err != nil {
 					return err
 				}
 			} else {
 				baud = util.ParseSketchBaud(sketch)
 				sketchOpts := core.CompileSketchOpts{
-					Sketch:              sketch,
-					FQBN:                fqbn,
-					BuildPros:           buildProps,
-					ShowProps:           false,
-					OnlyConnectedBoards: true,
+					Sketch:    sketch,
+					FQBN:      fqbn,
+					BuildPros: buildProps,
+					ShowProps: false,
 				}
 				if compileOpts, err = ardiCore.CompileSketch(sketchOpts); err != nil {
 					return err
@@ -55,7 +50,7 @@ func getWatchCmd() *cobra.Command {
 			}
 
 			board, err := ardiCore.GetTargetBoard(compileOpts.FQBN, port, true)
-			if err != nil {
+			if err != nil || board == nil {
 				return err
 			}
 
