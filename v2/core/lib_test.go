@@ -17,8 +17,8 @@ func TestLibCore(t *testing.T) {
 		library := fmt.Sprintf("%s@%s", lib, version)
 		installedVersion := "1.0.0-alpha.2"
 
-		env.Client.EXPECT().UpdateLibraryIndex().Times(1).Return(nil)
-		env.Client.EXPECT().InstallLibrary(lib, version).Times(1).Return(installedVersion, nil)
+		env.Cli.EXPECT().UpdateLibraryIndex().Times(1).Return(nil)
+		env.Cli.EXPECT().InstallLibrary(lib, version).Times(1).Return(installedVersion, nil)
 
 		returnedLib, returnedVers, err := env.ArdiCore.Lib.Add(library)
 		assert.NoError(env.T, err)
@@ -34,8 +34,8 @@ func TestLibCore(t *testing.T) {
 		version := "1.0.0"
 		library := fmt.Sprintf("%s@%s", lib, version)
 
-		env.Client.EXPECT().UpdateLibraryIndex().Times(1).Return(nil)
-		env.Client.EXPECT().InstallLibrary(lib, version).Times(1).Return("", dummyErr)
+		env.Cli.EXPECT().UpdateLibraryIndex().Times(1).Return(nil)
+		env.Cli.EXPECT().InstallLibrary(lib, version).Times(1).Return("", dummyErr)
 
 		_, _, err := env.ArdiCore.Lib.Add(library)
 		assert.Error(env.T, err)
@@ -44,7 +44,7 @@ func TestLibCore(t *testing.T) {
 
 	testutil.RunUnitTest("uninstalls library", t, func(env *testutil.UnitTestEnv) {
 		libName := "Adafruit_Pixie"
-		env.Client.EXPECT().UninstallLibrary(libName).Times(1).Return(nil)
+		env.Cli.EXPECT().UninstallLibrary(libName).Times(1).Return(nil)
 		err := env.ArdiCore.Lib.Remove(libName)
 		assert.NoError(env.T, err)
 	})
@@ -53,7 +53,7 @@ func TestLibCore(t *testing.T) {
 		errString := "dummy error"
 		dummyErr := errors.New(errString)
 		libName := "Adafruit_Pixie"
-		env.Client.EXPECT().UninstallLibrary(libName).Times(1).Return(dummyErr)
+		env.Cli.EXPECT().UninstallLibrary(libName).Times(1).Return(dummyErr)
 		err := env.ArdiCore.Lib.Remove(libName)
 		assert.Error(env.T, err)
 		assert.EqualError(env.T, err, errString)
@@ -76,8 +76,8 @@ func TestLibCore(t *testing.T) {
 
 		searchedLibs := []*commands.SearchedLibrary{&lib}
 
-		env.Client.EXPECT().UpdateLibraryIndex().Times(1).Return(nil)
-		env.Client.EXPECT().SearchLibraries(searchQuery).Times(1).Return(searchedLibs, nil)
+		env.Cli.EXPECT().UpdateLibraryIndex().Times(1).Return(nil)
+		env.Cli.EXPECT().SearchLibraries(searchQuery).Times(1).Return(searchedLibs, nil)
 
 		err := env.ArdiCore.Lib.Search(searchQuery)
 		assert.NoError(env.T, err)
@@ -94,7 +94,7 @@ func TestLibCore(t *testing.T) {
 			},
 		}
 
-		env.Client.EXPECT().GetInstalledLibs().Times(1).Return([]*commands.InstalledLibrary{&installedLib}, nil)
+		env.Cli.EXPECT().GetInstalledLibs().Times(1).Return([]*commands.InstalledLibrary{&installedLib}, nil)
 		env.ArdiCore.Lib.ListInstalled()
 
 		stdout := env.Stdout.String()

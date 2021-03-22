@@ -18,7 +18,7 @@ func getAddPlatformCmd() *cobra.Command {
 
 			if len(args) == 0 || all {
 				logger.Info("Adding all platforms")
-				rpcPlatforms, err := ardiCore.RPCClient.GetPlatforms()
+				rpcPlatforms, err := ardiCore.Cli.GetPlatforms()
 				if err != nil {
 					return err
 				}

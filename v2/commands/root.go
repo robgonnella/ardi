@@ -109,11 +109,11 @@ func preRun(cmd *cobra.Command, args []string) error {
 	}
 
 	ctx := cmd.Context()
-	client := cli.NewClient(ctx, cliSettingsPath, svrSettings, logger)
+	cli := cli.NewCli(ctx, cliSettingsPath, svrSettings, logger)
 	coreOpts := core.NewArdiCoreOpts{
 		Global:             useGlobal,
 		Logger:             logger,
-		Client:             client,
+		Cli:                cli,
 		ArdiConfig:         *ardiConfig,
 		ArduinoCliSettings: *svrSettings,
 	}

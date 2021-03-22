@@ -14,22 +14,22 @@ import (
 // PlatformCore module for platform commands
 type PlatformCore struct {
 	logger      *log.Logger
-	client      cli.Client
+	cli         cli.Cli
 	initialized bool
 }
 
 // NewPlatformCore platform module instance
-func NewPlatformCore(client cli.Client, logger *log.Logger) *PlatformCore {
+func NewPlatformCore(cli cli.Cli, logger *log.Logger) *PlatformCore {
 	return &PlatformCore{
 		logger:      logger,
-		client:      client,
+		cli:         cli,
 		initialized: false,
 	}
 }
 
 // ListInstalled lists only installed platforms
-func (p *PlatformCore) ListInstalled() error {
-	platforms, err := p.client.GetInstalledPlatforms()
+func (c *PlatformCore) ListInstalled() error {
+	platforms, err := c.cli.GetInstalledPlatforms()
 	if err != nil {
 		return err
 	}
@@ -38,7 +38,7 @@ func (p *PlatformCore) ListInstalled() error {
 		return platforms[i].GetName() < platforms[j].GetName()
 	})
 
-	w := tabwriter.NewWriter(p.logger.Out, 0, 0, 8, ' ', 0)
+	w := tabwriter.NewWriter(c.logger.Out, 0, 0, 8, ' ', 0)
 	defer w.Flush()
 	w.Write([]byte("Platform\tID\tInstalled\n"))
 	for _, plat := range platforms {
@@ -48,10 +48,10 @@ func (p *PlatformCore) ListInstalled() error {
 }
 
 // ListAll lists all available platforms
-func (p *PlatformCore) ListAll() error {
-	p.init()
+func (c *PlatformCore) ListAll() error {
+	c.init()
 
-	platforms, err := p.client.GetPlatforms()
+	platforms, err := c.cli.GetPlatforms()
 	if err != nil {
 		return err
 	}
@@ -60,8 +60,8 @@ func (p *PlatformCore) ListAll() error {
 		return platforms[i].GetName() < platforms[j].GetName()
 	})
 
-	p.logger.Info("------AVAILABLE PLATFORMS------")
-	w := tabwriter.NewWriter(p.logger.Out, 0, 0, 8, ' ', 0)
+	c.logger.Info("------AVAILABLE PLATFORMS------")
+	w := tabwriter.NewWriter(c.logger.Out, 0, 0, 8, ' ', 0)
 	defer w.Flush()
 	w.Write([]byte("Platform\tID\tLatest\n"))
 	for _, plat := range platforms {
@@ -71,14 +71,14 @@ func (p *PlatformCore) ListAll() error {
 }
 
 // Add installs specified platforms
-func (p *PlatformCore) Add(platform string) (string, string, error) {
-	p.init()
+func (c *PlatformCore) Add(platform string) (string, string, error) {
+	c.init()
 
 	if platform == "" {
-		return "", "", errors.New("Empty platform list")
+		return "", "", errors.New("empty platform list")
 	}
 
-	installed, vers, err := p.client.InstallPlatform(platform)
+	installed, vers, err := c.cli.InstallPlatform(platform)
 	if err != nil {
 		return "", "", err
 	}
@@ -87,12 +87,12 @@ func (p *PlatformCore) Add(platform string) (string, string, error) {
 }
 
 // Remove uninstalls specified platforms
-func (p *PlatformCore) Remove(platform string) (string, error) {
+func (c *PlatformCore) Remove(platform string) (string, error) {
 	if platform == "" {
-		return "", errors.New("Empty platform list")
+		return "", errors.New("empty platform list")
 	}
 
-	removed, err := p.client.UninstallPlatform(platform)
+	removed, err := c.cli.UninstallPlatform(platform)
 	if err != nil {
 		return "", err
 	}
@@ -101,12 +101,12 @@ func (p *PlatformCore) Remove(platform string) (string, error) {
 }
 
 // private
-func (p *PlatformCore) init() error {
-	if !p.initialized {
-		if err := p.client.UpdatePlatformIndex(); err != nil {
+func (c *PlatformCore) init() error {
+	if !c.initialized {
+		if err := c.cli.UpdatePlatformIndex(); err != nil {
 			return err
 		}
-		p.initialized = true
+		c.initialized = true
 	}
 	return nil
 }

@@ -70,7 +70,7 @@ func (w *WatchCore) SetTargets(targets WatchCoreTargets) error {
 // recompiling and re-uploading.
 func (w *WatchCore) Watch() error {
 	if !w.hasTargets() {
-		return errors.New("Must call SetTargets before calling watch")
+		return errors.New("must call SetTargets before calling watch")
 	}
 
 	w.port.Stop()

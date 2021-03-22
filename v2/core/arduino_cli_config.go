@@ -52,7 +52,7 @@ func (a *ArdiYAML) RemoveBoardURL(url string) error {
 // private methods
 func (a *ArdiYAML) write() error {
 	a.mux.Lock()
-	a.mux.Unlock()
+	defer a.mux.Unlock()
 
 	newData, err := yaml.Marshal(a.Config)
 	if err != nil {

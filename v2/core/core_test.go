@@ -16,8 +16,8 @@ func TestArdiCore(t *testing.T) {
 		allBoards := []*cli.Board{}
 		fqbn := "someboardfqbn"
 
-		env.Client.EXPECT().ConnectedBoards().Times(1).Return(connectedBoards)
-		env.Client.EXPECT().AllBoards().Times(1).Return(allBoards)
+		env.Cli.EXPECT().ConnectedBoards().Times(1).Return(connectedBoards)
+		env.Cli.EXPECT().AllBoards().Times(1).Return(allBoards)
 
 		board, err := env.ArdiCore.GetTargetBoard(fqbn, false)
 		assert.NoError(env.T, err)
@@ -31,8 +31,8 @@ func TestArdiCore(t *testing.T) {
 		connectedBoards := []*cli.Board{connectedBoard}
 		allBoards := []*cli.Board{}
 
-		env.Client.EXPECT().ConnectedBoards().Times(1).Return(connectedBoards)
-		env.Client.EXPECT().AllBoards().Times(1).Return(allBoards)
+		env.Cli.EXPECT().ConnectedBoards().Times(1).Return(connectedBoards)
+		env.Cli.EXPECT().AllBoards().Times(1).Return(allBoards)
 
 		board, err := env.ArdiCore.GetTargetBoard(fqbn, true)
 		assert.NoError(env.T, err)
@@ -44,8 +44,8 @@ func TestArdiCore(t *testing.T) {
 		connectedBoards := []*cli.Board{}
 		allBoards := []*cli.Board{}
 
-		env.Client.EXPECT().ConnectedBoards().Times(1).Return(connectedBoards)
-		env.Client.EXPECT().AllBoards().Times(1).Return(allBoards)
+		env.Cli.EXPECT().ConnectedBoards().Times(1).Return(connectedBoards)
+		env.Cli.EXPECT().AllBoards().Times(1).Return(allBoards)
 
 		board, err := env.ArdiCore.GetTargetBoard(fqbn, true)
 		assert.Error(env.T, err)
@@ -59,8 +59,8 @@ func TestArdiCore(t *testing.T) {
 		connectedBoards := []*cli.Board{connectedBoard}
 		allBoards := []*cli.Board{}
 
-		env.Client.EXPECT().ConnectedBoards().Times(1).Return(connectedBoards)
-		env.Client.EXPECT().AllBoards().Times(1).Return(allBoards)
+		env.Cli.EXPECT().ConnectedBoards().Times(1).Return(connectedBoards)
+		env.Cli.EXPECT().AllBoards().Times(1).Return(allBoards)
 
 		board, err := env.ArdiCore.GetTargetBoard("", false)
 		assert.NoError(env.T, err)
@@ -78,8 +78,8 @@ func TestArdiCore(t *testing.T) {
 		connectedBoards := []*cli.Board{connectedBoard1, connectedBoard2}
 		allBoards := []*cli.Board{}
 
-		env.Client.EXPECT().ConnectedBoards().Times(1).Return(connectedBoards)
-		env.Client.EXPECT().AllBoards().Times(1).Return(allBoards)
+		env.Cli.EXPECT().ConnectedBoards().Times(1).Return(connectedBoards)
+		env.Cli.EXPECT().AllBoards().Times(1).Return(allBoards)
 
 		env.ClearStdout()
 		board, err := env.ArdiCore.GetTargetBoard("", false)
@@ -101,8 +101,8 @@ func TestArdiCore(t *testing.T) {
 		otherBoard := testutil.GenerateRPCBoard(otherBoardName, otherBoardFQBN)
 		allBoards := []*cli.Board{otherBoard}
 
-		env.Client.EXPECT().ConnectedBoards().Times(1).Return(connectedBoards)
-		env.Client.EXPECT().AllBoards().Times(1).Return(allBoards)
+		env.Cli.EXPECT().ConnectedBoards().Times(1).Return(connectedBoards)
+		env.Cli.EXPECT().AllBoards().Times(1).Return(allBoards)
 
 		env.ClearStdout()
 		board, err := env.ArdiCore.GetTargetBoard("", false)
@@ -122,8 +122,8 @@ func TestArdiCore(t *testing.T) {
 		otherBoard := testutil.GenerateRPCBoard(otherBoardName, otherBoardFQBN)
 		allBoards := []*cli.Board{otherBoard}
 
-		env.Client.EXPECT().ConnectedBoards().Times(1).Return(connectedBoards)
-		env.Client.EXPECT().AllBoards().Times(1).Return(allBoards)
+		env.Cli.EXPECT().ConnectedBoards().Times(1).Return(connectedBoards)
+		env.Cli.EXPECT().AllBoards().Times(1).Return(allBoards)
 
 		env.ClearStdout()
 		board, err := env.ArdiCore.GetTargetBoard("", true)
@@ -145,8 +145,8 @@ func TestArdiCore(t *testing.T) {
 		err := env.ArdiCore.Config.AddBuild(buildName, sketch, fqbn, []string{})
 		assert.NoError(env.T, err)
 
-		env.Client.EXPECT().ConnectedBoards().Times(1).Return(connectedBoards)
-		env.Client.EXPECT().AllBoards().Times(1).Return(allBoards)
+		env.Cli.EXPECT().ConnectedBoards().Times(1).Return(connectedBoards)
+		env.Cli.EXPECT().AllBoards().Times(1).Return(allBoards)
 
 		buildOpts := core.CompileArdiBuildOpts{
 			BuildName:           "somebuild",
@@ -161,7 +161,7 @@ func TestArdiCore(t *testing.T) {
 			ShowProps:  false,
 		}
 
-		env.Client.EXPECT().Compile(expectedCompileOpts).Times(1).Return(nil)
+		env.Cli.EXPECT().Compile(expectedCompileOpts).Times(1).Return(nil)
 
 		compileOpts, board, err := env.ArdiCore.CompileArdiBuild(buildOpts)
 		assert.NoError(env.T, err)
@@ -179,8 +179,8 @@ func TestArdiCore(t *testing.T) {
 		err := env.ArdiCore.Config.AddBuild(buildName, sketch, fqbn, []string{})
 		assert.NoError(env.T, err)
 
-		env.Client.EXPECT().ConnectedBoards().Times(1).Return(connectedBoards)
-		env.Client.EXPECT().AllBoards().Times(1).Return(allBoards)
+		env.Cli.EXPECT().ConnectedBoards().Times(1).Return(connectedBoards)
+		env.Cli.EXPECT().AllBoards().Times(1).Return(allBoards)
 
 		buildOpts := core.CompileArdiBuildOpts{
 			BuildName:           "somebuild",
@@ -203,8 +203,8 @@ func TestArdiCore(t *testing.T) {
 		err := env.ArdiCore.Config.AddBuild(buildName, sketch, fqbn, []string{})
 		assert.NoError(env.T, err)
 
-		env.Client.EXPECT().ConnectedBoards().Times(1).Return(connectedBoards)
-		env.Client.EXPECT().AllBoards().Times(1).Return(allBoards)
+		env.Cli.EXPECT().ConnectedBoards().Times(1).Return(connectedBoards)
+		env.Cli.EXPECT().AllBoards().Times(1).Return(allBoards)
 
 		sketchOpts := core.CompileSketchOpts{
 			Sketch:              sketch,
@@ -222,7 +222,7 @@ func TestArdiCore(t *testing.T) {
 			ShowProps:  false,
 		}
 
-		env.Client.EXPECT().Compile(expectedCompileOpts).Times(1).Return(nil)
+		env.Cli.EXPECT().Compile(expectedCompileOpts).Times(1).Return(nil)
 
 		compileOpts, board, err := env.ArdiCore.CompileSketch(sketchOpts)
 		assert.NoError(env.T, err)
@@ -240,8 +240,8 @@ func TestArdiCore(t *testing.T) {
 		err := env.ArdiCore.Config.AddBuild(buildName, sketch, fqbn, []string{})
 		assert.NoError(env.T, err)
 
-		env.Client.EXPECT().ConnectedBoards().Times(1).Return(connectedBoards)
-		env.Client.EXPECT().AllBoards().Times(1).Return(allBoards)
+		env.Cli.EXPECT().ConnectedBoards().Times(1).Return(connectedBoards)
+		env.Cli.EXPECT().AllBoards().Times(1).Return(allBoards)
 
 		sketchOpts := core.CompileSketchOpts{
 			Sketch:              sketch,

@@ -21,7 +21,7 @@ func TestPlatformCore(t *testing.T) {
 		}
 		platforms := []*commands.Platform{&platform2, &platform1}
 
-		env.Client.EXPECT().GetInstalledPlatforms().Times(1).Return(platforms, nil)
+		env.Cli.EXPECT().GetInstalledPlatforms().Times(1).Return(platforms, nil)
 
 		err := env.ArdiCore.Platform.ListInstalled()
 		assert.NoError(env.T, err)
@@ -41,8 +41,8 @@ func TestPlatformCore(t *testing.T) {
 		}
 		platforms := []*commands.Platform{&platform2, &platform1}
 
-		env.Client.EXPECT().UpdatePlatformIndex().Times(1).Return(nil)
-		env.Client.EXPECT().GetPlatforms().Times(1).Return(platforms, nil)
+		env.Cli.EXPECT().UpdatePlatformIndex().Times(1).Return(nil)
+		env.Cli.EXPECT().GetPlatforms().Times(1).Return(platforms, nil)
 
 		err := env.ArdiCore.Platform.ListAll()
 		assert.NoError(env.T, err)
@@ -55,9 +55,9 @@ func TestPlatformCore(t *testing.T) {
 		testPlatform1 := "test-platform1"
 		testPlatform2 := "test-platform2"
 
-		env.Client.EXPECT().UpdatePlatformIndex().Times(1).Return(nil)
-		env.Client.EXPECT().InstallPlatform(testPlatform1).Times(1).Return(testPlatform1, "1.0.0", nil)
-		env.Client.EXPECT().InstallPlatform(testPlatform2).Times(1).Return(testPlatform2, "2.1.2", nil)
+		env.Cli.EXPECT().UpdatePlatformIndex().Times(1).Return(nil)
+		env.Cli.EXPECT().InstallPlatform(testPlatform1).Times(1).Return(testPlatform1, "1.0.0", nil)
+		env.Cli.EXPECT().InstallPlatform(testPlatform2).Times(1).Return(testPlatform2, "2.1.2", nil)
 
 		platforms := []string{testPlatform1, testPlatform2}
 
@@ -75,9 +75,9 @@ func TestPlatformCore(t *testing.T) {
 		testPlatform1 := "test-platform1"
 		testPlatform2 := "test-platform2"
 
-		env.Client.EXPECT().UpdatePlatformIndex().Times(1).Return(nil)
-		env.Client.EXPECT().InstallPlatform(testPlatform1).Times(1).Return("", "", dummyErr)
-		env.Client.EXPECT().InstallPlatform(testPlatform2).Times(1).Return("", "", dummyErr)
+		env.Cli.EXPECT().UpdatePlatformIndex().Times(1).Return(nil)
+		env.Cli.EXPECT().InstallPlatform(testPlatform1).Times(1).Return("", "", dummyErr)
+		env.Cli.EXPECT().InstallPlatform(testPlatform2).Times(1).Return("", "", dummyErr)
 
 		platforms := []string{testPlatform1, testPlatform2}
 
@@ -92,8 +92,8 @@ func TestPlatformCore(t *testing.T) {
 		testPlatform1 := "test-platform1"
 		testPlatform2 := "test-platform2"
 
-		env.Client.EXPECT().UninstallPlatform(testPlatform1).Times(1).Return(testPlatform1, nil)
-		env.Client.EXPECT().UninstallPlatform(testPlatform2).Times(1).Return(testPlatform2, nil)
+		env.Cli.EXPECT().UninstallPlatform(testPlatform1).Times(1).Return(testPlatform1, nil)
+		env.Cli.EXPECT().UninstallPlatform(testPlatform2).Times(1).Return(testPlatform2, nil)
 
 		platforms := []string{testPlatform1, testPlatform2}
 
@@ -111,8 +111,8 @@ func TestPlatformCore(t *testing.T) {
 		testPlatform1 := "test-platform1"
 		testPlatform2 := "test-platform2"
 
-		env.Client.EXPECT().UninstallPlatform(testPlatform1).Times(1).Return("", dummyErr)
-		env.Client.EXPECT().UninstallPlatform(testPlatform2).Times(1).Return("", dummyErr)
+		env.Cli.EXPECT().UninstallPlatform(testPlatform1).Times(1).Return("", dummyErr)
+		env.Cli.EXPECT().UninstallPlatform(testPlatform2).Times(1).Return("", dummyErr)
 
 		platforms := []string{testPlatform1, testPlatform2}
 

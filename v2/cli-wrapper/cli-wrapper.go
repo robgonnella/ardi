@@ -24,8 +24,8 @@ import (
 )
 
 // Client reprents our wrapper around arduino-cli
-//go:generate mockgen -destination=../mocks/mock_cli.go -package=mocks github.com/robgonnella/ardi/v2/cli-wrapper Client
-type Client interface {
+//go:generate mockgen -destination=../mocks/mock_cli.go -package=mocks github.com/robgonnella/ardi/v2/cli-wrapper Cli
+type Cli interface {
 	UpdateIndexFiles() error
 	UpdateLibraryIndex() error
 	UpdatePlatformIndex() error
@@ -46,7 +46,7 @@ type Client interface {
 }
 
 // ArdiClient represents a client connection to arduino-cli grpc daemon
-type ArdiClient struct {
+type ArduinoCli struct {
 	ctx          context.Context
 	settingsPath string
 	logger       *log.Logger
@@ -59,10 +59,10 @@ type Board struct {
 	Port string
 }
 
-// NewClient return new RPC controller
-func NewClient(ctx context.Context, settingsPath string, svrSettings *types.ArduinoCliSettings, logger *log.Logger) Client {
+// NewCli return new arduino-cli wrapper
+func NewCli(ctx context.Context, settingsPath string, svrSettings *types.ArduinoCliSettings, logger *log.Logger) Cli {
 	configuration.Settings = configuration.Init(settingsPath)
-	return &ArdiClient{
+	return &ArduinoCli{
 		ctx:          ctx,
 		settingsPath: settingsPath,
 		logger:       logger,
@@ -70,7 +70,7 @@ func NewClient(ctx context.Context, settingsPath string, svrSettings *types.Ardu
 }
 
 // UpdateIndexFiles updates platform and library index files
-func (c *ArdiClient) UpdateIndexFiles() error {
+func (c *ArduinoCli) UpdateIndexFiles() error {
 	if err := c.UpdatePlatformIndex(); err != nil {
 		return err
 	}
@@ -81,7 +81,7 @@ func (c *ArdiClient) UpdateIndexFiles() error {
 }
 
 // UpdateLibraryIndex updates library index file
-func (c *ArdiClient) UpdateLibraryIndex() error {
+func (c *ArduinoCli) UpdateLibraryIndex() error {
 	c.logger.Debug("Updating library index...")
 	inst := instance.CreateInstanceIgnorePlatformIndexErrors()
 
@@ -95,7 +95,7 @@ func (c *ArdiClient) UpdateLibraryIndex() error {
 }
 
 // UpdatePlatformIndex updates platform index file
-func (c *ArdiClient) UpdatePlatformIndex() error {
+func (c *ArduinoCli) UpdatePlatformIndex() error {
 	c.logger.Debug("Updating platform index...")
 	inst := instance.CreateInstanceIgnorePlatformIndexErrors()
 	_, err := commands.UpdateIndex(
@@ -109,7 +109,7 @@ func (c *ArdiClient) UpdatePlatformIndex() error {
 }
 
 // UpgradePlatform upgrades a given platform
-func (c *ArdiClient) UpgradePlatform(platform string) error {
+func (c *ArduinoCli) UpgradePlatform(platform string) error {
 	inst, err := instance.CreateInstance()
 	if err != nil {
 		return err
@@ -132,7 +132,7 @@ func (c *ArdiClient) UpgradePlatform(platform string) error {
 }
 
 // InstallPlatform installs a given platform
-func (c *ArdiClient) InstallPlatform(platform string) (string, string, error) {
+func (c *ArduinoCli) InstallPlatform(platform string) (string, string, error) {
 	inst, err := instance.CreateInstance()
 	if err != nil {
 		return "", "", err
@@ -181,7 +181,7 @@ func (c *ArdiClient) InstallPlatform(platform string) (string, string, error) {
 }
 
 // UninstallPlatform installs a given platform
-func (c *ArdiClient) UninstallPlatform(platform string) (string, error) {
+func (c *ArduinoCli) UninstallPlatform(platform string) (string, error) {
 	inst, err := instance.CreateInstance()
 	if err != nil {
 		return "", err
@@ -217,7 +217,7 @@ func (c *ArdiClient) UninstallPlatform(platform string) (string, error) {
 }
 
 // GetInstalledPlatforms lists all installed platforms
-func (c *ArdiClient) GetInstalledPlatforms() ([]*rpc.Platform, error) {
+func (c *ArduinoCli) GetInstalledPlatforms() ([]*rpc.Platform, error) {
 	inst, err := instance.CreateInstance()
 	if err != nil {
 		return nil, err
@@ -233,7 +233,7 @@ func (c *ArdiClient) GetInstalledPlatforms() ([]*rpc.Platform, error) {
 }
 
 // GetPlatforms returns specified platform or all platforms if unspecified
-func (c *ArdiClient) GetPlatforms() ([]*rpc.Platform, error) {
+func (c *ArduinoCli) GetPlatforms() ([]*rpc.Platform, error) {
 	inst, err := instance.CreateInstance()
 	if err != nil {
 		return nil, err
@@ -254,7 +254,7 @@ func (c *ArdiClient) GetPlatforms() ([]*rpc.Platform, error) {
 }
 
 // ConnectedBoards returns a list of connected arduino boards
-func (c *ArdiClient) ConnectedBoards() []*Board {
+func (c *ArduinoCli) ConnectedBoards() []*Board {
 	inst, err := instance.CreateInstance()
 	if err != nil {
 		c.logger.WithError(err).Warn("failed to get list of connected boards")
@@ -283,7 +283,7 @@ func (c *ArdiClient) ConnectedBoards() []*Board {
 }
 
 // AllBoards returns a list of all supported boards
-func (c *ArdiClient) AllBoards() []*Board {
+func (c *ArduinoCli) AllBoards() []*Board {
 	inst, err := instance.CreateInstance()
 	if err != nil {
 		return nil
@@ -318,7 +318,7 @@ func (c *ArdiClient) AllBoards() []*Board {
 }
 
 // Upload a sketch to target board
-func (c *ArdiClient) Upload(fqbn, sketchDir, device string) error {
+func (c *ArduinoCli) Upload(fqbn, sketchDir, device string) error {
 	inst, err := instance.CreateInstance()
 	if err != nil {
 		return err
@@ -352,7 +352,7 @@ type CompileOpts struct {
 }
 
 // Compile the specified sketch
-func (c *ArdiClient) Compile(opts CompileOpts) error {
+func (c *ArduinoCli) Compile(opts CompileOpts) error {
 	inst, err := instance.CreateInstance()
 	if err != nil {
 		return err
@@ -382,7 +382,7 @@ func (c *ArdiClient) Compile(opts CompileOpts) error {
 }
 
 // SearchLibraries searches available libraries for download
-func (c *ArdiClient) SearchLibraries(query string) ([]*rpc.SearchedLibrary, error) {
+func (c *ArduinoCli) SearchLibraries(query string) ([]*rpc.SearchedLibrary, error) {
 	inst, err := instance.CreateInstance()
 	if err != nil {
 		return nil, err
@@ -399,7 +399,7 @@ func (c *ArdiClient) SearchLibraries(query string) ([]*rpc.SearchedLibrary, erro
 }
 
 // InstallLibrary installs specified version of a library
-func (c *ArdiClient) InstallLibrary(name, version string) (string, error) {
+func (c *ArduinoCli) InstallLibrary(name, version string) (string, error) {
 	inst := instance.CreateInstanceIgnorePlatformIndexErrors()
 
 	req := &rpc.LibraryInstallReq{
@@ -436,7 +436,7 @@ func (c *ArdiClient) InstallLibrary(name, version string) (string, error) {
 }
 
 // UninstallLibrary removes specified library
-func (c *ArdiClient) UninstallLibrary(name string) error {
+func (c *ArduinoCli) UninstallLibrary(name string) error {
 	inst := instance.CreateInstanceIgnorePlatformIndexErrors()
 
 	req := &rpc.LibraryUninstallReq{
@@ -459,7 +459,7 @@ func (c *ArdiClient) UninstallLibrary(name string) error {
 }
 
 // GetInstalledLibs returns a list of installed libraries
-func (c *ArdiClient) GetInstalledLibs() ([]*rpc.InstalledLibrary, error) {
+func (c *ArduinoCli) GetInstalledLibs() ([]*rpc.InstalledLibrary, error) {
 	inst := instance.CreateInstanceIgnorePlatformIndexErrors()
 
 	req := &rpc.LibraryListReq{
@@ -471,23 +471,23 @@ func (c *ArdiClient) GetInstalledLibs() ([]*rpc.InstalledLibrary, error) {
 }
 
 // ClientVersion returns version of arduino-cli
-func (c *ArdiClient) ClientVersion() string {
+func (c *ArduinoCli) ClientVersion() string {
 	return globals.VersionInfo.String()
 }
 
 // private methods
-func (c *ArdiClient) isVerbose() bool {
+func (c *ArduinoCli) isVerbose() bool {
 	return c.logger.GetLevel() == log.DebugLevel
 }
 
-func (c *ArdiClient) getDownloadProgressFn() commands.DownloadProgressCB {
+func (c *ArduinoCli) getDownloadProgressFn() commands.DownloadProgressCB {
 	if c.isVerbose() {
 		return output.ProgressBar()
 	}
 	return noDownloadOutput
 }
 
-func (c *ArdiClient) getTaskProgressFn() commands.TaskProgressCB {
+func (c *ArduinoCli) getTaskProgressFn() commands.TaskProgressCB {
 	if c.isVerbose() {
 		return output.TaskProgress()
 	}

@@ -13,7 +13,7 @@ func getVersionCmd() *cobra.Command {
 		Short: "Prints current version of ardi",
 		Run: func(cmd *cobra.Command, args []string) {
 			ardiVersion := version.VERSION
-			arduinoCliVersion := ardiCore.RPCClient.ClientVersion()
+			arduinoCliVersion := ardiCore.Cli.ClientVersion()
 			logger.Infoln("")
 			logger.Infof("ardi: v%s", ardiVersion)
 			logger.Infof("arduino-cli: %s", arduinoCliVersion)

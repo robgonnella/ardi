@@ -82,7 +82,7 @@ func (f *FileWatcher) Watch() error {
 			return nil
 		case event, ok := <-f.watcher.Events:
 			if !ok {
-				err := errors.New("Failed to watch")
+				err := errors.New("failed to watch")
 				f.logger.WithError(err).Debug()
 				return err
 			}

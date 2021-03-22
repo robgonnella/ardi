@@ -11,15 +11,15 @@ import (
 // CompileCore represents core module for compile commands
 type CompileCore struct {
 	logger    *log.Logger
-	client    cli.Client
+	cli       cli.Cli
 	compiling bool
 }
 
 // NewCompileCore instance of core module for compile commands
-func NewCompileCore(client cli.Client, logger *log.Logger) *CompileCore {
+func NewCompileCore(cli cli.Cli, logger *log.Logger) *CompileCore {
 	return &CompileCore{
 		logger:    logger,
-		client:    client,
+		cli:       cli,
 		compiling: false,
 	}
 }
@@ -28,7 +28,7 @@ func NewCompileCore(client cli.Client, logger *log.Logger) *CompileCore {
 func (c *CompileCore) Compile(opts cli.CompileOpts) error {
 	c.waitForCompilationsToFinish()
 	c.compiling = true
-	if err := c.client.Compile(opts); err != nil {
+	if err := c.cli.Compile(opts); err != nil {
 		c.compiling = false
 		return err
 	}

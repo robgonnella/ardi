@@ -12,7 +12,6 @@ import (
 
 	rpccommands "github.com/arduino/arduino-cli/rpc/commands"
 	"github.com/golang/mock/gomock"
-	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 
 	cli "github.com/robgonnella/ardi/v2/cli-wrapper"
@@ -28,7 +27,7 @@ var userHome string
 func init() {
 	here, _ = filepath.Abs(".")
 	userHome, _ = os.UserHomeDir()
-	logrus.SetOutput(ioutil.Discard)
+	log.SetOutput(ioutil.Discard)
 }
 
 // CleanCoreDir removes test data from core directory
@@ -94,7 +93,7 @@ type UnitTestEnv struct {
 	T            *testing.T
 	Ctrl         *gomock.Controller
 	Logger       *log.Logger
-	Client       *mocks.MockClient
+	Cli          *mocks.MockCli
 	ArdiCore     *core.ArdiCore
 	Stdout       *bytes.Buffer
 	PixieProjDir string
@@ -184,7 +183,7 @@ func RunUnitTest(name string, t *testing.T, f func(env *UnitTestEnv)) {
 		ctrl := gomock.NewController(st)
 		defer ctrl.Finish()
 
-		client := mocks.NewMockClient(ctrl)
+		cli := mocks.NewMockCli(ctrl)
 		logger := log.New()
 
 		CleanAll()
@@ -202,7 +201,7 @@ func RunUnitTest(name string, t *testing.T, f func(env *UnitTestEnv)) {
 		coreOpts := core.NewArdiCoreOpts{
 			Global:             false,
 			Logger:             logger,
-			Client:             client,
+			Cli:                cli,
 			ArdiConfig:         *ardiConfig,
 			ArduinoCliSettings: *svrSettings,
 		}
@@ -212,7 +211,7 @@ func RunUnitTest(name string, t *testing.T, f func(env *UnitTestEnv)) {
 			T:        st,
 			Ctrl:     ctrl,
 			Logger:   logger,
-			Client:   client,
+			Cli:      cli,
 			ArdiCore: ardiCore,
 			Stdout:   &b,
 		}

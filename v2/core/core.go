@@ -10,13 +10,12 @@ import (
 	"github.com/robgonnella/ardi/v2/paths"
 	"github.com/robgonnella/ardi/v2/types"
 	"github.com/robgonnella/ardi/v2/util"
-	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 )
 
 // ArdiCore represents the core package of ardi
 type ArdiCore struct {
-	RPCClient cli.Client
+	Cli       cli.Cli
 	Config    *ArdiConfig
 	CliConfig *ArdiYAML
 	Watcher   *WatchCore
@@ -33,7 +32,7 @@ type NewArdiCoreOpts struct {
 	Global             bool
 	ArdiConfig         types.ArdiConfig
 	ArduinoCliSettings types.ArduinoCliSettings
-	Client             cli.Client
+	Cli                cli.Cli
 	Logger             *log.Logger
 }
 
@@ -62,22 +61,22 @@ func NewArdiCore(opts NewArdiCoreOpts) *ArdiCore {
 		cliConf = paths.ArduinoCliGlobalConfig
 	}
 
-	client := opts.Client
+	cli := opts.Cli
 	logger := opts.Logger
 
-	compiler := NewCompileCore(client, logger)
-	uploader := NewUploadCore(client, logger)
+	compiler := NewCompileCore(cli, logger)
+	uploader := NewUploadCore(cli, logger)
 
 	return &ArdiCore{
-		RPCClient: client,
+		Cli:       cli,
 		Config:    NewArdiConfig(ardiConf, opts.ArdiConfig, logger),
 		CliConfig: NewArdiYAML(cliConf, opts.ArduinoCliSettings),
 		Watcher:   NewWatchCore(compiler, uploader, logger),
-		Board:     NewBoardCore(client, logger),
+		Board:     NewBoardCore(cli, logger),
 		Compiler:  compiler,
 		Uploader:  uploader,
-		Lib:       NewLibCore(client, logger),
-		Platform:  NewPlatformCore(client, logger),
+		Lib:       NewLibCore(cli, logger),
+		Platform:  NewPlatformCore(cli, logger),
 		logger:    logger,
 	}
 }
@@ -92,7 +91,7 @@ func (c *ArdiCore) CompileArdiBuild(buildOpts CompileArdiBuildOpts) (*cli.Compil
 	if err != nil {
 		return nil, nil, err
 	}
-	fields := logrus.Fields{
+	fields := log.Fields{
 		"sketch": compileOpts.SketchPath,
 		"fqbn":   compileOpts.FQBN,
 	}
@@ -124,7 +123,7 @@ func (c *ArdiCore) CompileSketch(sketchOpts CompileSketchOpts) (*cli.CompileOpts
 		BuildProps: sketchOpts.BuildPros,
 		ShowProps:  sketchOpts.ShowProps,
 	}
-	fields := logrus.Fields{
+	fields := log.Fields{
 		"sketch": compileOpts.SketchPath,
 		"fqbn":   compileOpts.FQBN,
 	}
@@ -139,9 +138,9 @@ func (c *ArdiCore) CompileSketch(sketchOpts CompileSketchOpts) (*cli.CompileOpts
 // GetTargetBoard returns target info for a connected & disconnected boards
 func (c *ArdiCore) GetTargetBoard(fqbn string, onlyConnected bool) (*cli.Board, error) {
 	fqbnErr := errors.New("you must specify a board fqbn to compile - you can find a list of board fqbns for installed platforms above")
-	connectedBoardsErr := errors.New("No connected boards detected")
-	connectedBoards := c.RPCClient.ConnectedBoards()
-	allBoards := c.RPCClient.AllBoards()
+	connectedBoardsErr := errors.New("no connected boards detected")
+	connectedBoards := c.Cli.ConnectedBoards()
+	allBoards := c.Cli.AllBoards()
 
 	if fqbn != "" {
 		if onlyConnected {
@@ -172,7 +171,7 @@ func (c *ArdiCore) GetTargetBoard(fqbn string, onlyConnected bool) (*cli.Board, 
 		return nil, fqbnErr
 	}
 
-	return nil, errors.New("Error parsing target")
+	return nil, errors.New("error parsing target")
 }
 
 // private helpers

@@ -35,8 +35,8 @@ func TestWatchCore(t *testing.T) {
 		port := mocks.NewMockSerialPort(env.Ctrl)
 		port.EXPECT().Stop().AnyTimes()
 		port.EXPECT().Watch().AnyTimes()
-		env.Client.EXPECT().Compile(compileOpts).AnyTimes().Return(nil)
-		env.Client.EXPECT().Upload(fqbn, sketchDir, board.Port).AnyTimes().Return(nil)
+		env.Cli.EXPECT().Compile(compileOpts).AnyTimes().Return(nil)
+		env.Cli.EXPECT().Upload(fqbn, sketchDir, board.Port).AnyTimes().Return(nil)
 
 		targets := core.WatchCoreTargets{
 			Board:       board,
@@ -65,7 +65,7 @@ func TestWatchCore(t *testing.T) {
 		port := mocks.NewMockSerialPort(env.Ctrl)
 		port.EXPECT().Stop().AnyTimes()
 		port.EXPECT().Watch().Times(1)
-		env.Client.EXPECT().Compile(compileOpts).AnyTimes().Return(errors.New("dummy errror"))
+		env.Cli.EXPECT().Compile(compileOpts).AnyTimes().Return(errors.New("dummy errror"))
 
 		targets := core.WatchCoreTargets{
 			Board:       board,

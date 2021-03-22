@@ -30,7 +30,7 @@ func TestCompileCore(t *testing.T) {
 			BuildProps: expectedBuildProps,
 			ShowProps:  expectedShowProps,
 		}
-		env.Client.EXPECT().Compile(compileOpts).Times(1).Return(nil)
+		env.Cli.EXPECT().Compile(compileOpts).Times(1).Return(nil)
 
 		err := env.ArdiCore.Compiler.Compile(compileOpts)
 		assert.Nil(env.T, err)
@@ -54,7 +54,7 @@ func TestCompileCore(t *testing.T) {
 			ShowProps:  expectedShowProps,
 		}
 
-		env.Client.EXPECT().Compile(compileOpts).Times(1).Return(dummyErr)
+		env.Cli.EXPECT().Compile(compileOpts).Times(1).Return(dummyErr)
 
 		err := env.ArdiCore.Compiler.Compile(compileOpts)
 		assert.Error(env.T, err)
@@ -88,13 +88,13 @@ func TestCompileCore(t *testing.T) {
 			ShowProps:  expectedShowProps,
 		}
 
-		env.Client.EXPECT().Compile(compileOpts).Times(1).Return(nil)
+		env.Cli.EXPECT().Compile(compileOpts).Times(1).Return(nil)
 
 		err = env.ArdiCore.Compiler.Compile(compileOpts)
 		assert.NoError(env.T, err)
 
 		env.ClearStdout()
-		env.Client.EXPECT().Compile(compileOpts).Times(1).Return(dummyErr)
+		env.Cli.EXPECT().Compile(compileOpts).Times(1).Return(dummyErr)
 
 		go env.ArdiCore.Compiler.WatchForChanges(compileOpts)
 

@@ -15,14 +15,14 @@ func TestUploadCore(t *testing.T) {
 		connectedBoard := testutil.GenerateRPCBoard("someboard", "somefqbn")
 		connectedBoards := []*cli.Board{connectedBoard}
 
-		env.Client.EXPECT().ConnectedBoards().Times(1).Return(connectedBoards)
-		env.Client.EXPECT().AllBoards().Times(1).Return([]*cli.Board{})
+		env.Cli.EXPECT().ConnectedBoards().Times(1).Return(connectedBoards)
+		env.Cli.EXPECT().AllBoards().Times(1).Return([]*cli.Board{})
 
 		env.ClearStdout()
 		board, err := env.ArdiCore.GetTargetBoard("", true)
 		assert.NoError(env.T, err)
 
-		env.Client.EXPECT().Upload(board.FQBN, testutil.BlinkProjectDir(), board.Port).Times(1).Return(nil)
+		env.Cli.EXPECT().Upload(board.FQBN, testutil.BlinkProjectDir(), board.Port).Times(1).Return(nil)
 
 		err = env.ArdiCore.Uploader.Upload(board, testutil.BlinkProjectDir())
 		assert.Nil(env.T, err)
@@ -33,14 +33,14 @@ func TestUploadCore(t *testing.T) {
 		connectedBoard := testutil.GenerateRPCBoard("someboard", "somefqbn")
 		connectedBoards := []*cli.Board{connectedBoard}
 
-		env.Client.EXPECT().ConnectedBoards().Times(1).Return(connectedBoards)
-		env.Client.EXPECT().AllBoards().Times(1).Return([]*cli.Board{})
+		env.Cli.EXPECT().ConnectedBoards().Times(1).Return(connectedBoards)
+		env.Cli.EXPECT().AllBoards().Times(1).Return([]*cli.Board{})
 
 		env.ClearStdout()
 		board, err := env.ArdiCore.GetTargetBoard("", true)
 		assert.NoError(env.T, err)
 
-		env.Client.EXPECT().Upload(board.FQBN, testutil.BlinkProjectDir(), board.Port).Times(1).Return(dummyErr)
+		env.Cli.EXPECT().Upload(board.FQBN, testutil.BlinkProjectDir(), board.Port).Times(1).Return(dummyErr)
 
 		err = env.ArdiCore.Uploader.Upload(board, testutil.BlinkProjectDir())
 		assert.EqualError(env.T, err, dummyErr.Error())

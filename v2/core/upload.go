@@ -10,40 +10,40 @@ import (
 // UploadCore represents core module for ardi upload commands
 type UploadCore struct {
 	logger    *log.Logger
-	client    cli.Client
+	cli       cli.Cli
 	uploading bool
 }
 
 // NewUploadCore returns new ardi upload core
-func NewUploadCore(client cli.Client, logger *log.Logger) *UploadCore {
+func NewUploadCore(cli cli.Cli, logger *log.Logger) *UploadCore {
 	return &UploadCore{
-		client:    client,
+		cli:       cli,
 		logger:    logger,
 		uploading: false,
 	}
 }
 
 // Upload compiled sketches to the specified board
-func (u *UploadCore) Upload(board *cli.Board, buildDir string) error {
+func (c *UploadCore) Upload(board *cli.Board, buildDir string) error {
 	fqbn := board.FQBN
 	device := board.Port
 
-	u.waitForUploadsToFinish()
-	u.uploading = true
-	if err := u.client.Upload(fqbn, buildDir, device); err != nil {
-		u.logger.WithError(err).Error("Failed to upload sketch")
-		u.uploading = false
+	c.waitForUploadsToFinish()
+	c.uploading = true
+	if err := c.cli.Upload(fqbn, buildDir, device); err != nil {
+		c.logger.WithError(err).Error("Failed to upload sketch")
+		c.uploading = false
 		return err
 	}
 
-	u.uploading = false
+	c.uploading = false
 	return nil
 }
 
 // Attach attaches to the associated board port and prints logs
-func (u *UploadCore) Attach(device string, baud int, port SerialPort) {
+func (c *UploadCore) Attach(device string, baud int, port SerialPort) {
 	if port == nil {
-		port = NewArdiSerialPort(device, baud, u.logger)
+		port = NewArdiSerialPort(device, baud, c.logger)
 	} else {
 		port.Stop()
 	}
@@ -51,17 +51,17 @@ func (u *UploadCore) Attach(device string, baud int, port SerialPort) {
 }
 
 // IsUploading returns whether or not core is currently uploading
-func (u *UploadCore) IsUploading() bool {
-	return u.uploading
+func (c *UploadCore) IsUploading() bool {
+	return c.uploading
 }
 
 // private
-func (u *UploadCore) waitForUploadsToFinish() {
+func (c *UploadCore) waitForUploadsToFinish() {
 	for {
-		if !u.IsUploading() {
+		if !c.IsUploading() {
 			break
 		}
-		u.logger.Info("Waiting for previous upload to finish...")
+		c.logger.Info("Waiting for previous upload to finish...")
 		time.Sleep(time.Second)
 	}
 }

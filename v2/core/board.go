@@ -14,21 +14,21 @@ import (
 
 // BoardCore module for board commands
 type BoardCore struct {
-	client cli.Client
+	cli    cli.Cli
 	logger *log.Logger
 }
 
 // NewBoardCore module instance for board commands
-func NewBoardCore(client cli.Client, logger *log.Logger) *BoardCore {
+func NewBoardCore(cli cli.Cli, logger *log.Logger) *BoardCore {
 	return &BoardCore{
 		logger: logger,
-		client: client,
+		cli:    cli,
 	}
 }
 
 // FQBNS lists all available boards with associated fqbns
-func (b *BoardCore) FQBNS(query string) error {
-	platforms, err := b.client.GetPlatforms()
+func (c *BoardCore) FQBNS(query string) error {
+	platforms, err := c.cli.GetPlatforms()
 
 	if err != nil {
 		return err
@@ -53,7 +53,7 @@ func (b *BoardCore) FQBNS(query string) error {
 		return boardList[i].GetName() < boardList[j].GetName()
 	})
 
-	w := tabwriter.NewWriter(b.logger.Out, 0, 0, 8, ' ', 0)
+	w := tabwriter.NewWriter(c.logger.Out, 0, 0, 8, ' ', 0)
 	defer w.Flush()
 	w.Write([]byte("Board\tFQBN\n"))
 	for _, board := range boardList {
@@ -63,8 +63,8 @@ func (b *BoardCore) FQBNS(query string) error {
 }
 
 // Platforms lists all available boards with associated platorms
-func (b *BoardCore) Platforms(query string) error {
-	platforms, err := b.client.GetPlatforms()
+func (c *BoardCore) Platforms(query string) error {
+	platforms, err := c.cli.GetPlatforms()
 
 	if err != nil {
 		return err
@@ -92,7 +92,7 @@ func (b *BoardCore) Platforms(query string) error {
 		return boardList[i].boardName < boardList[j].boardName
 	})
 
-	w := tabwriter.NewWriter(b.logger.Out, 0, 0, 8, ' ', 0)
+	w := tabwriter.NewWriter(c.logger.Out, 0, 0, 8, ' ', 0)
 	defer w.Flush()
 	w.Write([]byte("Board\tPlatform\n"))
 	for _, board := range boardList {

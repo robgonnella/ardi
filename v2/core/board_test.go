@@ -15,7 +15,7 @@ func TestBoardCore(t *testing.T) {
 		platform := testutil.GenerateCmdPlatform("test-platform", boards)
 		platforms := []*commands.Platform{platform}
 
-		env.Client.EXPECT().GetPlatforms().Return(platforms, nil)
+		env.Cli.EXPECT().GetPlatforms().Return(platforms, nil)
 		env.ArdiCore.Board.FQBNS("")
 
 		for _, b := range boards {
@@ -28,7 +28,7 @@ func TestBoardCore(t *testing.T) {
 		errString := "dummy error"
 		dummyErr := errors.New(errString)
 
-		env.Client.EXPECT().GetPlatforms().Return(nil, dummyErr)
+		env.Cli.EXPECT().GetPlatforms().Return(nil, dummyErr)
 		err := env.ArdiCore.Board.FQBNS("")
 		assert.Error(env.T, err)
 		assert.EqualError(env.T, err, errString)
@@ -39,7 +39,7 @@ func TestBoardCore(t *testing.T) {
 		platform := testutil.GenerateCmdPlatform("test-platform", boards)
 		platforms := []*commands.Platform{platform}
 
-		env.Client.EXPECT().GetPlatforms().Return(platforms, nil)
+		env.Cli.EXPECT().GetPlatforms().Return(platforms, nil)
 		env.ArdiCore.Board.Platforms("")
 
 		for _, b := range boards {
@@ -52,7 +52,7 @@ func TestBoardCore(t *testing.T) {
 		errString := "dummy error"
 		dummyErr := errors.New(errString)
 
-		env.Client.EXPECT().GetPlatforms().Return(nil, dummyErr)
+		env.Cli.EXPECT().GetPlatforms().Return(nil, dummyErr)
 		err := env.ArdiCore.Board.Platforms("")
 		assert.Error(env.T, err)
 		assert.EqualError(env.T, err, errString)

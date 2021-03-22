@@ -14,24 +14,24 @@ import (
 // LibCore core module for lib commands
 type LibCore struct {
 	logger      *log.Logger
-	client      cli.Client
+	cli         cli.Cli
 	initialized bool
 }
 
 // NewLibCore Lib instance
-func NewLibCore(client cli.Client, logger *log.Logger) *LibCore {
+func NewLibCore(cli cli.Cli, logger *log.Logger) *LibCore {
 	return &LibCore{
 		logger:      logger,
-		client:      client,
+		cli:         cli,
 		initialized: false,
 	}
 }
 
 // Search all available libraries with optional search filter
-func (l *LibCore) Search(searchArg string) error {
-	l.init()
+func (c *LibCore) Search(searchArg string) error {
+	c.init()
 
-	libraries, err := l.client.SearchLibraries(searchArg)
+	libraries, err := c.cli.SearchLibraries(searchArg)
 	if err != nil {
 		return err
 	}
@@ -43,7 +43,7 @@ func (l *LibCore) Search(searchArg string) error {
 		return libraries[i].GetName() < libraries[j].GetName()
 	})
 
-	w := tabwriter.NewWriter(l.logger.Out, 0, 0, 8, ' ', 0)
+	w := tabwriter.NewWriter(c.logger.Out, 0, 0, 8, ' ', 0)
 	defer w.Flush()
 
 	w.Write([]byte("Library\tLatest\tOther Releases\n"))
@@ -70,8 +70,8 @@ func (l *LibCore) Search(searchArg string) error {
 }
 
 // Add library for project
-func (l *LibCore) Add(lib string) (string, string, error) {
-	l.init()
+func (c *LibCore) Add(lib string) (string, string, error) {
+	c.init()
 
 	libParts := strings.Split(lib, "@")
 	library := libParts[0]
@@ -80,19 +80,19 @@ func (l *LibCore) Add(lib string) (string, string, error) {
 		version = libParts[1]
 	}
 
-	installedVersion, err := l.client.InstallLibrary(library, version)
+	installedVersion, err := c.cli.InstallLibrary(library, version)
 	if err != nil {
 		return "", "", err
 	}
 
-	l.logger.Infof("Installed library: %s %s", library, installedVersion)
+	c.logger.Infof("Installed library: %s %s", library, installedVersion)
 	return library, installedVersion, nil
 }
 
 // Remove library either globally or for project
-func (l *LibCore) Remove(library string) error {
-	l.logger.Infof("Removing library: %s", library)
-	if err := l.client.UninstallLibrary(library); err != nil {
+func (c *LibCore) Remove(library string) error {
+	c.logger.Infof("Removing library: %s", library)
+	if err := c.cli.UninstallLibrary(library); err != nil {
 		return err
 	}
 
@@ -100,13 +100,13 @@ func (l *LibCore) Remove(library string) error {
 }
 
 // ListInstalled lists all installed libraries
-func (l *LibCore) ListInstalled() error {
-	libs, err := l.client.GetInstalledLibs()
+func (c *LibCore) ListInstalled() error {
+	libs, err := c.cli.GetInstalledLibs()
 	if err != nil {
 		return err
 	}
 
-	w := tabwriter.NewWriter(l.logger.Out, 0, 0, 8, ' ', 0)
+	w := tabwriter.NewWriter(c.logger.Out, 0, 0, 8, ' ', 0)
 	defer w.Flush()
 
 	w.Write([]byte("Library\tVersion\tDescription\n"))
@@ -123,13 +123,13 @@ func (l *LibCore) ListInstalled() error {
 }
 
 // private
-func (l *LibCore) init() error {
-	if !l.initialized {
-		if err := l.client.UpdateLibraryIndex(); err != nil {
-			l.logger.WithError(err).Warn("Failed to update library index file")
+func (c *LibCore) init() error {
+	if !c.initialized {
+		if err := c.cli.UpdateLibraryIndex(); err != nil {
+			c.logger.WithError(err).Warn("Failed to update library index file")
 			return err
 		}
-		l.initialized = true
+		c.initialized = true
 	}
 	return nil
 }
