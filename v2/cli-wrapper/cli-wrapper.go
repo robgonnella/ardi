@@ -23,7 +23,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// Client reprents our wrapper around arduino-cli
+// Cli reprents our wrapper around arduino-cli
 //go:generate mockgen -destination=../mocks/mock_cli.go -package=mocks github.com/robgonnella/ardi/v2/cli-wrapper Cli
 type Cli interface {
 	UpdateIndexFiles() error
@@ -45,7 +45,7 @@ type Cli interface {
 	ClientVersion() string
 }
 
-// ArdiClient represents a client connection to arduino-cli grpc daemon
+// ArduinoCli represents a client connection to arduino-cli grpc daemon
 type ArduinoCli struct {
 	ctx          context.Context
 	settingsPath string
