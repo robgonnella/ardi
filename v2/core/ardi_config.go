@@ -194,7 +194,7 @@ func (a *ArdiConfig) write() error {
 	a.mux.Lock()
 	defer a.mux.Unlock()
 
-	newData, err := json.MarshalIndent(a.config, "", "  ")
+	newData, err := json.MarshalIndent(a.config, "", "\t")
 	if err != nil {
 		return err
 	}

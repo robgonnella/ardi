@@ -182,7 +182,7 @@ func WriteAllSettings(opts WriteSettingsOpts) error {
 		return err
 	}
 
-	byteData, _ := json.MarshalIndent(opts.ArdiConfig, "\n", " ")
+	byteData, _ := json.MarshalIndent(opts.ArdiConfig, "", "\t")
 	if err := ioutil.WriteFile(ardiConf, byteData, 0644); err != nil {
 		return err
 	}
