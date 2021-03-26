@@ -13,7 +13,7 @@ Things ardi can fo for you:
   consistent and repeatable builds.
 - Enable running your builds in a CI pipeline
 - Compile and upload to an auto discovered connected board
-- Watche a sketch for changes and auto recompil / reupload to a connected board
+- Watch a sketch for changes and auto recompile / reupload to a connected board
 - Print various info about platforms and boards
 - Search and print available libraries and versions
 
