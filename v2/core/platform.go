@@ -14,12 +14,12 @@ import (
 // PlatformCore module for platform commands
 type PlatformCore struct {
 	logger      *log.Logger
-	cli         cli.Cli
+	cli         *cli.Wrapper
 	initialized bool
 }
 
 // NewPlatformCore platform module instance
-func NewPlatformCore(cli cli.Cli, logger *log.Logger) *PlatformCore {
+func NewPlatformCore(cli *cli.Wrapper, logger *log.Logger) *PlatformCore {
 	return &PlatformCore{
 		logger:      logger,
 		cli:         cli,
@@ -51,7 +51,7 @@ func (c *PlatformCore) ListInstalled() error {
 func (c *PlatformCore) ListAll() error {
 	c.init()
 
-	platforms, err := c.cli.GetPlatforms()
+	platforms, err := c.cli.SearchPlatforms()
 	if err != nil {
 		return err
 	}

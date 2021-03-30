@@ -4,7 +4,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/arduino/arduino-cli/rpc/commands"
+	rpc "github.com/arduino/arduino-cli/rpc/commands"
+	"github.com/golang/mock/gomock"
 	"github.com/robgonnella/ardi/v2/testutil"
 	"github.com/stretchr/testify/assert"
 )
@@ -12,16 +13,24 @@ import (
 // @todo: check that list is actually sorted
 func TestPlatformCore(t *testing.T) {
 	testutil.RunUnitTest("prints sorted list of all installed platforms to stdout", t, func(env *testutil.UnitTestEnv) {
-		platform1 := commands.Platform{
+		platform1 := rpc.Platform{
 			Name: "test-platform-1",
 		}
 
-		platform2 := commands.Platform{
+		platform2 := rpc.Platform{
 			Name: "test-platform-2",
 		}
-		platforms := []*commands.Platform{&platform2, &platform1}
+		platforms := []*rpc.Platform{&platform2, &platform1}
 
-		env.Cli.EXPECT().GetInstalledPlatforms().Times(1).Return(platforms, nil)
+		instance := &rpc.Instance{Id: int32(1)}
+		req := &rpc.PlatformListReq{
+			Instance:      instance,
+			UpdatableOnly: false,
+			All:           false,
+		}
+
+		env.Cli.EXPECT().CreateInstance().Return(instance, nil)
+		env.Cli.EXPECT().GetPlatforms(req).Return(platforms, nil)
 
 		err := env.ArdiCore.Platform.ListInstalled()
 		assert.NoError(env.T, err)
@@ -32,17 +41,28 @@ func TestPlatformCore(t *testing.T) {
 
 	// @todo: check that list is actually sorted
 	testutil.RunUnitTest("prints sorted list of all available platforms to stdout", t, func(env *testutil.UnitTestEnv) {
-		platform1 := commands.Platform{
+		platform1 := rpc.Platform{
 			Name: "test-platform-1",
 		}
 
-		platform2 := commands.Platform{
+		platform2 := rpc.Platform{
 			Name: "test-platform-2",
 		}
-		platforms := []*commands.Platform{&platform2, &platform1}
+		platforms := []*rpc.Platform{&platform2, &platform1}
 
-		env.Cli.EXPECT().UpdatePlatformIndex().Times(1).Return(nil)
-		env.Cli.EXPECT().GetPlatforms().Times(1).Return(platforms, nil)
+		instance := &rpc.Instance{Id: int32(1)}
+		req := &rpc.PlatformSearchReq{
+			Instance:    instance,
+			AllVersions: true,
+		}
+		resp := &rpc.PlatformSearchResp{
+			SearchOutput: platforms,
+		}
+		env.Cli.EXPECT().CreateInstanceIgnorePlatformIndexErrors().Return(instance).Times(3)
+		env.Cli.EXPECT().UpdateIndex(gomock.Any(), gomock.Any(), gomock.Any()).Times(2)
+		env.Cli.EXPECT().UpdateLibrariesIndex(gomock.Any(), gomock.Any(), gomock.Any())
+		env.Cli.EXPECT().CreateInstance().Return(instance, nil)
+		env.Cli.EXPECT().PlatformSearch(req).Return(resp, nil)
 
 		err := env.ArdiCore.Platform.ListAll()
 		assert.NoError(env.T, err)
@@ -52,19 +72,54 @@ func TestPlatformCore(t *testing.T) {
 	})
 
 	testutil.RunUnitTest("adds platforms", t, func(env *testutil.UnitTestEnv) {
-		testPlatform1 := "test-platform1"
-		testPlatform2 := "test-platform2"
+		platform1 := &rpc.Platform{
+			ID:        "test:platform1",
+			Name:      "Platform1",
+			Installed: "1.3.8",
+		}
 
-		env.Cli.EXPECT().UpdatePlatformIndex().Times(1).Return(nil)
-		env.Cli.EXPECT().InstallPlatform(testPlatform1).Times(1).Return(testPlatform1, "1.0.0", nil)
-		env.Cli.EXPECT().InstallPlatform(testPlatform2).Times(1).Return(testPlatform2, "2.1.2", nil)
+		platform2 := &rpc.Platform{
+			ID:        "test:platform2",
+			Name:      "Platform2",
+			Installed: "3.1.9",
+		}
 
-		platforms := []string{testPlatform1, testPlatform2}
+		instance := &rpc.Instance{Id: int32(1)}
+		req1 := &rpc.PlatformInstallReq{
+			Instance:        instance,
+			PlatformPackage: "test",
+			Architecture:    "platform1",
+		}
+		req2 := &rpc.PlatformInstallReq{
+			Instance:        instance,
+			PlatformPackage: "test",
+			Architecture:    "platform2",
+		}
+
+		listReq := &rpc.PlatformListReq{
+			Instance:      instance,
+			UpdatableOnly: false,
+			All:           false,
+		}
+		platforms := []*rpc.Platform{platform1, platform2}
+
+		env.Cli.EXPECT().CreateInstanceIgnorePlatformIndexErrors().Return(instance)
+		env.Cli.EXPECT().UpdateIndex(gomock.Any(), gomock.Any(), gomock.Any())
+
+		env.Cli.EXPECT().CreateInstance().Return(instance, nil)
+		env.Cli.EXPECT().PlatformInstall(gomock.Any(), req1, gomock.Any(), gomock.Any())
+		env.Cli.EXPECT().CreateInstance().Return(instance, nil)
+		env.Cli.EXPECT().GetPlatforms(listReq).Return([]*rpc.Platform{platform1}, nil)
+
+		env.Cli.EXPECT().CreateInstance().Return(instance, nil)
+		env.Cli.EXPECT().PlatformInstall(gomock.Any(), req2, gomock.Any(), gomock.Any())
+		env.Cli.EXPECT().CreateInstance().Return(instance, nil)
+		env.Cli.EXPECT().GetPlatforms(listReq).Return(platforms, nil)
 
 		for _, p := range platforms {
-			installed, _, err := env.ArdiCore.Platform.Add(p)
+			installed, _, err := env.ArdiCore.Platform.Add(p.GetID())
 			assert.NoError(env.T, err)
-			assert.Equal(env.T, p, installed)
+			assert.Equal(env.T, p.GetID(), installed)
 		}
 	})
 
@@ -72,35 +127,89 @@ func TestPlatformCore(t *testing.T) {
 		errString := "dummy error"
 		dummyErr := errors.New(errString)
 
-		testPlatform1 := "test-platform1"
-		testPlatform2 := "test-platform2"
+		platform1 := &rpc.Platform{
+			ID:        "test:platform1",
+			Name:      "Platform1",
+			Installed: "1.3.8",
+		}
 
-		env.Cli.EXPECT().UpdatePlatformIndex().Times(1).Return(nil)
-		env.Cli.EXPECT().InstallPlatform(testPlatform1).Times(1).Return("", "", dummyErr)
-		env.Cli.EXPECT().InstallPlatform(testPlatform2).Times(1).Return("", "", dummyErr)
+		platform2 := &rpc.Platform{
+			ID:        "test:platform2",
+			Name:      "Platform2",
+			Installed: "3.1.9",
+		}
 
-		platforms := []string{testPlatform1, testPlatform2}
+		instance := &rpc.Instance{Id: int32(1)}
+
+		req1 := &rpc.PlatformInstallReq{
+			Instance:        instance,
+			PlatformPackage: "test",
+			Architecture:    "platform1",
+		}
+
+		req2 := &rpc.PlatformInstallReq{
+			Instance:        instance,
+			PlatformPackage: "test",
+			Architecture:    "platform2",
+		}
+
+		platforms := []*rpc.Platform{platform1, platform2}
+
+		env.Cli.EXPECT().CreateInstanceIgnorePlatformIndexErrors().Return(instance)
+		env.Cli.EXPECT().UpdateIndex(gomock.Any(), gomock.Any(), gomock.Any())
+
+		env.Cli.EXPECT().CreateInstance().Return(instance, nil)
+		env.Cli.EXPECT().PlatformInstall(gomock.Any(), req1, gomock.Any(), gomock.Any()).Return(nil, dummyErr)
+
+		env.Cli.EXPECT().CreateInstance().Return(instance, nil)
+		env.Cli.EXPECT().PlatformInstall(gomock.Any(), req2, gomock.Any(), gomock.Any()).Return(nil, dummyErr)
 
 		for _, p := range platforms {
-			_, _, err := env.ArdiCore.Platform.Add(p)
+			_, _, err := env.ArdiCore.Platform.Add(p.GetID())
 			assert.Error(env.T, err)
 			assert.EqualError(env.T, err, errString)
 		}
 	})
 
 	testutil.RunUnitTest("removes a platforms", t, func(env *testutil.UnitTestEnv) {
-		testPlatform1 := "test-platform1"
-		testPlatform2 := "test-platform2"
+		platform1 := &rpc.Platform{
+			ID:        "test:platform1",
+			Name:      "Platform1",
+			Installed: "1.3.8",
+		}
 
-		env.Cli.EXPECT().UninstallPlatform(testPlatform1).Times(1).Return(testPlatform1, nil)
-		env.Cli.EXPECT().UninstallPlatform(testPlatform2).Times(1).Return(testPlatform2, nil)
+		platform2 := &rpc.Platform{
+			ID:        "test:platform2",
+			Name:      "Platform2",
+			Installed: "3.1.9",
+		}
 
-		platforms := []string{testPlatform1, testPlatform2}
+		instance := &rpc.Instance{Id: int32(1)}
+
+		req1 := &rpc.PlatformUninstallReq{
+			Instance:        instance,
+			PlatformPackage: "test",
+			Architecture:    "platform1",
+		}
+
+		req2 := &rpc.PlatformUninstallReq{
+			Instance:        instance,
+			PlatformPackage: "test",
+			Architecture:    "platform2",
+		}
+
+		platforms := []*rpc.Platform{platform1, platform2}
+
+		env.Cli.EXPECT().CreateInstance().Return(instance, nil)
+		env.Cli.EXPECT().PlatformUninstall(gomock.Any(), req1, gomock.Any())
+
+		env.Cli.EXPECT().CreateInstance().Return(instance, nil)
+		env.Cli.EXPECT().PlatformUninstall(gomock.Any(), req2, gomock.Any())
 
 		for _, p := range platforms {
-			removed, err := env.ArdiCore.Platform.Remove(p)
+			removed, err := env.ArdiCore.Platform.Remove(p.GetID())
 			assert.NoError(env.T, err)
-			assert.Equal(env.T, p, removed)
+			assert.Equal(env.T, p.GetID(), removed)
 		}
 	})
 
@@ -108,16 +217,42 @@ func TestPlatformCore(t *testing.T) {
 		errString := "dummy error"
 		dummyErr := errors.New(errString)
 
-		testPlatform1 := "test-platform1"
-		testPlatform2 := "test-platform2"
+		platform1 := &rpc.Platform{
+			ID:        "test:platform1",
+			Name:      "Platform1",
+			Installed: "1.3.8",
+		}
 
-		env.Cli.EXPECT().UninstallPlatform(testPlatform1).Times(1).Return("", dummyErr)
-		env.Cli.EXPECT().UninstallPlatform(testPlatform2).Times(1).Return("", dummyErr)
+		platform2 := &rpc.Platform{
+			ID:        "test:platform2",
+			Name:      "Platform2",
+			Installed: "3.1.9",
+		}
 
-		platforms := []string{testPlatform1, testPlatform2}
+		instance := &rpc.Instance{Id: int32(1)}
+
+		req1 := &rpc.PlatformUninstallReq{
+			Instance:        instance,
+			PlatformPackage: "test",
+			Architecture:    "platform1",
+		}
+
+		req2 := &rpc.PlatformUninstallReq{
+			Instance:        instance,
+			PlatformPackage: "test",
+			Architecture:    "platform2",
+		}
+
+		platforms := []*rpc.Platform{platform1, platform2}
+
+		env.Cli.EXPECT().CreateInstance().Return(instance, nil)
+		env.Cli.EXPECT().PlatformUninstall(gomock.Any(), req1, gomock.Any()).Return(nil, dummyErr)
+
+		env.Cli.EXPECT().CreateInstance().Return(instance, nil)
+		env.Cli.EXPECT().PlatformUninstall(gomock.Any(), req2, gomock.Any()).Return(nil, dummyErr)
 
 		for _, p := range platforms {
-			_, err := env.ArdiCore.Platform.Remove(p)
+			_, err := env.ArdiCore.Platform.Remove(p.GetID())
 			assert.Error(env.T, err)
 			assert.EqualError(env.T, err, errString)
 		}

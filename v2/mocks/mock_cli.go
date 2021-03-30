@@ -5,9 +5,11 @@
 package mocks
 
 import (
-	commands "github.com/arduino/arduino-cli/rpc/commands"
+	context "context"
+	commands "github.com/arduino/arduino-cli/commands"
+	commands0 "github.com/arduino/arduino-cli/rpc/commands"
 	gomock "github.com/golang/mock/gomock"
-	cli "github.com/robgonnella/ardi/v2/cli-wrapper"
+	io "io"
 	reflect "reflect"
 )
 
@@ -34,248 +36,252 @@ func (m *MockCli) EXPECT() *MockCliMockRecorder {
 	return m.recorder
 }
 
-// AllBoards mocks base method
-func (m *MockCli) AllBoards() []*cli.Board {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AllBoards")
-	ret0, _ := ret[0].([]*cli.Board)
-	return ret0
-}
-
-// AllBoards indicates an expected call of AllBoards
-func (mr *MockCliMockRecorder) AllBoards() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AllBoards", reflect.TypeOf((*MockCli)(nil).AllBoards))
-}
-
-// ClientVersion mocks base method
-func (m *MockCli) ClientVersion() string {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ClientVersion")
-	ret0, _ := ret[0].(string)
-	return ret0
-}
-
-// ClientVersion indicates an expected call of ClientVersion
-func (mr *MockCliMockRecorder) ClientVersion() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ClientVersion", reflect.TypeOf((*MockCli)(nil).ClientVersion))
-}
-
 // Compile mocks base method
-func (m *MockCli) Compile(arg0 cli.CompileOpts) error {
+func (m *MockCli) Compile(arg0 context.Context, arg1 *commands0.CompileReq, arg2, arg3 io.Writer, arg4 bool) (*commands0.CompileResp, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Compile", arg0)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret := m.ctrl.Call(m, "Compile", arg0, arg1, arg2, arg3, arg4)
+	ret0, _ := ret[0].(*commands0.CompileResp)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // Compile indicates an expected call of Compile
-func (mr *MockCliMockRecorder) Compile(arg0 interface{}) *gomock.Call {
+func (mr *MockCliMockRecorder) Compile(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Compile", reflect.TypeOf((*MockCli)(nil).Compile), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Compile", reflect.TypeOf((*MockCli)(nil).Compile), arg0, arg1, arg2, arg3, arg4)
 }
 
 // ConnectedBoards mocks base method
-func (m *MockCli) ConnectedBoards() []*cli.Board {
+func (m *MockCli) ConnectedBoards(arg0 int32) ([]*commands0.DetectedPort, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ConnectedBoards")
-	ret0, _ := ret[0].([]*cli.Board)
-	return ret0
+	ret := m.ctrl.Call(m, "ConnectedBoards", arg0)
+	ret0, _ := ret[0].([]*commands0.DetectedPort)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // ConnectedBoards indicates an expected call of ConnectedBoards
-func (mr *MockCliMockRecorder) ConnectedBoards() *gomock.Call {
+func (mr *MockCliMockRecorder) ConnectedBoards(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ConnectedBoards", reflect.TypeOf((*MockCli)(nil).ConnectedBoards))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ConnectedBoards", reflect.TypeOf((*MockCli)(nil).ConnectedBoards), arg0)
 }
 
-// GetInstalledLibs mocks base method
-func (m *MockCli) GetInstalledLibs() ([]*commands.InstalledLibrary, error) {
+// CreateInstance mocks base method
+func (m *MockCli) CreateInstance() (*commands0.Instance, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetInstalledLibs")
-	ret0, _ := ret[0].([]*commands.InstalledLibrary)
+	ret := m.ctrl.Call(m, "CreateInstance")
+	ret0, _ := ret[0].(*commands0.Instance)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetInstalledLibs indicates an expected call of GetInstalledLibs
-func (mr *MockCliMockRecorder) GetInstalledLibs() *gomock.Call {
+// CreateInstance indicates an expected call of CreateInstance
+func (mr *MockCliMockRecorder) CreateInstance() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetInstalledLibs", reflect.TypeOf((*MockCli)(nil).GetInstalledLibs))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateInstance", reflect.TypeOf((*MockCli)(nil).CreateInstance))
 }
 
-// GetInstalledPlatforms mocks base method
-func (m *MockCli) GetInstalledPlatforms() ([]*commands.Platform, error) {
+// CreateInstanceIgnorePlatformIndexErrors mocks base method
+func (m *MockCli) CreateInstanceIgnorePlatformIndexErrors() *commands0.Instance {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetInstalledPlatforms")
-	ret0, _ := ret[0].([]*commands.Platform)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret := m.ctrl.Call(m, "CreateInstanceIgnorePlatformIndexErrors")
+	ret0, _ := ret[0].(*commands0.Instance)
+	return ret0
 }
 
-// GetInstalledPlatforms indicates an expected call of GetInstalledPlatforms
-func (mr *MockCliMockRecorder) GetInstalledPlatforms() *gomock.Call {
+// CreateInstanceIgnorePlatformIndexErrors indicates an expected call of CreateInstanceIgnorePlatformIndexErrors
+func (mr *MockCliMockRecorder) CreateInstanceIgnorePlatformIndexErrors() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetInstalledPlatforms", reflect.TypeOf((*MockCli)(nil).GetInstalledPlatforms))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateInstanceIgnorePlatformIndexErrors", reflect.TypeOf((*MockCli)(nil).CreateInstanceIgnorePlatformIndexErrors))
 }
 
 // GetPlatforms mocks base method
-func (m *MockCli) GetPlatforms() ([]*commands.Platform, error) {
+func (m *MockCli) GetPlatforms(arg0 *commands0.PlatformListReq) ([]*commands0.Platform, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetPlatforms")
-	ret0, _ := ret[0].([]*commands.Platform)
+	ret := m.ctrl.Call(m, "GetPlatforms", arg0)
+	ret0, _ := ret[0].([]*commands0.Platform)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetPlatforms indicates an expected call of GetPlatforms
-func (mr *MockCliMockRecorder) GetPlatforms() *gomock.Call {
+func (mr *MockCliMockRecorder) GetPlatforms(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPlatforms", reflect.TypeOf((*MockCli)(nil).GetPlatforms))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPlatforms", reflect.TypeOf((*MockCli)(nil).GetPlatforms), arg0)
 }
 
-// InstallLibrary mocks base method
-func (m *MockCli) InstallLibrary(arg0, arg1 string) (string, error) {
+// LibraryInstall mocks base method
+func (m *MockCli) LibraryInstall(arg0 context.Context, arg1 *commands0.LibraryInstallReq, arg2 commands.DownloadProgressCB, arg3 commands.TaskProgressCB) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "InstallLibrary", arg0, arg1)
-	ret0, _ := ret[0].(string)
+	ret := m.ctrl.Call(m, "LibraryInstall", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// LibraryInstall indicates an expected call of LibraryInstall
+func (mr *MockCliMockRecorder) LibraryInstall(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LibraryInstall", reflect.TypeOf((*MockCli)(nil).LibraryInstall), arg0, arg1, arg2, arg3)
+}
+
+// LibraryList mocks base method
+func (m *MockCli) LibraryList(arg0 context.Context, arg1 *commands0.LibraryListReq) (*commands0.LibraryListResp, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "LibraryList", arg0, arg1)
+	ret0, _ := ret[0].(*commands0.LibraryListResp)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// InstallLibrary indicates an expected call of InstallLibrary
-func (mr *MockCliMockRecorder) InstallLibrary(arg0, arg1 interface{}) *gomock.Call {
+// LibraryList indicates an expected call of LibraryList
+func (mr *MockCliMockRecorder) LibraryList(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InstallLibrary", reflect.TypeOf((*MockCli)(nil).InstallLibrary), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LibraryList", reflect.TypeOf((*MockCli)(nil).LibraryList), arg0, arg1)
 }
 
-// InstallPlatform mocks base method
-func (m *MockCli) InstallPlatform(arg0 string) (string, string, error) {
+// LibrarySearch mocks base method
+func (m *MockCli) LibrarySearch(arg0 context.Context, arg1 *commands0.LibrarySearchReq) (*commands0.LibrarySearchResp, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "InstallPlatform", arg0)
-	ret0, _ := ret[0].(string)
-	ret1, _ := ret[1].(string)
-	ret2, _ := ret[2].(error)
-	return ret0, ret1, ret2
-}
-
-// InstallPlatform indicates an expected call of InstallPlatform
-func (mr *MockCliMockRecorder) InstallPlatform(arg0 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InstallPlatform", reflect.TypeOf((*MockCli)(nil).InstallPlatform), arg0)
-}
-
-// SearchLibraries mocks base method
-func (m *MockCli) SearchLibraries(arg0 string) ([]*commands.SearchedLibrary, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SearchLibraries", arg0)
-	ret0, _ := ret[0].([]*commands.SearchedLibrary)
+	ret := m.ctrl.Call(m, "LibrarySearch", arg0, arg1)
+	ret0, _ := ret[0].(*commands0.LibrarySearchResp)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// SearchLibraries indicates an expected call of SearchLibraries
-func (mr *MockCliMockRecorder) SearchLibraries(arg0 interface{}) *gomock.Call {
+// LibrarySearch indicates an expected call of LibrarySearch
+func (mr *MockCliMockRecorder) LibrarySearch(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SearchLibraries", reflect.TypeOf((*MockCli)(nil).SearchLibraries), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LibrarySearch", reflect.TypeOf((*MockCli)(nil).LibrarySearch), arg0, arg1)
 }
 
-// UninstallLibrary mocks base method
-func (m *MockCli) UninstallLibrary(arg0 string) error {
+// LibraryUninstall mocks base method
+func (m *MockCli) LibraryUninstall(arg0 context.Context, arg1 *commands0.LibraryUninstallReq, arg2 commands.TaskProgressCB) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UninstallLibrary", arg0)
+	ret := m.ctrl.Call(m, "LibraryUninstall", arg0, arg1, arg2)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// UninstallLibrary indicates an expected call of UninstallLibrary
-func (mr *MockCliMockRecorder) UninstallLibrary(arg0 interface{}) *gomock.Call {
+// LibraryUninstall indicates an expected call of LibraryUninstall
+func (mr *MockCliMockRecorder) LibraryUninstall(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UninstallLibrary", reflect.TypeOf((*MockCli)(nil).UninstallLibrary), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LibraryUninstall", reflect.TypeOf((*MockCli)(nil).LibraryUninstall), arg0, arg1, arg2)
 }
 
-// UninstallPlatform mocks base method
-func (m *MockCli) UninstallPlatform(arg0 string) (string, error) {
+// PlatformInstall mocks base method
+func (m *MockCli) PlatformInstall(arg0 context.Context, arg1 *commands0.PlatformInstallReq, arg2 commands.DownloadProgressCB, arg3 commands.TaskProgressCB) (*commands0.PlatformInstallResp, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UninstallPlatform", arg0)
-	ret0, _ := ret[0].(string)
+	ret := m.ctrl.Call(m, "PlatformInstall", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(*commands0.PlatformInstallResp)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// UninstallPlatform indicates an expected call of UninstallPlatform
-func (mr *MockCliMockRecorder) UninstallPlatform(arg0 interface{}) *gomock.Call {
+// PlatformInstall indicates an expected call of PlatformInstall
+func (mr *MockCliMockRecorder) PlatformInstall(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UninstallPlatform", reflect.TypeOf((*MockCli)(nil).UninstallPlatform), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PlatformInstall", reflect.TypeOf((*MockCli)(nil).PlatformInstall), arg0, arg1, arg2, arg3)
 }
 
-// UpdateIndexFiles mocks base method
-func (m *MockCli) UpdateIndexFiles() error {
+// PlatformSearch mocks base method
+func (m *MockCli) PlatformSearch(arg0 *commands0.PlatformSearchReq) (*commands0.PlatformSearchResp, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateIndexFiles")
+	ret := m.ctrl.Call(m, "PlatformSearch", arg0)
+	ret0, _ := ret[0].(*commands0.PlatformSearchResp)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PlatformSearch indicates an expected call of PlatformSearch
+func (mr *MockCliMockRecorder) PlatformSearch(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PlatformSearch", reflect.TypeOf((*MockCli)(nil).PlatformSearch), arg0)
+}
+
+// PlatformUninstall mocks base method
+func (m *MockCli) PlatformUninstall(arg0 context.Context, arg1 *commands0.PlatformUninstallReq, arg2 func(*commands0.TaskProgress)) (*commands0.PlatformUninstallResp, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PlatformUninstall", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*commands0.PlatformUninstallResp)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PlatformUninstall indicates an expected call of PlatformUninstall
+func (mr *MockCliMockRecorder) PlatformUninstall(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PlatformUninstall", reflect.TypeOf((*MockCli)(nil).PlatformUninstall), arg0, arg1, arg2)
+}
+
+// PlatformUpgrade mocks base method
+func (m *MockCli) PlatformUpgrade(arg0 context.Context, arg1 *commands0.PlatformUpgradeReq, arg2 commands.DownloadProgressCB, arg3 commands.TaskProgressCB) (*commands0.PlatformUpgradeResp, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PlatformUpgrade", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(*commands0.PlatformUpgradeResp)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PlatformUpgrade indicates an expected call of PlatformUpgrade
+func (mr *MockCliMockRecorder) PlatformUpgrade(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PlatformUpgrade", reflect.TypeOf((*MockCli)(nil).PlatformUpgrade), arg0, arg1, arg2, arg3)
+}
+
+// UpdateIndex mocks base method
+func (m *MockCli) UpdateIndex(arg0 context.Context, arg1 *commands0.UpdateIndexReq, arg2 commands.DownloadProgressCB) (*commands0.UpdateIndexResp, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateIndex", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*commands0.UpdateIndexResp)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdateIndex indicates an expected call of UpdateIndex
+func (mr *MockCliMockRecorder) UpdateIndex(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateIndex", reflect.TypeOf((*MockCli)(nil).UpdateIndex), arg0, arg1, arg2)
+}
+
+// UpdateLibrariesIndex mocks base method
+func (m *MockCli) UpdateLibrariesIndex(arg0 context.Context, arg1 *commands0.UpdateLibrariesIndexReq, arg2 commands.DownloadProgressCB) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateLibrariesIndex", arg0, arg1, arg2)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// UpdateIndexFiles indicates an expected call of UpdateIndexFiles
-func (mr *MockCliMockRecorder) UpdateIndexFiles() *gomock.Call {
+// UpdateLibrariesIndex indicates an expected call of UpdateLibrariesIndex
+func (mr *MockCliMockRecorder) UpdateLibrariesIndex(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateIndexFiles", reflect.TypeOf((*MockCli)(nil).UpdateIndexFiles))
-}
-
-// UpdateLibraryIndex mocks base method
-func (m *MockCli) UpdateLibraryIndex() error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateLibraryIndex")
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// UpdateLibraryIndex indicates an expected call of UpdateLibraryIndex
-func (mr *MockCliMockRecorder) UpdateLibraryIndex() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateLibraryIndex", reflect.TypeOf((*MockCli)(nil).UpdateLibraryIndex))
-}
-
-// UpdatePlatformIndex mocks base method
-func (m *MockCli) UpdatePlatformIndex() error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdatePlatformIndex")
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// UpdatePlatformIndex indicates an expected call of UpdatePlatformIndex
-func (mr *MockCliMockRecorder) UpdatePlatformIndex() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdatePlatformIndex", reflect.TypeOf((*MockCli)(nil).UpdatePlatformIndex))
-}
-
-// UpgradePlatform mocks base method
-func (m *MockCli) UpgradePlatform(arg0 string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpgradePlatform", arg0)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// UpgradePlatform indicates an expected call of UpgradePlatform
-func (mr *MockCliMockRecorder) UpgradePlatform(arg0 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpgradePlatform", reflect.TypeOf((*MockCli)(nil).UpgradePlatform), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateLibrariesIndex", reflect.TypeOf((*MockCli)(nil).UpdateLibrariesIndex), arg0, arg1, arg2)
 }
 
 // Upload mocks base method
-func (m *MockCli) Upload(arg0, arg1, arg2 string) error {
+func (m *MockCli) Upload(arg0 context.Context, arg1 *commands0.UploadReq, arg2, arg3 io.Writer) (*commands0.UploadResp, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Upload", arg0, arg1, arg2)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret := m.ctrl.Call(m, "Upload", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(*commands0.UploadResp)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // Upload indicates an expected call of Upload
-func (mr *MockCliMockRecorder) Upload(arg0, arg1, arg2 interface{}) *gomock.Call {
+func (mr *MockCliMockRecorder) Upload(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Upload", reflect.TypeOf((*MockCli)(nil).Upload), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Upload", reflect.TypeOf((*MockCli)(nil).Upload), arg0, arg1, arg2, arg3)
+}
+
+// Version mocks base method
+func (m *MockCli) Version() string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Version")
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// Version indicates an expected call of Version
+func (mr *MockCliMockRecorder) Version() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Version", reflect.TypeOf((*MockCli)(nil).Version))
 }

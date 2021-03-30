@@ -16,6 +16,7 @@ var logger *log.Logger
 var verbose bool
 var quiet bool
 var ardiCore *core.ArdiCore
+var cliInstance cli.Cli
 
 type ardiLogFormatter struct {
 	log.TextFormatter
@@ -100,10 +101,11 @@ func preRun(cmd *cobra.Command, args []string) error {
 	}
 
 	ctx := cmd.Context()
-	cli := cli.NewCli(ctx, cliSettingsPath, svrSettings, logger)
+	cliWrapper := cli.NewCli(ctx, cliSettingsPath, svrSettings, logger, cliInstance)
+
 	coreOpts := core.NewArdiCoreOpts{
 		Logger:             logger,
-		Cli:                cli,
+		Cli:                cliWrapper,
 		ArdiConfig:         *ardiConfig,
 		ArduinoCliSettings: *svrSettings,
 	}
@@ -129,8 +131,9 @@ func getRootCommand() *cobra.Command {
 }
 
 // GetRootCmd adds all ardi commands to root and returns root command
-func GetRootCmd(cmdLogger *log.Logger) *cobra.Command {
+func GetRootCmd(cmdLogger *log.Logger, instance cli.Cli) *cobra.Command {
 	logger = cmdLogger
+	cliInstance = instance
 	rootCmd := getRootCommand()
 	rootCmd.AddCommand(getAddCmd())
 	rootCmd.AddCommand(getCleanCmd())

@@ -6,49 +6,23 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"sort"
 	"strings"
+	"text/tabwriter"
 
-	"github.com/arduino/arduino-cli/cli/globals"
-	"github.com/arduino/arduino-cli/cli/instance"
 	"github.com/arduino/arduino-cli/cli/output"
 	"github.com/arduino/arduino-cli/commands"
-	"github.com/arduino/arduino-cli/commands/board"
-	"github.com/arduino/arduino-cli/commands/compile"
-	"github.com/arduino/arduino-cli/commands/core"
-	"github.com/arduino/arduino-cli/commands/lib"
-	"github.com/arduino/arduino-cli/commands/upload"
 	"github.com/arduino/arduino-cli/configuration"
 	rpc "github.com/arduino/arduino-cli/rpc/commands"
 	"github.com/robgonnella/ardi/v2/types"
 	log "github.com/sirupsen/logrus"
 )
 
-// Cli reprents our wrapper around arduino-cli
-//go:generate mockgen -destination=../mocks/mock_cli.go -package=mocks github.com/robgonnella/ardi/v2/cli-wrapper Cli
-type Cli interface {
-	UpdateIndexFiles() error
-	UpdateLibraryIndex() error
-	UpdatePlatformIndex() error
-	UpgradePlatform(platform string) error
-	InstallPlatform(platform string) (string, string, error)
-	UninstallPlatform(platform string) (string, error)
-	GetInstalledPlatforms() ([]*rpc.Platform, error)
-	GetPlatforms() ([]*rpc.Platform, error)
-	ConnectedBoards() []*Board
-	AllBoards() []*Board
-	Upload(fqbn, sketchDir, device string) error
-	Compile(o CompileOpts) error
-	SearchLibraries(query string) ([]*rpc.SearchedLibrary, error)
-	InstallLibrary(name, version string) (string, error)
-	UninstallLibrary(name string) error
-	GetInstalledLibs() ([]*rpc.InstalledLibrary, error)
-	ClientVersion() string
-}
-
-// ArduinoCli represents a client connection to arduino-cli grpc daemon
-type ArduinoCli struct {
+// Wrapper our wrapper around the arduino-cli interface
+type Wrapper struct {
 	ctx          context.Context
 	settingsPath string
+	cli          Cli
 	logger       *log.Logger
 }
 
@@ -60,17 +34,21 @@ type Board struct {
 }
 
 // NewCli return new arduino-cli wrapper
-func NewCli(ctx context.Context, settingsPath string, svrSettings *types.ArduinoCliSettings, logger *log.Logger) Cli {
+func NewCli(ctx context.Context, settingsPath string, svrSettings *types.ArduinoCliSettings, logger *log.Logger, cli Cli) *Wrapper {
 	configuration.Settings = configuration.Init(settingsPath)
-	return &ArduinoCli{
+	if cli == nil {
+		cli = newArduinoCli()
+	}
+	return &Wrapper{
 		ctx:          ctx,
 		settingsPath: settingsPath,
 		logger:       logger,
+		cli:          cli,
 	}
 }
 
 // UpdateIndexFiles updates platform and library index files
-func (c *ArduinoCli) UpdateIndexFiles() error {
+func (c *Wrapper) UpdateIndexFiles() error {
 	if err := c.UpdatePlatformIndex(); err != nil {
 		return err
 	}
@@ -81,11 +59,11 @@ func (c *ArduinoCli) UpdateIndexFiles() error {
 }
 
 // UpdateLibraryIndex updates library index file
-func (c *ArduinoCli) UpdateLibraryIndex() error {
+func (c *Wrapper) UpdateLibraryIndex() error {
 	c.logger.Debug("Updating library index...")
-	inst := instance.CreateInstanceIgnorePlatformIndexErrors()
+	inst := c.cli.CreateInstanceIgnorePlatformIndexErrors()
 
-	return commands.UpdateLibrariesIndex(
+	return c.cli.UpdateLibrariesIndex(
 		c.ctx,
 		&rpc.UpdateLibrariesIndexReq{
 			Instance: inst,
@@ -95,10 +73,10 @@ func (c *ArduinoCli) UpdateLibraryIndex() error {
 }
 
 // UpdatePlatformIndex updates platform index file
-func (c *ArduinoCli) UpdatePlatformIndex() error {
+func (c *Wrapper) UpdatePlatformIndex() error {
 	c.logger.Debug("Updating platform index...")
-	inst := instance.CreateInstanceIgnorePlatformIndexErrors()
-	_, err := commands.UpdateIndex(
+	inst := c.cli.CreateInstanceIgnorePlatformIndexErrors()
+	_, err := c.cli.UpdateIndex(
 		c.ctx,
 		&rpc.UpdateIndexReq{
 			Instance: inst,
@@ -109,8 +87,8 @@ func (c *ArduinoCli) UpdatePlatformIndex() error {
 }
 
 // UpgradePlatform upgrades a given platform
-func (c *ArduinoCli) UpgradePlatform(platform string) error {
-	inst, err := instance.CreateInstance()
+func (c *Wrapper) UpgradePlatform(platform string) error {
+	inst, err := c.cli.CreateInstance()
 	if err != nil {
 		return err
 	}
@@ -122,7 +100,7 @@ func (c *ArduinoCli) UpgradePlatform(platform string) error {
 		PlatformPackage: pkg,
 		Architecture:    arch,
 	}
-	_, err = core.PlatformUpgrade(
+	_, err = c.cli.PlatformUpgrade(
 		c.ctx,
 		req,
 		c.getDownloadProgressFn(),
@@ -132,8 +110,8 @@ func (c *ArduinoCli) UpgradePlatform(platform string) error {
 }
 
 // InstallPlatform installs a given platform
-func (c *ArduinoCli) InstallPlatform(platform string) (string, string, error) {
-	inst, err := instance.CreateInstance()
+func (c *Wrapper) InstallPlatform(platform string) (string, string, error) {
+	inst, err := c.cli.CreateInstance()
 	if err != nil {
 		return "", "", err
 	}
@@ -154,7 +132,7 @@ func (c *ArduinoCli) InstallPlatform(platform string) (string, string, error) {
 		Version:         version,
 	}
 
-	_, err = core.PlatformInstall(
+	_, err = c.cli.PlatformInstall(
 		c.ctx,
 		req,
 		c.getDownloadProgressFn(),
@@ -181,8 +159,8 @@ func (c *ArduinoCli) InstallPlatform(platform string) (string, string, error) {
 }
 
 // UninstallPlatform installs a given platform
-func (c *ArduinoCli) UninstallPlatform(platform string) (string, error) {
-	inst, err := instance.CreateInstance()
+func (c *Wrapper) UninstallPlatform(platform string) (string, error) {
+	inst, err := c.cli.CreateInstance()
 	if err != nil {
 		return "", err
 	}
@@ -203,7 +181,7 @@ func (c *ArduinoCli) UninstallPlatform(platform string) (string, error) {
 		Architecture:    arch,
 	}
 
-	_, err = core.PlatformUninstall(
+	_, err = c.cli.PlatformUninstall(
 		c.ctx,
 		req,
 		output.NewTaskProgressCB(),
@@ -217,8 +195,8 @@ func (c *ArduinoCli) UninstallPlatform(platform string) (string, error) {
 }
 
 // GetInstalledPlatforms lists all installed platforms
-func (c *ArduinoCli) GetInstalledPlatforms() ([]*rpc.Platform, error) {
-	inst, err := instance.CreateInstance()
+func (c *Wrapper) GetInstalledPlatforms() ([]*rpc.Platform, error) {
+	inst, err := c.cli.CreateInstance()
 	if err != nil {
 		return nil, err
 	}
@@ -229,12 +207,12 @@ func (c *ArduinoCli) GetInstalledPlatforms() ([]*rpc.Platform, error) {
 		All:           false,
 	}
 
-	return core.GetPlatforms(req)
+	return c.cli.GetPlatforms(req)
 }
 
-// GetPlatforms returns specified platform or all platforms if unspecified
-func (c *ArduinoCli) GetPlatforms() ([]*rpc.Platform, error) {
-	inst, err := instance.CreateInstance()
+// SearchPlatforms returns specified platform or all platforms if unspecified
+func (c *Wrapper) SearchPlatforms() ([]*rpc.Platform, error) {
+	inst, err := c.cli.CreateInstance()
 	if err != nil {
 		return nil, err
 	}
@@ -248,14 +226,14 @@ func (c *ArduinoCli) GetPlatforms() ([]*rpc.Platform, error) {
 		AllVersions: true,
 	}
 
-	resp, err := core.PlatformSearch(req)
+	resp, err := c.cli.PlatformSearch(req)
 
 	return resp.GetSearchOutput(), err
 }
 
 // ConnectedBoards returns a list of connected arduino boards
-func (c *ArduinoCli) ConnectedBoards() []*Board {
-	inst, err := instance.CreateInstance()
+func (c *Wrapper) ConnectedBoards() []*Board {
+	inst, err := c.cli.CreateInstance()
 	if err != nil {
 		c.logger.WithError(err).Warn("failed to get list of connected boards")
 		return nil
@@ -263,7 +241,7 @@ func (c *ArduinoCli) ConnectedBoards() []*Board {
 
 	boardList := []*Board{}
 
-	ports, err := board.List(inst.GetId())
+	ports, err := c.cli.ConnectedBoards(inst.GetId())
 	if err != nil {
 		return nil
 	}
@@ -283,8 +261,8 @@ func (c *ArduinoCli) ConnectedBoards() []*Board {
 }
 
 // AllBoards returns a list of all supported boards
-func (c *ArduinoCli) AllBoards() []*Board {
-	inst, err := instance.CreateInstance()
+func (c *Wrapper) AllBoards() []*Board {
+	inst, err := c.cli.CreateInstance()
 	if err != nil {
 		return nil
 	}
@@ -299,7 +277,7 @@ func (c *ArduinoCli) AllBoards() []*Board {
 		All:           true,
 	}
 
-	platforms, err := core.GetPlatforms(req)
+	platforms, err := c.cli.GetPlatforms(req)
 	if err != nil {
 		c.logger.WithError(err).Warn("failed to get list of installed platforms")
 		return nil
@@ -318,8 +296,8 @@ func (c *ArduinoCli) AllBoards() []*Board {
 }
 
 // Upload a sketch to target board
-func (c *ArduinoCli) Upload(fqbn, sketchDir, device string) error {
-	inst, err := instance.CreateInstance()
+func (c *Wrapper) Upload(fqbn, sketchDir, device string) error {
+	inst, err := c.cli.CreateInstance()
 	if err != nil {
 		return err
 	}
@@ -332,7 +310,7 @@ func (c *ArduinoCli) Upload(fqbn, sketchDir, device string) error {
 		Verbose:    c.isVerbose(),
 	}
 
-	_, err = upload.Upload(
+	_, err = c.cli.Upload(
 		c.ctx,
 		req,
 		os.Stdout,
@@ -352,8 +330,8 @@ type CompileOpts struct {
 }
 
 // Compile the specified sketch
-func (c *ArduinoCli) Compile(opts CompileOpts) error {
-	inst, err := instance.CreateInstance()
+func (c *Wrapper) Compile(opts CompileOpts) error {
+	inst, err := c.cli.CreateInstance()
 	if err != nil {
 		return err
 	}
@@ -370,7 +348,7 @@ func (c *ArduinoCli) Compile(opts CompileOpts) error {
 		Verbose:         c.isVerbose(),
 	}
 
-	_, err = compile.Compile(
+	_, err = c.cli.Compile(
 		c.ctx,
 		req,
 		os.Stdout,
@@ -382,8 +360,8 @@ func (c *ArduinoCli) Compile(opts CompileOpts) error {
 }
 
 // SearchLibraries searches available libraries for download
-func (c *ArduinoCli) SearchLibraries(query string) ([]*rpc.SearchedLibrary, error) {
-	inst, err := instance.CreateInstance()
+func (c *Wrapper) SearchLibraries(query string) ([]*rpc.SearchedLibrary, error) {
+	inst, err := c.cli.CreateInstance()
 	if err != nil {
 		return nil, err
 	}
@@ -393,14 +371,14 @@ func (c *ArduinoCli) SearchLibraries(query string) ([]*rpc.SearchedLibrary, erro
 		Query:    query,
 	}
 
-	searchResp, err := lib.LibrarySearch(c.ctx, req)
+	searchResp, err := c.cli.LibrarySearch(c.ctx, req)
 
 	return searchResp.GetLibraries(), err
 }
 
 // InstallLibrary installs specified version of a library
-func (c *ArduinoCli) InstallLibrary(name, version string) (string, error) {
-	inst := instance.CreateInstanceIgnorePlatformIndexErrors()
+func (c *Wrapper) InstallLibrary(name, version string) (string, error) {
+	inst := c.cli.CreateInstanceIgnorePlatformIndexErrors()
 
 	req := &rpc.LibraryInstallReq{
 		Instance: inst,
@@ -408,7 +386,7 @@ func (c *ArduinoCli) InstallLibrary(name, version string) (string, error) {
 		Version:  version,
 	}
 
-	err := lib.LibraryInstall(
+	err := c.cli.LibraryInstall(
 		c.ctx,
 		req,
 		c.getDownloadProgressFn(),
@@ -436,12 +414,12 @@ func (c *ArduinoCli) InstallLibrary(name, version string) (string, error) {
 }
 
 // UninstallLibrary removes specified library
-func (c *ArduinoCli) UninstallLibrary(name string) error {
-	inst := instance.CreateInstanceIgnorePlatformIndexErrors()
+func (c *Wrapper) UninstallLibrary(name string) error {
+	inst := c.cli.CreateInstanceIgnorePlatformIndexErrors()
 
 	req := &rpc.LibraryUninstallReq{
 		Instance: inst,
-		// Assume spaces in name were intended to be underscore. This indicates
+		// Assume spaces in name were intended to be underscores. This indicates
 		// a potential bug in the arduino-cli package manager as names
 		// potentially do not have a one-to-one mapping with regards to install
 		// and remove commands. It seems as though arduino should be forcing
@@ -450,7 +428,7 @@ func (c *ArduinoCli) UninstallLibrary(name string) error {
 		Name: strings.ReplaceAll(name, " ", "_"),
 	}
 
-	err := lib.LibraryUninstall(
+	err := c.cli.LibraryUninstall(
 		c.ctx,
 		req,
 		c.getTaskProgressFn())
@@ -459,39 +437,103 @@ func (c *ArduinoCli) UninstallLibrary(name string) error {
 }
 
 // GetInstalledLibs returns a list of installed libraries
-func (c *ArduinoCli) GetInstalledLibs() ([]*rpc.InstalledLibrary, error) {
-	inst := instance.CreateInstanceIgnorePlatformIndexErrors()
+func (c *Wrapper) GetInstalledLibs() ([]*rpc.InstalledLibrary, error) {
+	inst := c.cli.CreateInstanceIgnorePlatformIndexErrors()
 
 	req := &rpc.LibraryListReq{
 		Instance: inst,
 	}
 
-	res, err := lib.LibraryList(c.ctx, req)
+	res, err := c.cli.LibraryList(c.ctx, req)
 	return res.GetInstalledLibrary(), err
 }
 
+// GetTargetBoard returns target info for a connected & disconnected boards
+func (c *Wrapper) GetTargetBoard(fqbn, port string, onlyConnected bool) (*Board, error) {
+	if fqbn != "" && port != "" {
+		return &Board{
+			FQBN: fqbn,
+			Port: port,
+		}, nil
+	}
+
+	fqbnErr := errors.New("you must specify a board fqbn to compile - you can find a list of board fqbns for installed platforms above")
+	connectedBoardsErr := errors.New("no connected boards detected")
+	connectedBoards := c.ConnectedBoards()
+	allBoards := c.AllBoards()
+
+	if fqbn != "" {
+		if onlyConnected {
+			for _, b := range connectedBoards {
+				if b.FQBN == fqbn {
+					return b, nil
+				}
+			}
+			return nil, connectedBoardsErr
+		}
+		return &Board{FQBN: fqbn}, nil
+	}
+
+	if len(connectedBoards) == 0 {
+		if onlyConnected {
+			return nil, connectedBoardsErr
+		}
+		c.printFQBNs(allBoards, c.logger)
+		return nil, fqbnErr
+	}
+
+	if len(connectedBoards) == 1 {
+		return connectedBoards[0], nil
+	}
+
+	if len(connectedBoards) > 1 {
+		c.printFQBNs(connectedBoards, c.logger)
+		return nil, fqbnErr
+	}
+
+	return nil, errors.New("error parsing target")
+}
+
 // ClientVersion returns version of arduino-cli
-func (c *ArduinoCli) ClientVersion() string {
-	return globals.VersionInfo.String()
+func (c *Wrapper) ClientVersion() string {
+	return c.cli.Version()
 }
 
 // private methods
-func (c *ArduinoCli) isVerbose() bool {
+func (c *Wrapper) isVerbose() bool {
 	return c.logger.GetLevel() == log.DebugLevel
 }
 
-func (c *ArduinoCli) getDownloadProgressFn() commands.DownloadProgressCB {
+func (c *Wrapper) getDownloadProgressFn() commands.DownloadProgressCB {
 	if c.isVerbose() {
 		return output.ProgressBar()
 	}
 	return noDownloadOutput
 }
 
-func (c *ArduinoCli) getTaskProgressFn() commands.TaskProgressCB {
+func (c *Wrapper) getTaskProgressFn() commands.TaskProgressCB {
 	if c.isVerbose() {
 		return output.TaskProgress()
 	}
 	return noTaskOutput
+}
+
+// private helpers
+func (c *Wrapper) printFQBNs(boardList []*Board, logger *log.Logger) {
+	sort.Slice(boardList, func(i, j int) bool {
+		return boardList[i].Name < boardList[j].Name
+	})
+
+	c.printBoardsWithIndices(boardList, logger)
+}
+
+func (c *Wrapper) printBoardsWithIndices(boards []*Board, logger *log.Logger) {
+	w := tabwriter.NewWriter(logger.Out, 0, 0, 8, ' ', 0)
+	defer w.Flush()
+	w.Write([]byte("No.\tName\tFQBN\n"))
+	for i, b := range boards {
+		w.Write([]byte(fmt.Sprintf("%d\t%s\t%s\n", i, b.Name, b.FQBN)))
+	}
 }
 
 // private helpers

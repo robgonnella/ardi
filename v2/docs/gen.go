@@ -11,7 +11,7 @@ import (
 
 func main() {
 	logger := logrus.New()
-	rootCmd := commands.GetRootCmd(logger)
+	rootCmd := commands.GetRootCmd(logger, nil)
 	err := doc.GenMarkdownTree(rootCmd, "./docs")
 	if err != nil {
 		log.Fatal(err)

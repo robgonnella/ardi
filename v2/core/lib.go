@@ -14,12 +14,12 @@ import (
 // LibCore core module for lib commands
 type LibCore struct {
 	logger      *log.Logger
-	cli         cli.Cli
+	cli         *cli.Wrapper
 	initialized bool
 }
 
 // NewLibCore Lib instance
-func NewLibCore(cli cli.Cli, logger *log.Logger) *LibCore {
+func NewLibCore(cli *cli.Wrapper, logger *log.Logger) *LibCore {
 	return &LibCore{
 		logger:      logger,
 		cli:         cli,

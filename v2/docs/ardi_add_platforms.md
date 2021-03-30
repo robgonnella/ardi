@@ -14,7 +14,6 @@ ardi add platforms [flags]
 ### Options
 
 ```
-  -a, --all    Add all available platforms
   -h, --help   help for platforms
 ```
 

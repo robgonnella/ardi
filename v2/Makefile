@@ -35,6 +35,7 @@ endif
 
 $(foreach o,$(objects),$(call add_zip_object,$(o)))
 
+.PHONY: all
 all: $(objects)
 
 $(objects): $(shell find . -type f -name "*.go")
@@ -46,14 +47,18 @@ $(objects): $(shell find . -type f -name "*.go")
 $(zips): $(objects)
 	zip -j $(@) $(@:.zip=)
 
+.PHONY: release
 release: $(zips)
 
+.PHONY: mock
 mock:
 	go generate ./...
 
+.PHONY: lint
 lint:
 	golint -set_exit_status ./...
 
+.PHONY: test-unit
 test-unit:
 	mkdir -p test_artifacts
 	rm -rf test_artifacts/unit.out
@@ -64,6 +69,7 @@ test-unit:
 		github.com/robgonnella/ardi/v2/core \
 		github.com/robgonnella/ardi/v2/util
 
+.PHONY: test-int
 test-int:
 	mkdir -p test_artifacts
 	rm -rf test_artifacts/int.out
@@ -73,9 +79,11 @@ test-int:
 		-coverprofile test_artifacts/int.out \
 		github.com/robgonnella/ardi/v2/commands
 
+.PHONY: test-e2e
 test-e2e:
 	./scripts/run_e2e.sh
 
+.PHONY: test-all
 test-all: lint
 	rm -rf test_artifacts
 	mkdir -p test_artifacts
@@ -87,12 +95,26 @@ test-all: lint
 		github.com/robgonnella/ardi/v2/util \
 		github.com/robgonnella/ardi/v2/commands
 	$(MAKE) test-e2e
+	$(MAKE) coverage
+	$(MAKE) badge
+
+.PHONY: coverage
+coverage:
 	go tool cover -func test_artifacts/coverage.out
 
+.PHONY: badge
+badge:
+	total=$$(go tool cover -func test_artifacts/coverage.out | grep total: | awk '{print $$3}') \
+		&& python ./scripts/gen_badge.py $$total
+
+.PHONY: test-report
+test-report:
+	go tool cover -html=test_artifacts/coverage.out
+
+.PHONY: docs
 docs:
 	go run docs/gen.go
 
+.PHONY: clean
 clean:
 	rm -rf build
-
-.PHONY: all release mock docs clean
