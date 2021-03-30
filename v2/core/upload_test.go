@@ -4,7 +4,8 @@ import (
 	"errors"
 	"testing"
 
-	cli "github.com/robgonnella/ardi/v2/cli-wrapper"
+	rpc "github.com/arduino/arduino-cli/rpc/commands"
+	"github.com/golang/mock/gomock"
 	"github.com/robgonnella/ardi/v2/mocks"
 	"github.com/robgonnella/ardi/v2/testutil"
 	"github.com/stretchr/testify/assert"
@@ -13,36 +14,42 @@ import (
 func TestUploadCore(t *testing.T) {
 	testutil.RunUnitTest("returns nil on success ", t, func(env *testutil.UnitTestEnv) {
 		connectedBoard := testutil.GenerateRPCBoard("someboard", "somefqbn")
-		connectedBoards := []*cli.Board{connectedBoard}
+		projectDir := testutil.BlinkProjectDir()
 
-		env.Cli.EXPECT().ConnectedBoards().Times(1).Return(connectedBoards)
-		env.Cli.EXPECT().AllBoards().Times(1).Return([]*cli.Board{})
+		instance := &rpc.Instance{Id: int32(1)}
+		req := &rpc.UploadReq{
+			Instance:   instance,
+			Fqbn:       connectedBoard.FQBN,
+			Port:       connectedBoard.Port,
+			SketchPath: projectDir,
+			Verbose:    true,
+		}
 
-		env.ClearStdout()
-		board, err := env.ArdiCore.GetTargetBoard("", "", true)
-		assert.NoError(env.T, err)
+		env.Cli.EXPECT().CreateInstance().Return(instance, nil)
+		env.Cli.EXPECT().Upload(gomock.Any(), req, gomock.Any(), gomock.Any())
 
-		env.Cli.EXPECT().Upload(board.FQBN, testutil.BlinkProjectDir(), board.Port).Times(1).Return(nil)
-
-		err = env.ArdiCore.Uploader.Upload(board, testutil.BlinkProjectDir())
+		err := env.ArdiCore.Uploader.Upload(connectedBoard, projectDir)
 		assert.Nil(env.T, err)
 	})
 
 	testutil.RunUnitTest("returns upload error", t, func(env *testutil.UnitTestEnv) {
+		board := testutil.GenerateRPCBoard("whatever", "fqbn")
 		dummyErr := errors.New("dummy error")
-		connectedBoard := testutil.GenerateRPCBoard("someboard", "somefqbn")
-		connectedBoards := []*cli.Board{connectedBoard}
+		projectDir := testutil.BlinkProjectDir()
 
-		env.Cli.EXPECT().ConnectedBoards().Times(1).Return(connectedBoards)
-		env.Cli.EXPECT().AllBoards().Times(1).Return([]*cli.Board{})
+		instance := &rpc.Instance{Id: int32(1)}
+		req := &rpc.UploadReq{
+			Instance:   instance,
+			Fqbn:       board.FQBN,
+			Port:       board.Port,
+			SketchPath: projectDir,
+			Verbose:    true,
+		}
 
-		env.ClearStdout()
-		board, err := env.ArdiCore.GetTargetBoard("", "", true)
-		assert.NoError(env.T, err)
+		env.Cli.EXPECT().CreateInstance().Return(instance, nil)
+		env.Cli.EXPECT().Upload(gomock.Any(), req, gomock.Any(), gomock.Any()).Return(nil, dummyErr)
 
-		env.Cli.EXPECT().Upload(board.FQBN, testutil.BlinkProjectDir(), board.Port).Times(1).Return(dummyErr)
-
-		err = env.ArdiCore.Uploader.Upload(board, testutil.BlinkProjectDir())
+		err := env.ArdiCore.Uploader.Upload(board, projectDir)
 		assert.EqualError(env.T, err, dummyErr.Error())
 	})
 

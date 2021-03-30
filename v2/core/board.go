@@ -14,12 +14,12 @@ import (
 
 // BoardCore module for board commands
 type BoardCore struct {
-	cli    cli.Cli
+	cli    *cli.Wrapper
 	logger *log.Logger
 }
 
 // NewBoardCore module instance for board commands
-func NewBoardCore(cli cli.Cli, logger *log.Logger) *BoardCore {
+func NewBoardCore(cli *cli.Wrapper, logger *log.Logger) *BoardCore {
 	return &BoardCore{
 		logger: logger,
 		cli:    cli,
@@ -28,7 +28,7 @@ func NewBoardCore(cli cli.Cli, logger *log.Logger) *BoardCore {
 
 // FQBNS lists all available boards with associated fqbns
 func (c *BoardCore) FQBNS(query string) error {
-	platforms, err := c.cli.GetPlatforms()
+	platforms, err := c.cli.SearchPlatforms()
 
 	if err != nil {
 		return err
@@ -64,7 +64,7 @@ func (c *BoardCore) FQBNS(query string) error {
 
 // Platforms lists all available boards with associated platorms
 func (c *BoardCore) Platforms(query string) error {
-	platforms, err := c.cli.GetPlatforms()
+	platforms, err := c.cli.SearchPlatforms()
 
 	if err != nil {
 		return err

@@ -8,6 +8,8 @@ import (
 	"testing"
 	"time"
 
+	rpc "github.com/arduino/arduino-cli/rpc/commands"
+	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 
 	cli "github.com/robgonnella/ardi/v2/cli-wrapper"
@@ -22,6 +24,7 @@ func TestCompileCore(t *testing.T) {
 		expectedSketch := path.Join(projectDir, "blink.ino")
 		expectedBuildProps := []string{"build.extra_flags='-DSOME_OPTION'"}
 		expectedShowProps := false
+		expectedExportDir := path.Join(projectDir, "build")
 
 		compileOpts := cli.CompileOpts{
 			FQBN:       expectedFqbn,
@@ -30,7 +33,20 @@ func TestCompileCore(t *testing.T) {
 			BuildProps: expectedBuildProps,
 			ShowProps:  expectedShowProps,
 		}
-		env.Cli.EXPECT().Compile(compileOpts).Times(1).Return(nil)
+
+		instance := &rpc.Instance{Id: int32(1)}
+		req := &rpc.CompileReq{
+			Instance:        instance,
+			Fqbn:            expectedFqbn,
+			SketchPath:      expectedSketch,
+			ExportDir:       expectedExportDir,
+			BuildProperties: expectedBuildProps,
+			ShowProperties:  expectedShowProps,
+			Verbose:         true,
+		}
+
+		env.Cli.EXPECT().CreateInstance().Return(instance, nil)
+		env.Cli.EXPECT().Compile(gomock.Any(), req, gomock.Any(), gomock.Any(), gomock.Any())
 
 		err := env.ArdiCore.Compiler.Compile(compileOpts)
 		assert.Nil(env.T, err)
@@ -45,6 +61,7 @@ func TestCompileCore(t *testing.T) {
 		expectedSketch := path.Join(projectDir, "blink.ino")
 		expectedBuildProps := []string{"build.extra_flags='-DSOME_OPTION'"}
 		expectedShowProps := false
+		expectedExportDir := path.Join(projectDir, "build")
 
 		compileOpts := cli.CompileOpts{
 			FQBN:       expectedFqbn,
@@ -54,7 +71,19 @@ func TestCompileCore(t *testing.T) {
 			ShowProps:  expectedShowProps,
 		}
 
-		env.Cli.EXPECT().Compile(compileOpts).Times(1).Return(dummyErr)
+		instance := &rpc.Instance{Id: int32(1)}
+		req := &rpc.CompileReq{
+			Instance:        instance,
+			Fqbn:            expectedFqbn,
+			SketchPath:      expectedSketch,
+			ExportDir:       expectedExportDir,
+			BuildProperties: expectedBuildProps,
+			ShowProperties:  expectedShowProps,
+			Verbose:         true,
+		}
+
+		env.Cli.EXPECT().CreateInstance().Return(instance, nil)
+		env.Cli.EXPECT().Compile(gomock.Any(), req, gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, dummyErr)
 
 		err := env.ArdiCore.Compiler.Compile(compileOpts)
 		assert.Error(env.T, err)
@@ -79,6 +108,7 @@ func TestCompileCore(t *testing.T) {
 		expectedSketch := sketch
 		expectedBuildProps := []string{"build.extra_flags='-DSOME_OPTION'"}
 		expectedShowProps := false
+		expectedExportDir := path.Join(sketchDir, "build")
 
 		compileOpts := cli.CompileOpts{
 			FQBN:       expectedFqbn,
@@ -88,13 +118,26 @@ func TestCompileCore(t *testing.T) {
 			ShowProps:  expectedShowProps,
 		}
 
-		env.Cli.EXPECT().Compile(compileOpts).Times(1).Return(nil)
+		instance := &rpc.Instance{Id: int32(1)}
+		req := &rpc.CompileReq{
+			Instance:        instance,
+			Fqbn:            expectedFqbn,
+			SketchPath:      expectedSketch,
+			ExportDir:       expectedExportDir,
+			BuildProperties: expectedBuildProps,
+			ShowProperties:  expectedShowProps,
+			Verbose:         true,
+		}
+
+		env.Cli.EXPECT().CreateInstance().Return(instance, nil)
+		env.Cli.EXPECT().Compile(gomock.Any(), req, gomock.Any(), gomock.Any(), gomock.Any())
 
 		err = env.ArdiCore.Compiler.Compile(compileOpts)
 		assert.NoError(env.T, err)
 
 		env.ClearStdout()
-		env.Cli.EXPECT().Compile(compileOpts).Times(1).Return(dummyErr)
+		env.Cli.EXPECT().CreateInstance().Return(instance, nil)
+		env.Cli.EXPECT().Compile(gomock.Any(), req, gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, dummyErr)
 
 		go env.ArdiCore.Compiler.WatchForChanges(compileOpts)
 

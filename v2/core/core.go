@@ -1,11 +1,6 @@
 package core
 
 import (
-	"errors"
-	"fmt"
-	"sort"
-	"text/tabwriter"
-
 	cli "github.com/robgonnella/ardi/v2/cli-wrapper"
 	"github.com/robgonnella/ardi/v2/paths"
 	"github.com/robgonnella/ardi/v2/types"
@@ -15,7 +10,7 @@ import (
 
 // ArdiCore represents the core package of ardi
 type ArdiCore struct {
-	Cli       cli.Cli
+	Cli       *cli.Wrapper
 	Config    *ArdiConfig
 	CliConfig *ArdiYAML
 	Watcher   *WatchCore
@@ -31,7 +26,7 @@ type ArdiCore struct {
 type NewArdiCoreOpts struct {
 	ArdiConfig         types.ArdiConfig
 	ArduinoCliSettings types.ArduinoCliSettings
-	Cli                cli.Cli
+	Cli                *cli.Wrapper
 	Logger             *log.Logger
 }
 
@@ -114,68 +109,4 @@ func (c *ArdiCore) CompileSketch(sketchOpts CompileSketchOpts) (*cli.CompileOpts
 	}
 
 	return &compileOpts, nil
-}
-
-// GetTargetBoard returns target info for a connected & disconnected boards
-func (c *ArdiCore) GetTargetBoard(fqbn, port string, onlyConnected bool) (*cli.Board, error) {
-	if fqbn != "" && port != "" {
-		return &cli.Board{
-			FQBN: fqbn,
-			Port: port,
-		}, nil
-	}
-
-	fqbnErr := errors.New("you must specify a board fqbn to compile - you can find a list of board fqbns for installed platforms above")
-	connectedBoardsErr := errors.New("no connected boards detected")
-	connectedBoards := c.Cli.ConnectedBoards()
-	allBoards := c.Cli.AllBoards()
-
-	if fqbn != "" {
-		if onlyConnected {
-			for _, b := range connectedBoards {
-				if b.FQBN == fqbn {
-					return b, nil
-				}
-			}
-			return nil, connectedBoardsErr
-		}
-		return &cli.Board{FQBN: fqbn}, nil
-	}
-
-	if len(connectedBoards) == 0 {
-		if onlyConnected {
-			return nil, connectedBoardsErr
-		}
-		c.printFQBNs(allBoards, c.logger)
-		return nil, fqbnErr
-	}
-
-	if len(connectedBoards) == 1 {
-		return connectedBoards[0], nil
-	}
-
-	if len(connectedBoards) > 1 {
-		c.printFQBNs(connectedBoards, c.logger)
-		return nil, fqbnErr
-	}
-
-	return nil, errors.New("error parsing target")
-}
-
-// private helpers
-func (c *ArdiCore) printFQBNs(boardList []*cli.Board, logger *log.Logger) {
-	sort.Slice(boardList, func(i, j int) bool {
-		return boardList[i].Name < boardList[j].Name
-	})
-
-	c.printBoardsWithIndices(boardList, logger)
-}
-
-func (c *ArdiCore) printBoardsWithIndices(boards []*cli.Board, logger *log.Logger) {
-	w := tabwriter.NewWriter(logger.Out, 0, 0, 8, ' ', 0)
-	defer w.Flush()
-	w.Write([]byte("No.\tName\tFQBN\n"))
-	for i, b := range boards {
-		w.Write([]byte(fmt.Sprintf("%d\t%s\t%s\n", i, b.Name, b.FQBN)))
-	}
 }

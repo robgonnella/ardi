@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	rpc "github.com/arduino/arduino-cli/rpc/commands"
+	"github.com/golang/mock/gomock"
 	cli "github.com/robgonnella/ardi/v2/cli-wrapper"
 	"github.com/robgonnella/ardi/v2/core"
 	"github.com/robgonnella/ardi/v2/mocks"
@@ -35,8 +37,29 @@ func TestWatchCore(t *testing.T) {
 		port := mocks.NewMockSerialPort(env.Ctrl)
 		port.EXPECT().Stop().AnyTimes()
 		port.EXPECT().Watch().AnyTimes()
-		env.Cli.EXPECT().Compile(compileOpts).AnyTimes().Return(nil)
-		env.Cli.EXPECT().Upload(fqbn, sketchDir, board.Port).AnyTimes().Return(nil)
+
+		instance := &rpc.Instance{Id: int32(1)}
+		compileReq := &rpc.CompileReq{
+			Instance:        instance,
+			Fqbn:            fqbn,
+			SketchPath:      sketch,
+			ExportDir:       path.Join(sketchDir, "build"),
+			BuildProperties: compileOpts.BuildProps,
+			ShowProperties:  compileOpts.ShowProps,
+			Verbose:         true,
+		}
+
+		uploadReq := &rpc.UploadReq{
+			Instance:   instance,
+			Fqbn:       fqbn,
+			SketchPath: sketchDir,
+			Port:       board.Port,
+			Verbose:    true,
+		}
+
+		env.Cli.EXPECT().CreateInstance().Return(instance, nil).AnyTimes()
+		env.Cli.EXPECT().Compile(gomock.Any(), compileReq, gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+		env.Cli.EXPECT().Upload(gomock.Any(), uploadReq, gomock.Any(), gomock.Any()).AnyTimes()
 
 		targets := core.WatchCoreTargets{
 			Board:       board,
@@ -65,7 +88,30 @@ func TestWatchCore(t *testing.T) {
 		port := mocks.NewMockSerialPort(env.Ctrl)
 		port.EXPECT().Stop().AnyTimes()
 		port.EXPECT().Watch().Times(1)
-		env.Cli.EXPECT().Compile(compileOpts).AnyTimes().Return(errors.New("dummy errror"))
+
+		dummyErr := errors.New("dummy errror")
+		instance := &rpc.Instance{Id: int32(1)}
+		compileReq := &rpc.CompileReq{
+			Instance:        instance,
+			Fqbn:            fqbn,
+			SketchPath:      sketch,
+			ExportDir:       path.Join(sketchDir, "build"),
+			BuildProperties: compileOpts.BuildProps,
+			ShowProperties:  compileOpts.ShowProps,
+			Verbose:         true,
+		}
+
+		uploadReq := &rpc.UploadReq{
+			Instance:   instance,
+			Fqbn:       fqbn,
+			SketchPath: sketchDir,
+			Port:       board.Port,
+			Verbose:    true,
+		}
+
+		env.Cli.EXPECT().CreateInstance().Return(instance, nil).AnyTimes()
+		env.Cli.EXPECT().Compile(gomock.Any(), compileReq, gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(nil, dummyErr)
+		env.Cli.EXPECT().Upload(gomock.Any(), uploadReq, gomock.Any(), gomock.Any()).AnyTimes()
 
 		targets := core.WatchCoreTargets{
 			Board:       board,

@@ -10,12 +10,12 @@ import (
 // UploadCore represents core module for ardi upload commands
 type UploadCore struct {
 	logger    *log.Logger
-	cli       cli.Cli
+	cli       *cli.Wrapper
 	uploading bool
 }
 
 // NewUploadCore returns new ardi upload core
-func NewUploadCore(cli cli.Cli, logger *log.Logger) *UploadCore {
+func NewUploadCore(cli *cli.Wrapper, logger *log.Logger) *UploadCore {
 	return &UploadCore{
 		cli:       cli,
 		logger:    logger,

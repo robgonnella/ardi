@@ -1,35 +1,18 @@
 package commands
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
 )
 
 func getAddPlatformCmd() *cobra.Command {
-	var all bool
 	addCmd := &cobra.Command{
 		Use:     "platforms",
 		Long:    "\nAdd platform(s) to project",
 		Short:   "Add platform(s) to project",
 		Aliases: []string{"platform"},
+		Args:    cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			platforms := []string{}
-
-			if len(args) == 0 || all {
-				logger.Info("Adding all platforms")
-				rpcPlatforms, err := ardiCore.Cli.GetPlatforms()
-				if err != nil {
-					return err
-				}
-				for _, p := range rpcPlatforms {
-					platforms = append(platforms, fmt.Sprintf("%s@%s", p.GetID(), p.GetLatest()))
-				}
-			} else {
-				platforms = args
-			}
-
-			for _, p := range platforms {
+			for _, p := range args {
 				logger.Infof("Adding platform: %s", p)
 				installed, vers, err := ardiCore.Platform.Add(p)
 				if err != nil {
@@ -45,7 +28,6 @@ func getAddPlatformCmd() *cobra.Command {
 			return nil
 		},
 	}
-	addCmd.Flags().BoolVarP(&all, "all", "a", false, "Add all available platforms")
 	return addCmd
 }
 
@@ -59,10 +41,7 @@ func getAddBuildCmd() *cobra.Command {
 		Long:  "\nAdd build config to project",
 		Short: "Add build config to project",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := ardiCore.Config.AddBuild(name, sketch, fqbn, buildProps); err != nil {
-				return err
-			}
-			return nil
+			return ardiCore.Config.AddBuild(name, sketch, fqbn, buildProps)
 		},
 	}
 	addCmd.Flags().StringVarP(&name, "name", "n", "", "Custom name for the build")
@@ -96,7 +75,6 @@ func getAddLibCmd() *cobra.Command {
 					logger.WithError(err).Error("Failed to save libary to ardi.json")
 					return err
 				}
-				logger.Info("Updated config")
 			}
 			return nil
 		},

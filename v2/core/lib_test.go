@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/arduino/arduino-cli/rpc/commands"
+	rpc "github.com/arduino/arduino-cli/rpc/commands"
+	"github.com/golang/mock/gomock"
 	"github.com/robgonnella/ardi/v2/testutil"
 	"github.com/stretchr/testify/assert"
 )
@@ -17,8 +18,26 @@ func TestLibCore(t *testing.T) {
 		library := fmt.Sprintf("%s@%s", lib, version)
 		installedVersion := "1.0.0-alpha.2"
 
-		env.Cli.EXPECT().UpdateLibraryIndex().Times(1).Return(nil)
-		env.Cli.EXPECT().InstallLibrary(lib, version).Times(1).Return(installedVersion, nil)
+		instance := &rpc.Instance{Id: int32(1)}
+		req := &rpc.LibraryInstallReq{
+			Instance: instance,
+			Name:     lib,
+			Version:  version,
+		}
+		listReq := &rpc.LibraryListReq{
+			Instance: instance,
+		}
+		listResp := &rpc.LibraryListResp{
+			InstalledLibrary: []*rpc.InstalledLibrary{
+				&rpc.InstalledLibrary{
+					Library: &rpc.Library{Name: lib, Version: installedVersion},
+				},
+			},
+		}
+		env.Cli.EXPECT().CreateInstanceIgnorePlatformIndexErrors().Return(instance).Times(3)
+		env.Cli.EXPECT().UpdateLibrariesIndex(gomock.Any(), gomock.Any(), gomock.Any())
+		env.Cli.EXPECT().LibraryInstall(gomock.Any(), req, gomock.Any(), gomock.Any())
+		env.Cli.EXPECT().LibraryList(gomock.Any(), listReq).Return(listResp, nil)
 
 		returnedLib, returnedVers, err := env.ArdiCore.Lib.Add(library)
 		assert.NoError(env.T, err)
@@ -34,8 +53,15 @@ func TestLibCore(t *testing.T) {
 		version := "1.0.0"
 		library := fmt.Sprintf("%s@%s", lib, version)
 
-		env.Cli.EXPECT().UpdateLibraryIndex().Times(1).Return(nil)
-		env.Cli.EXPECT().InstallLibrary(lib, version).Times(1).Return("", dummyErr)
+		instance := &rpc.Instance{Id: int32(1)}
+		req := &rpc.LibraryInstallReq{
+			Instance: instance,
+			Name:     lib,
+			Version:  version,
+		}
+		env.Cli.EXPECT().CreateInstanceIgnorePlatformIndexErrors().Return(instance).Times(2)
+		env.Cli.EXPECT().UpdateLibrariesIndex(gomock.Any(), gomock.Any(), gomock.Any())
+		env.Cli.EXPECT().LibraryInstall(gomock.Any(), req, gomock.Any(), gomock.Any()).Return(dummyErr)
 
 		_, _, err := env.ArdiCore.Lib.Add(library)
 		assert.Error(env.T, err)
@@ -44,7 +70,13 @@ func TestLibCore(t *testing.T) {
 
 	testutil.RunUnitTest("uninstalls library", t, func(env *testutil.UnitTestEnv) {
 		libName := "Adafruit_Pixie"
-		env.Cli.EXPECT().UninstallLibrary(libName).Times(1).Return(nil)
+		instance := &rpc.Instance{Id: int32(1)}
+		req := &rpc.LibraryUninstallReq{
+			Instance: instance,
+			Name:     libName,
+		}
+		env.Cli.EXPECT().CreateInstanceIgnorePlatformIndexErrors().Return(instance)
+		env.Cli.EXPECT().LibraryUninstall(gomock.Any(), req, gomock.Any()).Return(nil)
 		err := env.ArdiCore.Lib.Remove(libName)
 		assert.NoError(env.T, err)
 	})
@@ -53,7 +85,13 @@ func TestLibCore(t *testing.T) {
 		errString := "dummy error"
 		dummyErr := errors.New(errString)
 		libName := "Adafruit_Pixie"
-		env.Cli.EXPECT().UninstallLibrary(libName).Times(1).Return(dummyErr)
+		instance := &rpc.Instance{Id: int32(1)}
+		req := &rpc.LibraryUninstallReq{
+			Instance: instance,
+			Name:     libName,
+		}
+		env.Cli.EXPECT().CreateInstanceIgnorePlatformIndexErrors().Return(instance)
+		env.Cli.EXPECT().LibraryUninstall(gomock.Any(), req, gomock.Any()).Return(dummyErr)
 		err := env.ArdiCore.Lib.Remove(libName)
 		assert.Error(env.T, err)
 		assert.EqualError(env.T, err, errString)
@@ -62,22 +100,31 @@ func TestLibCore(t *testing.T) {
 	testutil.RunUnitTest("prints library searches to stdout", t, func(env *testutil.UnitTestEnv) {
 		searchQuery := "wifi101"
 
-		latest := commands.LibraryRelease{Version: "1.2.1"}
+		latest := rpc.LibraryRelease{Version: "1.2.1"}
 
-		libReleaseMap := map[string]*commands.LibraryRelease{
+		libReleaseMap := map[string]*rpc.LibraryRelease{
 			"1.2.1": &latest,
 		}
 
-		lib := commands.SearchedLibrary{
+		lib := rpc.SearchedLibrary{
 			Name:     "WIFI101",
 			Latest:   &latest,
 			Releases: libReleaseMap,
 		}
 
-		searchedLibs := []*commands.SearchedLibrary{&lib}
-
-		env.Cli.EXPECT().UpdateLibraryIndex().Times(1).Return(nil)
-		env.Cli.EXPECT().SearchLibraries(searchQuery).Times(1).Return(searchedLibs, nil)
+		searchedLibs := []*rpc.SearchedLibrary{&lib}
+		instance := &rpc.Instance{Id: int32(1)}
+		req := &rpc.LibrarySearchReq{
+			Instance: instance,
+			Query:    searchQuery,
+		}
+		resp := &rpc.LibrarySearchResp{
+			Libraries: searchedLibs,
+		}
+		env.Cli.EXPECT().CreateInstanceIgnorePlatformIndexErrors().Return(instance)
+		env.Cli.EXPECT().UpdateLibrariesIndex(gomock.Any(), gomock.Any(), gomock.Any())
+		env.Cli.EXPECT().CreateInstance().Return(instance, nil)
+		env.Cli.EXPECT().LibrarySearch(gomock.Any(), req).Return(resp, nil)
 
 		err := env.ArdiCore.Lib.Search(searchQuery)
 		assert.NoError(env.T, err)
@@ -86,17 +133,33 @@ func TestLibCore(t *testing.T) {
 	})
 
 	testutil.RunUnitTest("prints installed libraries to stdout", t, func(env *testutil.UnitTestEnv) {
-		installedLib := commands.InstalledLibrary{
-			Library: &commands.Library{
+		installedLib := rpc.InstalledLibrary{
+			Library: &rpc.Library{
 				Name:     "My favorite library",
 				Version:  "1.2.2",
 				Sentence: "This is my favoritest library",
 			},
 		}
 
-		env.Cli.EXPECT().GetInstalledLibs().Times(1).Return([]*commands.InstalledLibrary{&installedLib}, nil)
-		env.ArdiCore.Lib.ListInstalled()
+		instance := &rpc.Instance{Id: int32(1)}
+		req := &rpc.LibraryListReq{
+			Instance: instance,
+		}
+		resp := &rpc.LibraryListResp{
+			InstalledLibrary: []*rpc.InstalledLibrary{
+				&rpc.InstalledLibrary{
+					Library: &rpc.Library{
+						Name:     installedLib.Library.Name,
+						Version:  installedLib.Library.Version,
+						Sentence: installedLib.Library.Sentence,
+					},
+				},
+			},
+		}
+		env.Cli.EXPECT().CreateInstanceIgnorePlatformIndexErrors().Return(instance)
+		env.Cli.EXPECT().LibraryList(gomock.Any(), req).Return(resp, nil)
 
+		env.ArdiCore.Lib.ListInstalled()
 		stdout := env.Stdout.String()
 		assert.Contains(env.T, stdout, installedLib.Library.Name)
 		assert.Contains(env.T, stdout, installedLib.Library.Version)

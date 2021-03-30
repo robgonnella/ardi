@@ -42,7 +42,7 @@ func getUploadCmd() *cobra.Command {
 				}
 			}
 
-			board, err := ardiCore.GetTargetBoard(fqbn, port, true)
+			board, err := ardiCore.Cli.GetTargetBoard(fqbn, port, true)
 			if err != nil {
 				return err
 			}

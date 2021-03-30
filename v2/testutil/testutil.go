@@ -22,11 +22,9 @@ import (
 )
 
 var here string
-var userHome string
 
 func init() {
 	here, _ = filepath.Abs(".")
-	userHome, _ = os.UserHomeDir()
 	log.SetOutput(ioutil.Discard)
 }
 
@@ -84,6 +82,7 @@ func Esp8266BoardURL() string {
 // UnitTestEnv represents our unit test environment
 type UnitTestEnv struct {
 	T            *testing.T
+	Ctx          context.Context
 	Ctrl         *gomock.Controller
 	Logger       *log.Logger
 	Cli          *mocks.MockCli
@@ -173,10 +172,12 @@ func PixieProjectDir() string {
 // RunUnitTest runs an ardi unit test
 func RunUnitTest(name string, t *testing.T, f func(env *UnitTestEnv)) {
 	t.Run(name, func(st *testing.T) {
+		ctx := context.Background()
+
 		ctrl := gomock.NewController(st)
 		defer ctrl.Finish()
 
-		cli := mocks.NewMockCli(ctrl)
+		cliInstance := mocks.NewMockCli(ctrl)
 		logger := log.New()
 
 		CleanAll()
@@ -189,10 +190,13 @@ func RunUnitTest(name string, t *testing.T, f func(env *UnitTestEnv)) {
 			LogLevel: "debug",
 		}
 		ardiConfig, svrSettings := util.GetAllSettings(opts)
+		settingsPath := util.GetCliSettingsPath(opts)
+
+		cliWrapper := cli.NewCli(ctx, settingsPath, svrSettings, logger, cliInstance)
 
 		coreOpts := core.NewArdiCoreOpts{
 			Logger:             logger,
-			Cli:                cli,
+			Cli:                cliWrapper,
 			ArdiConfig:         *ardiConfig,
 			ArduinoCliSettings: *svrSettings,
 		}
@@ -200,9 +204,10 @@ func RunUnitTest(name string, t *testing.T, f func(env *UnitTestEnv)) {
 
 		env := UnitTestEnv{
 			T:        st,
+			Ctx:      ctx,
 			Ctrl:     ctrl,
 			Logger:   logger,
-			Cli:      cli,
+			Cli:      cliInstance,
 			ArdiCore: ardiCore,
 			Stdout:   &b,
 		}
@@ -248,7 +253,19 @@ func (e *IntegrationTestEnv) RunProjectInit() error {
 
 // Execute executes the root command with given arguments
 func (e *IntegrationTestEnv) Execute(args []string) error {
-	rootCmd := commands.GetRootCmd(e.logger)
+	rootCmd := commands.GetRootCmd(e.logger, nil)
+	rootCmd.SetOut(e.logger.Out)
+	rootCmd.SetArgs(args)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	return rootCmd.ExecuteContext(ctx)
+}
+
+// ExecuteWithMockCli executes command with injected mock cli instance
+func (e *IntegrationTestEnv) ExecuteWithMockCli(args []string, inst *mocks.MockCli) error {
+	rootCmd := commands.GetRootCmd(e.logger, inst)
 	rootCmd.SetOut(e.logger.Out)
 	rootCmd.SetArgs(args)
 

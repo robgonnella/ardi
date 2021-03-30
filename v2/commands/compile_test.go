@@ -1,6 +1,7 @@
 package commands_test
 
 import (
+	"os"
 	"path"
 	"testing"
 
@@ -72,6 +73,33 @@ func TestCompileCommandProject(t *testing.T) {
 			assert.NoError(st, err)
 			assert.DirExists(st, buildDir1)
 			assert.DirExists(st, buildDir2)
+		})
+
+		groupEnv.T.Run("returns error is one build fails", func(st *testing.T) {
+			testutil.CleanBuilds()
+			buildName1 := "blink"
+			sketchDir1 := testutil.BlinkProjectDir()
+
+			args := []string{"add", "build", "-n", buildName1, "-f", fqbn, "-s", sketchDir1}
+			err := groupEnv.Execute(args)
+			assert.NoError(st, err)
+
+			// Requires library that we aren't installing so this will error out
+			buildName2 := "pixie"
+			sketchDir2 := testutil.PixieProjectDir()
+
+			args = []string{"add", "build", "-n", buildName2, "-f", fqbn, "-s", sketchDir2}
+			err = groupEnv.Execute(args)
+			assert.NoError(st, err)
+
+			args = []string{"compile", buildName1, buildName2}
+			err = groupEnv.Execute(args)
+			assert.Error(st, err)
+
+			// Cleanup
+			args = []string{"remove", "build", buildName2}
+			err = groupEnv.Execute(args)
+			assert.NoError(st, err)
 		})
 
 		groupEnv.T.Run("errors if attempt to watch multiple builds", func(st *testing.T) {
@@ -161,6 +189,18 @@ func TestCompileCommandProject(t *testing.T) {
 		args := []string{"compile", blinkDir, "--fqbn", testutil.ArduinoMegaFQBN()}
 		err = env.Execute(args)
 		assert.Error(env.T, err)
+	})
+
+	testutil.RunIntegrationTest("compiles directory if sketch arg missing", t, func(env *testutil.IntegrationTestEnv) {
+		currentDir, _ := os.Getwd()
+		blinkDir := testutil.BlinkProjectDir()
+		os.Chdir(blinkDir)
+		err := env.RunProjectInit()
+		assert.NoError(env.T, err)
+		args := []string{"compile", "--fqbn", testutil.ArduinoMegaFQBN()}
+		err = env.Execute(args)
+		assert.Error(env.T, err)
+		os.Chdir(currentDir)
 	})
 
 	testutil.RunIntegrationTest("errors if not a valid project directory", t, func(env *testutil.IntegrationTestEnv) {

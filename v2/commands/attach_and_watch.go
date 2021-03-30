@@ -49,7 +49,7 @@ func getWatchCmd() *cobra.Command {
 				}
 			}
 
-			board, err := ardiCore.GetTargetBoard(compileOpts.FQBN, port, true)
+			board, err := ardiCore.Cli.GetTargetBoard(compileOpts.FQBN, port, true)
 			if err != nil || board == nil {
 				return err
 			}

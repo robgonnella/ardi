@@ -11,12 +11,12 @@ import (
 // CompileCore represents core module for compile commands
 type CompileCore struct {
 	logger    *log.Logger
-	cli       cli.Cli
+	cli       *cli.Wrapper
 	compiling bool
 }
 
 // NewCompileCore instance of core module for compile commands
-func NewCompileCore(cli cli.Cli, logger *log.Logger) *CompileCore {
+func NewCompileCore(cli *cli.Wrapper, logger *log.Logger) *CompileCore {
 	return &CompileCore{
 		logger:    logger,
 		cli:       cli,
