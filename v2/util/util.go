@@ -14,17 +14,14 @@ import (
 	"strings"
 
 	"github.com/arduino/arduino-cli/inventory"
-	log "github.com/sirupsen/logrus"
-	"gopkg.in/yaml.v2"
-
+	"github.com/google/uuid"
 	"github.com/robgonnella/ardi/v2/paths"
 	"github.com/robgonnella/ardi/v2/types"
+	"gopkg.in/yaml.v2"
 )
 
-// GetAllSettingsOpts options for retrieving all settings
-type GetAllSettingsOpts struct {
-	LogLevel string
-}
+var appID = uuid.New().String()
+var appSecret = uuid.New().String()
 
 // WriteSettingsOpts options for writing all settings to file
 type WriteSettingsOpts struct {
@@ -74,7 +71,7 @@ func ReadArduinoCliSettings(confPath string) (*types.ArduinoCliSettings, error) 
 }
 
 // GenArduinoCliSettings generated data config file with default values
-func GenArduinoCliSettings(logLevel, dataDir string) *types.ArduinoCliSettings {
+func GenArduinoCliSettings(dataDir string) *types.ArduinoCliSettings {
 	return &types.ArduinoCliSettings{
 		BoardManager: types.BoardManager{AdditionalUrls: []string{}},
 		Daemon: types.Daemon{
@@ -86,14 +83,14 @@ func GenArduinoCliSettings(logLevel, dataDir string) *types.ArduinoCliSettings {
 			User:      path.Join(dataDir, "Arduino"),
 		},
 		Installation: types.Installation{
-			ID:     "somefancyid",
-			Secret: "somefancysecret",
+			ID:     appID,
+			Secret: appSecret,
 		},
 		Library: types.Library{
 			EnableUnsafeInstall: false,
 		},
 		Logging: types.Logging{
-			Level:  logLevel,
+			Level:  "fatal",
 			Format: "text",
 			File:   "",
 		},
@@ -105,12 +102,8 @@ func GenArduinoCliSettings(logLevel, dataDir string) *types.ArduinoCliSettings {
 }
 
 // GenArdiConfig returns default ardi.json in current directory
-func GenArdiConfig(logLevel string) *types.ArdiConfig {
+func GenArdiConfig() *types.ArdiConfig {
 	return &types.ArdiConfig{
-		Daemon: types.ArdiDaemonConfig{
-			Port:     "",
-			LogLevel: logLevel,
-		},
 		Platforms: make(map[string]string),
 		BoardURLS: []string{},
 		Libraries: make(map[string]string),
@@ -140,34 +133,31 @@ func ReadArdiConfig(confPath string) (*types.ArdiConfig, error) {
 }
 
 // GetAllSettings returns settings for both ardi and arduino-cli
-func GetAllSettings(opts GetAllSettingsOpts) (*types.ArdiConfig, *types.ArduinoCliSettings) {
+func GetAllSettings() (*types.ArdiConfig, *types.ArduinoCliSettings) {
 	var ardiConfig *types.ArdiConfig
 	var cliSettings *types.ArduinoCliSettings
-	logLevel := opts.LogLevel
 
 	dataDir := paths.ArdiProjectDataDir
 	ardiConf := paths.ArdiProjectConfig
 	cliConf := paths.ArduinoCliProjectConfig
 
 	if _, err := os.Stat(ardiConf); os.IsNotExist(err) {
-		ardiConfig = GenArdiConfig(logLevel)
+		ardiConfig = GenArdiConfig()
 	} else if ardiConfig, err = ReadArdiConfig(ardiConf); err != nil {
-		ardiConfig = GenArdiConfig(logLevel)
+		ardiConfig = GenArdiConfig()
 	}
 
 	if _, err := os.Stat(cliConf); os.IsNotExist(err) {
-		cliSettings = GenArduinoCliSettings(ardiConfig.Daemon.LogLevel, dataDir)
+		cliSettings = GenArduinoCliSettings(dataDir)
 	} else if cliSettings, err = ReadArduinoCliSettings(cliConf); err != nil {
-		cliSettings = GenArduinoCliSettings(ardiConfig.Daemon.LogLevel, dataDir)
+		cliSettings = GenArduinoCliSettings(dataDir)
 	}
-	cliSettings.Daemon.Port = ardiConfig.Daemon.Port
-	cliSettings.Logging.Level = ardiConfig.Daemon.LogLevel
 
 	return ardiConfig, cliSettings
 }
 
 // GetCliSettingsPath returns path to arduino-cli.yaml based on scope
-func GetCliSettingsPath(opts GetAllSettingsOpts) string {
+func GetCliSettingsPath() string {
 	cliConf := paths.ArduinoCliProjectConfig
 	return cliConf
 }
@@ -201,34 +191,19 @@ func WriteAllSettings(opts WriteSettingsOpts) error {
 
 // InitProjectDirectory initializes a directory as an ardi project
 func InitProjectDirectory() error {
-	getOpts := GetAllSettingsOpts{
-		LogLevel: "fatal",
-	}
-	ardiConfig, cliSettings := GetAllSettings(getOpts)
+	ardiConfig, cliSettings := GetAllSettings()
 
 	writeOpts := WriteSettingsOpts{
 		ArdiConfig:         ardiConfig,
 		ArduinoCliSettings: cliSettings,
 	}
-	if err := WriteAllSettings(writeOpts); err != nil {
-		return err
-	}
-
-	return nil
+	return WriteAllSettings(writeOpts)
 }
 
 // IsProjectDirectory returns whether or not currect directory has been initialized as an ardi project
 func IsProjectDirectory() bool {
 	_, buildErr := os.Stat(paths.ArdiProjectConfig)
 	return !os.IsNotExist(buildErr)
-}
-
-// GetLogLevel returns daemon log level string based on logger settings
-func GetLogLevel(logger *log.Logger) string {
-	if logger.GetLevel() == log.DebugLevel {
-		return "debug"
-	}
-	return "fatal"
 }
 
 // CleanDataDirectory removes directory

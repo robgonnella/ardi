@@ -68,15 +68,8 @@ type ArdiBuild struct {
 	Props     map[string]string `json:"props"`
 }
 
-// ArdiDaemonConfig represents daemon config in ardi.json
-type ArdiDaemonConfig struct {
-	Port     string `json:"port"`
-	LogLevel string `json:"logLevel"`
-}
-
 // ArdiConfig represents the ardi.json file
 type ArdiConfig struct {
-	Daemon    ArdiDaemonConfig     `json:"daemon"`
 	Platforms map[string]string    `json:"platforms"`
 	BoardURLS []string             `json:"boardUrls"`
 	Libraries map[string]string    `json:"libraries"`

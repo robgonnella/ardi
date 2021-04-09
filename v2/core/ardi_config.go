@@ -83,10 +83,13 @@ func (a *ArdiConfig) ListBuilds(builds []string) {
 	a.logger.Println("")
 	if len(builds) > 0 {
 		for _, name := range builds {
-			if b, ok := a.config.Builds[name]; ok {
+			pass := util.ArrayContains(builds, name)
+			b, ok := a.config.Builds[name]
+			if pass && ok {
 				a.printBuild(name, b)
 			}
 		}
+		return
 	}
 	for name, build := range a.config.Builds {
 		a.printBuild(name, build)
