@@ -13,7 +13,7 @@ import (
 	"github.com/arduino/arduino-cli/cli/output"
 	"github.com/arduino/arduino-cli/commands"
 	"github.com/arduino/arduino-cli/configuration"
-	rpc "github.com/arduino/arduino-cli/rpc/commands"
+	rpc "github.com/arduino/arduino-cli/rpc/cc/arduino/cli/commands/v1"
 	"github.com/robgonnella/ardi/v2/types"
 	log "github.com/sirupsen/logrus"
 )
@@ -65,7 +65,7 @@ func (c *Wrapper) UpdateLibraryIndex() error {
 
 	return c.cli.UpdateLibrariesIndex(
 		c.ctx,
-		&rpc.UpdateLibrariesIndexReq{
+		&rpc.UpdateLibrariesIndexRequest{
 			Instance: inst,
 		},
 		c.getDownloadProgressFn(),
@@ -78,7 +78,7 @@ func (c *Wrapper) UpdatePlatformIndex() error {
 	inst := c.cli.CreateInstanceIgnorePlatformIndexErrors()
 	_, err := c.cli.UpdateIndex(
 		c.ctx,
-		&rpc.UpdateIndexReq{
+		&rpc.UpdateIndexRequest{
 			Instance: inst,
 		},
 		c.getDownloadProgressFn(),
@@ -95,7 +95,7 @@ func (c *Wrapper) UpgradePlatform(platform string) error {
 
 	pkg, arch, _ := parsePlatform(platform)
 	c.logger.Debugf("Upgrading platform: %s:%s\n", pkg, arch)
-	req := &rpc.PlatformUpgradeReq{
+	req := &rpc.PlatformUpgradeRequest{
 		Instance:        inst,
 		PlatformPackage: pkg,
 		Architecture:    arch,
@@ -125,7 +125,7 @@ func (c *Wrapper) InstallPlatform(platform string) (string, string, error) {
 	pkg, arch, version := parsePlatform(platform)
 	installedPlatform := fmt.Sprintf("%s:%s", pkg, arch)
 
-	req := &rpc.PlatformInstallReq{
+	req := &rpc.PlatformInstallRequest{
 		Instance:        inst,
 		PlatformPackage: pkg,
 		Architecture:    arch,
@@ -150,7 +150,7 @@ func (c *Wrapper) InstallPlatform(platform string) (string, string, error) {
 	foundVersion := version
 
 	for _, plat := range platforms {
-		if plat.GetID() == fmt.Sprintf("%s:%s", pkg, arch) {
+		if plat.GetId() == fmt.Sprintf("%s:%s", pkg, arch) {
 			foundVersion = plat.GetInstalled()
 		}
 	}
@@ -175,7 +175,7 @@ func (c *Wrapper) UninstallPlatform(platform string) (string, error) {
 
 	removedPlatform := fmt.Sprintf("%s:%s", pkg, arch)
 
-	req := &rpc.PlatformUninstallReq{
+	req := &rpc.PlatformUninstallRequest{
 		Instance:        inst,
 		PlatformPackage: pkg,
 		Architecture:    arch,
@@ -201,7 +201,7 @@ func (c *Wrapper) GetInstalledPlatforms() ([]*rpc.Platform, error) {
 		return nil, err
 	}
 
-	req := &rpc.PlatformListReq{
+	req := &rpc.PlatformListRequest{
 		Instance:      inst,
 		UpdatableOnly: false,
 		All:           false,
@@ -221,7 +221,7 @@ func (c *Wrapper) SearchPlatforms() ([]*rpc.Platform, error) {
 		return nil, err
 	}
 
-	req := &rpc.PlatformSearchReq{
+	req := &rpc.PlatformSearchRequest{
 		Instance:    inst,
 		AllVersions: true,
 	}
@@ -249,7 +249,7 @@ func (c *Wrapper) ConnectedBoards() []*Board {
 	for _, port := range ports {
 		for _, board := range port.GetBoards() {
 			boardWithPort := Board{
-				FQBN: board.GetFQBN(),
+				FQBN: board.GetFqbn(),
 				Name: board.GetName(),
 				Port: port.GetAddress(),
 			}
@@ -271,7 +271,7 @@ func (c *Wrapper) AllBoards() []*Board {
 
 	boardList := []*Board{}
 
-	req := &rpc.PlatformListReq{
+	req := &rpc.PlatformListRequest{
 		Instance:      inst,
 		UpdatableOnly: false,
 		All:           true,
@@ -302,7 +302,7 @@ func (c *Wrapper) Upload(fqbn, sketchDir, device string) error {
 		return err
 	}
 
-	req := &rpc.UploadReq{
+	req := &rpc.UploadRequest{
 		Instance:   inst,
 		Fqbn:       fqbn,
 		SketchPath: sketchDir,
@@ -338,7 +338,7 @@ func (c *Wrapper) Compile(opts CompileOpts) error {
 
 	exportDir := path.Join(opts.SketchDir, "build")
 
-	req := &rpc.CompileReq{
+	req := &rpc.CompileRequest{
 		Instance:        inst,
 		Fqbn:            opts.FQBN,
 		SketchPath:      opts.SketchPath,
@@ -366,7 +366,7 @@ func (c *Wrapper) SearchLibraries(query string) ([]*rpc.SearchedLibrary, error) 
 		return nil, err
 	}
 
-	req := &rpc.LibrarySearchReq{
+	req := &rpc.LibrarySearchRequest{
 		Instance: inst,
 		Query:    query,
 	}
@@ -380,7 +380,7 @@ func (c *Wrapper) SearchLibraries(query string) ([]*rpc.SearchedLibrary, error) 
 func (c *Wrapper) InstallLibrary(name, version string) (string, error) {
 	inst := c.cli.CreateInstanceIgnorePlatformIndexErrors()
 
-	req := &rpc.LibraryInstallReq{
+	req := &rpc.LibraryInstallRequest{
 		Instance: inst,
 		Name:     name,
 		Version:  version,
@@ -417,7 +417,7 @@ func (c *Wrapper) InstallLibrary(name, version string) (string, error) {
 func (c *Wrapper) UninstallLibrary(name string) error {
 	inst := c.cli.CreateInstanceIgnorePlatformIndexErrors()
 
-	req := &rpc.LibraryUninstallReq{
+	req := &rpc.LibraryUninstallRequest{
 		Instance: inst,
 		// Assume spaces in name were intended to be underscores. This indicates
 		// a potential bug in the arduino-cli package manager as names
@@ -440,12 +440,12 @@ func (c *Wrapper) UninstallLibrary(name string) error {
 func (c *Wrapper) GetInstalledLibs() ([]*rpc.InstalledLibrary, error) {
 	inst := c.cli.CreateInstanceIgnorePlatformIndexErrors()
 
-	req := &rpc.LibraryListReq{
+	req := &rpc.LibraryListRequest{
 		Instance: inst,
 	}
 
 	res, err := c.cli.LibraryList(c.ctx, req)
-	return res.GetInstalledLibrary(), err
+	return res.GetInstalledLibraries(), err
 }
 
 // GetTargetBoard returns target info for a connected & disconnected boards

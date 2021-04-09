@@ -5,7 +5,7 @@ import (
 	"path"
 	"testing"
 
-	rpc "github.com/arduino/arduino-cli/rpc/commands"
+	rpc "github.com/arduino/arduino-cli/rpc/cc/arduino/cli/commands/v1"
 	"github.com/golang/mock/gomock"
 	"github.com/robgonnella/ardi/v2/mocks"
 	"github.com/robgonnella/ardi/v2/testutil"
@@ -32,14 +32,14 @@ func TestUploadCommand(t *testing.T) {
 		assert.NoError(env.T, err)
 
 		instance := &rpc.Instance{Id: int32(1)}
-		req := &rpc.UploadReq{
+		req := &rpc.UploadRequest{
 			Instance:   instance,
 			Fqbn:       fqbn,
 			SketchPath: sketchDir,
 			Port:       board.Port,
 		}
 
-		platformReq := &rpc.PlatformListReq{
+		platformReq := &rpc.PlatformListRequest{
 			Instance:      instance,
 			UpdatableOnly: false,
 			All:           true,
@@ -47,7 +47,7 @@ func TestUploadCommand(t *testing.T) {
 
 		boardItem := &rpc.BoardListItem{
 			Name: board.Name,
-			FQBN: board.FQBN,
+			Fqbn: board.FQBN,
 		}
 		port := &rpc.DetectedPort{
 			Address: board.Port,

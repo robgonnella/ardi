@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	rpc "github.com/arduino/arduino-cli/rpc/commands"
+	rpc "github.com/arduino/arduino-cli/rpc/cc/arduino/cli/commands/v1"
 	"github.com/golang/mock/gomock"
 	"github.com/robgonnella/ardi/v2/testutil"
 	"github.com/stretchr/testify/assert"
@@ -19,16 +19,16 @@ func TestLibCore(t *testing.T) {
 		installedVersion := "1.0.0-alpha.2"
 
 		instance := &rpc.Instance{Id: int32(1)}
-		req := &rpc.LibraryInstallReq{
+		req := &rpc.LibraryInstallRequest{
 			Instance: instance,
 			Name:     lib,
 			Version:  version,
 		}
-		listReq := &rpc.LibraryListReq{
+		listReq := &rpc.LibraryListRequest{
 			Instance: instance,
 		}
-		listResp := &rpc.LibraryListResp{
-			InstalledLibrary: []*rpc.InstalledLibrary{
+		listResp := &rpc.LibraryListResponse{
+			InstalledLibraries: []*rpc.InstalledLibrary{
 				&rpc.InstalledLibrary{
 					Library: &rpc.Library{Name: lib, Version: installedVersion},
 				},
@@ -54,7 +54,7 @@ func TestLibCore(t *testing.T) {
 		library := fmt.Sprintf("%s@%s", lib, version)
 
 		instance := &rpc.Instance{Id: int32(1)}
-		req := &rpc.LibraryInstallReq{
+		req := &rpc.LibraryInstallRequest{
 			Instance: instance,
 			Name:     lib,
 			Version:  version,
@@ -71,7 +71,7 @@ func TestLibCore(t *testing.T) {
 	testutil.RunUnitTest("uninstalls library", t, func(env *testutil.UnitTestEnv) {
 		libName := "Adafruit_Pixie"
 		instance := &rpc.Instance{Id: int32(1)}
-		req := &rpc.LibraryUninstallReq{
+		req := &rpc.LibraryUninstallRequest{
 			Instance: instance,
 			Name:     libName,
 		}
@@ -86,7 +86,7 @@ func TestLibCore(t *testing.T) {
 		dummyErr := errors.New(errString)
 		libName := "Adafruit_Pixie"
 		instance := &rpc.Instance{Id: int32(1)}
-		req := &rpc.LibraryUninstallReq{
+		req := &rpc.LibraryUninstallRequest{
 			Instance: instance,
 			Name:     libName,
 		}
@@ -114,11 +114,11 @@ func TestLibCore(t *testing.T) {
 
 		searchedLibs := []*rpc.SearchedLibrary{&lib}
 		instance := &rpc.Instance{Id: int32(1)}
-		req := &rpc.LibrarySearchReq{
+		req := &rpc.LibrarySearchRequest{
 			Instance: instance,
 			Query:    searchQuery,
 		}
-		resp := &rpc.LibrarySearchResp{
+		resp := &rpc.LibrarySearchResponse{
 			Libraries: searchedLibs,
 		}
 		env.Cli.EXPECT().CreateInstanceIgnorePlatformIndexErrors().Return(instance)
@@ -142,11 +142,11 @@ func TestLibCore(t *testing.T) {
 		}
 
 		instance := &rpc.Instance{Id: int32(1)}
-		req := &rpc.LibraryListReq{
+		req := &rpc.LibraryListRequest{
 			Instance: instance,
 		}
-		resp := &rpc.LibraryListResp{
-			InstalledLibrary: []*rpc.InstalledLibrary{
+		resp := &rpc.LibraryListResponse{
+			InstalledLibraries: []*rpc.InstalledLibrary{
 				&rpc.InstalledLibrary{
 					Library: &rpc.Library{
 						Name:     installedLib.Library.Name,

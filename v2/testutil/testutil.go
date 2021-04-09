@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	rpccommands "github.com/arduino/arduino-cli/rpc/commands"
+	rpccommands "github.com/arduino/arduino-cli/rpc/cc/arduino/cli/commands/v1"
 	"github.com/golang/mock/gomock"
 	log "github.com/sirupsen/logrus"
 
@@ -121,7 +121,7 @@ func GenerateCmdBoards(n int) []*rpccommands.Board {
 // GenerateCmdPlatform generates a single named arduino-cli command platform
 func GenerateCmdPlatform(name string, boards []*rpccommands.Board) *rpccommands.Platform {
 	return &rpccommands.Platform{
-		ID:     name,
+		Id:     name,
 		Boards: boards,
 	}
 }

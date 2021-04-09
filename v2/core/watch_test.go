@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	rpc "github.com/arduino/arduino-cli/rpc/commands"
+	rpc "github.com/arduino/arduino-cli/rpc/cc/arduino/cli/commands/v1"
 	"github.com/golang/mock/gomock"
 	cli "github.com/robgonnella/ardi/v2/cli-wrapper"
 	"github.com/robgonnella/ardi/v2/core"
@@ -39,7 +39,7 @@ func TestWatchCore(t *testing.T) {
 		port.EXPECT().Watch().AnyTimes()
 
 		instance := &rpc.Instance{Id: int32(1)}
-		compileReq := &rpc.CompileReq{
+		compileReq := &rpc.CompileRequest{
 			Instance:        instance,
 			Fqbn:            fqbn,
 			SketchPath:      sketch,
@@ -49,7 +49,7 @@ func TestWatchCore(t *testing.T) {
 			Verbose:         true,
 		}
 
-		uploadReq := &rpc.UploadReq{
+		uploadReq := &rpc.UploadRequest{
 			Instance:   instance,
 			Fqbn:       fqbn,
 			SketchPath: sketchDir,
@@ -91,7 +91,7 @@ func TestWatchCore(t *testing.T) {
 
 		dummyErr := errors.New("dummy errror")
 		instance := &rpc.Instance{Id: int32(1)}
-		compileReq := &rpc.CompileReq{
+		compileReq := &rpc.CompileRequest{
 			Instance:        instance,
 			Fqbn:            fqbn,
 			SketchPath:      sketch,
@@ -101,7 +101,7 @@ func TestWatchCore(t *testing.T) {
 			Verbose:         true,
 		}
 
-		uploadReq := &rpc.UploadReq{
+		uploadReq := &rpc.UploadRequest{
 			Instance:   instance,
 			Fqbn:       fqbn,
 			SketchPath: sketchDir,

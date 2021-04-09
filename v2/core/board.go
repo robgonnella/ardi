@@ -6,7 +6,7 @@ import (
 	"sort"
 	"text/tabwriter"
 
-	"github.com/arduino/arduino-cli/rpc/commands"
+	"github.com/arduino/arduino-cli/rpc/cc/arduino/cli/commands/v1"
 	log "github.com/sirupsen/logrus"
 
 	cli "github.com/robgonnella/ardi/v2/cli-wrapper"
@@ -82,7 +82,7 @@ func (c *BoardCore) Platforms(query string) error {
 				boardList,
 				boardAndPlat{
 					boardName: board.GetName(),
-					platform:  plat.GetID(),
+					platform:  plat.GetId(),
 				},
 			)
 		}
