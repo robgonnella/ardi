@@ -10,8 +10,8 @@ import (
 
 	"github.com/robgonnella/ardi/v2/paths"
 	"github.com/robgonnella/ardi/v2/testutil"
+	"github.com/robgonnella/ardi/v2/types"
 	"github.com/robgonnella/ardi/v2/util"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/yaml.v2"
 )
@@ -93,9 +93,9 @@ func TestUtilArduinoCliSettings(t *testing.T) {
 
 	t.Run("returns settings from file", func(st *testing.T) {
 		conf := "success-conf"
-		level := "debug"
+		level := "fatal"
 		dataDir := "."
-		expected := util.GenArduinoCliSettings(level, dataDir)
+		expected := util.GenArduinoCliSettings(dataDir)
 		assert.Equal(st, expected.Logging.Level, level)
 		assert.Equal(st, expected.Directories.Data, dataDir)
 		assert.Equal(st, expected.Directories.Downloads, path.Join(dataDir, "staging"))
@@ -113,8 +113,7 @@ func TestUtilArduinoCliSettings(t *testing.T) {
 	})
 
 	t.Run("returns project path", func(st *testing.T) {
-		opts := util.GetAllSettingsOpts{}
-		settingsPath := util.GetCliSettingsPath(opts)
+		settingsPath := util.GetCliSettingsPath()
 		assert.Equal(st, paths.ArduinoCliProjectConfig, settingsPath)
 	})
 }
@@ -140,10 +139,13 @@ func TestUtilArdiConfig(t *testing.T) {
 
 	t.Run("returns settings from file", func(st *testing.T) {
 		conf := "ardi-success-conf"
-		level := "debug"
-		expected := util.GenArdiConfig(level)
-		assert.Equal(st, expected.Daemon.LogLevel, level)
+		expected := util.GenArdiConfig()
+		assert.Equal(st, expected.BoardURLS, []string{})
+		assert.Equal(st, expected.Builds, map[string]types.ArdiBuild{})
+		assert.Equal(st, expected.Libraries, map[string]string{})
+		assert.Equal(st, expected.Platforms, map[string]string{})
 
+		expected.BoardURLS = append(expected.BoardURLS, "some-fancy-board-url")
 		byteData, err := json.Marshal(expected)
 		assert.NoError(st, err)
 		err = writeSettings(conf, byteData)
@@ -159,25 +161,20 @@ func TestUtilArdiConfig(t *testing.T) {
 func TestUtilGetAllSettings(t *testing.T) {
 	t.Run("returns default settings if project files not found", func(st *testing.T) {
 		dataDir := paths.ArdiProjectDataDir
-		level := "fancy-log-level"
 		os.RemoveAll(dataDir)
 
-		expectedConfig := util.GenArdiConfig(level)
-		expectedSettings := util.GenArduinoCliSettings(level, dataDir)
+		expectedConfig := util.GenArdiConfig()
+		expectedSettings := util.GenArduinoCliSettings(dataDir)
+		config, settings := util.GetAllSettings()
 
-		opts := util.GetAllSettingsOpts{
-			LogLevel: level,
-		}
-		config, settings := util.GetAllSettings(opts)
 		assert.Equal(st, expectedConfig, config)
 		assert.Equal(st, expectedSettings, settings)
 	})
 
 	t.Run("returns settings from project files", func(st *testing.T) {
 		dataDir := paths.ArdiProjectDataDir
-		level := "fancy-log-level"
-		expectedConfig := util.GenArdiConfig(level)
-		expectedSettings := util.GenArduinoCliSettings(level, dataDir)
+		expectedConfig := util.GenArdiConfig()
+		expectedSettings := util.GenArduinoCliSettings(dataDir)
 
 		os.RemoveAll(dataDir)
 
@@ -191,11 +188,7 @@ func TestUtilGetAllSettings(t *testing.T) {
 		assert.FileExists(st, paths.ArdiProjectConfig)
 		assert.FileExists(st, paths.ArduinoCliProjectConfig)
 
-		opts := util.GetAllSettingsOpts{
-			LogLevel: level,
-		}
-
-		config, settings := util.GetAllSettings(opts)
+		config, settings := util.GetAllSettings()
 		assert.Equal(st, expectedConfig, config)
 		assert.Equal(st, expectedSettings, settings)
 
@@ -233,22 +226,6 @@ func TestUtilIsProjectDirectory(t *testing.T) {
 			os.RemoveAll(paths.ArdiProjectConfig)
 		}()
 		assert.True(st, util.IsProjectDirectory())
-	})
-}
-
-func TestUtilGetLogLevel(t *testing.T) {
-	t.Run("returns debug for logger level", func(st *testing.T) {
-		logger := logrus.New()
-		logger.SetLevel(logrus.DebugLevel)
-		level := util.GetLogLevel(logger)
-		assert.Equal(st, "debug", level)
-	})
-
-	t.Run("returns fata for other logger levels", func(st *testing.T) {
-		logger := logrus.New()
-		logger.SetLevel(logrus.InfoLevel)
-		level := util.GetLogLevel(logger)
-		assert.Equal(st, "fatal", level)
 	})
 }
 

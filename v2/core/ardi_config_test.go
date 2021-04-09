@@ -13,18 +13,30 @@ import (
 func TestArdiConfigBuilds(t *testing.T) {
 	testutil.RunUnitTest("adds, lists, and removes builds", t, func(env *testutil.UnitTestEnv) {
 		util.InitProjectDirectory()
-		name := "somename"
-		dir := testutil.BlinkProjectDir()
+		name1 := "somename"
+		dir1 := testutil.BlinkProjectDir()
+		name2 := "anothername"
+		dir2 := testutil.Blink14400ProjectDir()
 		fqbn := "somefqbn"
 		buildProps := []string{"someprop=somevalue"}
 
-		err := env.ArdiCore.Config.AddBuild(name, dir, fqbn, buildProps)
+		err := env.ArdiCore.Config.AddBuild(name1, dir1, fqbn, buildProps)
+		assert.NoError(env.T, err)
+
+		err = env.ArdiCore.Config.AddBuild(name2, dir2, fqbn, buildProps)
 		assert.NoError(env.T, err)
 
 		builds := env.ArdiCore.Config.GetBuilds()
-		build, ok := builds[name]
+		build, ok := builds[name1]
 		assert.True(env.T, ok)
-		assert.Equal(env.T, dir, build.Directory)
+		assert.Equal(env.T, dir1, build.Directory)
+		assert.Equal(env.T, fqbn, build.FQBN)
+		assert.Contains(env.T, build.Props, "someprop")
+		assert.Equal(env.T, build.Props["someprop"], "somevalue")
+
+		build, ok = builds[name2]
+		assert.True(env.T, ok)
+		assert.Equal(env.T, dir2, build.Directory)
 		assert.Equal(env.T, fqbn, build.FQBN)
 		assert.Contains(env.T, build.Props, "someprop")
 		assert.Equal(env.T, build.Props["someprop"], "somevalue")
@@ -32,17 +44,41 @@ func TestArdiConfigBuilds(t *testing.T) {
 		env.ClearStdout()
 		env.ArdiCore.Config.ListBuilds([]string{})
 		out := env.Stdout.String()
-		assert.Contains(env.T, out, name)
-		assert.Contains(env.T, out, dir)
+		assert.Contains(env.T, out, name1)
+		assert.Contains(env.T, out, name2)
+		assert.Contains(env.T, out, dir1)
+		assert.Contains(env.T, out, dir2)
 		assert.Contains(env.T, out, fqbn)
 		assert.Contains(env.T, out, "someprop")
 		assert.Contains(env.T, out, "somevalue")
 
-		err = env.ArdiCore.Config.RemoveBuild(name)
+		env.ClearStdout()
+		env.ArdiCore.Config.ListBuilds([]string{name1})
+		out = env.Stdout.String()
+		assert.Contains(env.T, out, name1)
+		assert.NotContains(env.T, out, name2)
+		assert.Contains(env.T, out, dir1)
+		assert.NotContains(env.T, out, dir2)
+		assert.Contains(env.T, out, fqbn)
+		assert.Contains(env.T, out, "someprop")
+		assert.Contains(env.T, out, "somevalue")
+
+		err = env.ArdiCore.Config.RemoveBuild(name2)
 		assert.NoError(env.T, err)
 		builds = env.ArdiCore.Config.GetBuilds()
-		_, ok = builds[name]
+		_, ok = builds[name2]
 		assert.False(env.T, ok)
+	})
+
+	testutil.RunUnitTest("errors if sketch not found", t, func(env *testutil.UnitTestEnv) {
+		util.InitProjectDirectory()
+		name := "somename"
+		dir := "noop"
+		fqbn := "somefqbn"
+		buildProps := []string{"someprop=somevalue"}
+
+		err := env.ArdiCore.Config.AddBuild(name, dir, fqbn, buildProps)
+		assert.Error(env.T, err)
 	})
 }
 
@@ -140,5 +176,13 @@ func TestArdiConfigCompileOpts(t *testing.T) {
 		compileOpts, err := env.ArdiCore.Config.GetCompileOpts(name)
 		assert.NoError(env.T, err)
 		assert.Equal(env.T, expectedOpts, compileOpts)
+	})
+
+	testutil.RunUnitTest("errors if build not found", t, func(env *testutil.UnitTestEnv) {
+		util.InitProjectDirectory()
+		buildName := "noop"
+		compileOpts, err := env.ArdiCore.Config.GetCompileOpts(buildName)
+		assert.Error(env.T, err)
+		assert.Nil(env.T, compileOpts)
 	})
 }

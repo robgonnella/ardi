@@ -14,6 +14,7 @@ require (
 	github.com/gofrs/uuid v4.0.0+incompatible // indirect
 	github.com/golang/mock v1.5.0
 	github.com/golang/protobuf v1.5.1 // indirect
+	github.com/google/uuid v1.1.2
 	github.com/h2non/filetype v1.1.1 // indirect
 	github.com/imjasonmiller/godice v0.1.2 // indirect
 	github.com/juju/errors v0.0.0-20200330140219-3fe23663418f // indirect

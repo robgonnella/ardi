@@ -1,11 +1,15 @@
 package commands_test
 
 import (
+	"encoding/json"
+	"io/ioutil"
 	"os"
 	"testing"
 
 	"github.com/robgonnella/ardi/v2/paths"
 	"github.com/robgonnella/ardi/v2/testutil"
+	"github.com/robgonnella/ardi/v2/types"
+	"github.com/robgonnella/ardi/v2/util"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -61,5 +65,54 @@ func TestInstallCommand(t *testing.T) {
 		err = env.Execute(args)
 		assert.NoError(env.T, err)
 		assert.Contains(env.T, env.Stdout.String(), platform)
+	})
+
+	testutil.RunIntegrationTest("returns platform install error", t, func(env *testutil.IntegrationTestEnv) {
+		err := env.RunProjectInit()
+		assert.NoError(env.T, err)
+
+		platform := "noop"
+
+		var ardiConfig types.ArdiConfig
+		byteData, _ := ioutil.ReadFile(paths.ArdiProjectConfig)
+		json.Unmarshal(byteData, &ardiConfig)
+		ardiConfig.Platforms[platform] = "0.1.0"
+		settings := util.WriteSettingsOpts{
+			ArdiConfig:         &ardiConfig,
+			ArduinoCliSettings: util.GenArduinoCliSettings(paths.ArdiProjectDataDir),
+		}
+		util.WriteAllSettings(settings)
+
+		// remove data directory
+		os.RemoveAll(paths.ArdiProjectDataDir)
+
+		args := []string{"install"}
+		err = env.Execute(args)
+		assert.Error(env.T, err)
+	})
+
+	testutil.RunIntegrationTest("returns library install error", t, func(env *testutil.IntegrationTestEnv) {
+		err := env.RunProjectInit()
+		assert.NoError(env.T, err)
+
+		library := "noop"
+
+		var ardiConfig types.ArdiConfig
+		byteData, _ := ioutil.ReadFile(paths.ArdiProjectConfig)
+		json.Unmarshal(byteData, &ardiConfig)
+		ardiConfig.Libraries[library] = "1.3.5"
+
+		settings := util.WriteSettingsOpts{
+			ArdiConfig:         &ardiConfig,
+			ArduinoCliSettings: util.GenArduinoCliSettings(paths.ArdiProjectDataDir),
+		}
+		util.WriteAllSettings(settings)
+
+		// remove data directory
+		os.RemoveAll(paths.ArdiProjectDataDir)
+
+		args := []string{"install"}
+		err = env.Execute(args)
+		assert.Error(env.T, err)
 	})
 }

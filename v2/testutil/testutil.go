@@ -186,11 +186,8 @@ func RunUnitTest(name string, t *testing.T, f func(env *UnitTestEnv)) {
 		logger.SetOutput(&b)
 		logger.SetLevel(log.DebugLevel)
 
-		opts := util.GetAllSettingsOpts{
-			LogLevel: "debug",
-		}
-		ardiConfig, svrSettings := util.GetAllSettings(opts)
-		settingsPath := util.GetCliSettingsPath(opts)
+		ardiConfig, svrSettings := util.GetAllSettings()
+		settingsPath := util.GetCliSettingsPath()
 
 		cliWrapper := cli.NewCli(ctx, settingsPath, svrSettings, logger, cliInstance)
 

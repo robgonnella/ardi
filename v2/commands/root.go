@@ -78,17 +78,13 @@ func preRun(cmd *cobra.Command, args []string) error {
 	setLogger()
 
 	cmdPath := cmd.CommandPath()
-	daemonLogLevel := util.GetLogLevel(logger)
 
 	if shouldShowProjectError(cmdPath) {
 		return errors.New("not an ardi project directory, run 'ardi project-init' first")
 	}
 
-	getOpts := util.GetAllSettingsOpts{
-		LogLevel: daemonLogLevel,
-	}
-	ardiConfig, svrSettings := util.GetAllSettings(getOpts)
-	cliSettingsPath := util.GetCliSettingsPath(getOpts)
+	ardiConfig, svrSettings := util.GetAllSettings()
+	cliSettingsPath := util.GetCliSettingsPath()
 
 	writeOpts := util.WriteSettingsOpts{
 		ArdiConfig:         ardiConfig,
