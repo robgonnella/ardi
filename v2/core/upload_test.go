@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	rpc "github.com/arduino/arduino-cli/rpc/commands"
+	rpc "github.com/arduino/arduino-cli/rpc/cc/arduino/cli/commands/v1"
 	"github.com/golang/mock/gomock"
 	"github.com/robgonnella/ardi/v2/mocks"
 	"github.com/robgonnella/ardi/v2/testutil"
@@ -17,7 +17,7 @@ func TestUploadCore(t *testing.T) {
 		projectDir := testutil.BlinkProjectDir()
 
 		instance := &rpc.Instance{Id: int32(1)}
-		req := &rpc.UploadReq{
+		req := &rpc.UploadRequest{
 			Instance:   instance,
 			Fqbn:       connectedBoard.FQBN,
 			Port:       connectedBoard.Port,
@@ -38,7 +38,7 @@ func TestUploadCore(t *testing.T) {
 		projectDir := testutil.BlinkProjectDir()
 
 		instance := &rpc.Instance{Id: int32(1)}
-		req := &rpc.UploadReq{
+		req := &rpc.UploadRequest{
 			Instance:   instance,
 			Fqbn:       board.FQBN,
 			Port:       board.Port,

@@ -4,7 +4,7 @@ import (
 	"path"
 	"testing"
 
-	rpc "github.com/arduino/arduino-cli/rpc/commands"
+	rpc "github.com/arduino/arduino-cli/rpc/cc/arduino/cli/commands/v1"
 	"github.com/golang/mock/gomock"
 	cli "github.com/robgonnella/ardi/v2/cli-wrapper"
 	"github.com/robgonnella/ardi/v2/core"
@@ -31,7 +31,7 @@ func TestArdiCore(t *testing.T) {
 		}
 
 		instance := &rpc.Instance{Id: int32(1)}
-		req := &rpc.CompileReq{
+		req := &rpc.CompileRequest{
 			Instance:        instance,
 			Fqbn:            fqbn,
 			SketchPath:      sketch,
@@ -74,7 +74,7 @@ func TestArdiCore(t *testing.T) {
 		}
 
 		instance := &rpc.Instance{Id: int32(1)}
-		req := &rpc.CompileReq{
+		req := &rpc.CompileRequest{
 			Instance:        instance,
 			Fqbn:            fqbn,
 			SketchPath:      sketch,

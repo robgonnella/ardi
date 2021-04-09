@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	rpc "github.com/arduino/arduino-cli/rpc/commands"
+	rpc "github.com/arduino/arduino-cli/rpc/cc/arduino/cli/commands/v1"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 
@@ -35,7 +35,7 @@ func TestCompileCore(t *testing.T) {
 		}
 
 		instance := &rpc.Instance{Id: int32(1)}
-		req := &rpc.CompileReq{
+		req := &rpc.CompileRequest{
 			Instance:        instance,
 			Fqbn:            expectedFqbn,
 			SketchPath:      expectedSketch,
@@ -72,7 +72,7 @@ func TestCompileCore(t *testing.T) {
 		}
 
 		instance := &rpc.Instance{Id: int32(1)}
-		req := &rpc.CompileReq{
+		req := &rpc.CompileRequest{
 			Instance:        instance,
 			Fqbn:            expectedFqbn,
 			SketchPath:      expectedSketch,
@@ -119,7 +119,7 @@ func TestCompileCore(t *testing.T) {
 		}
 
 		instance := &rpc.Instance{Id: int32(1)}
-		req := &rpc.CompileReq{
+		req := &rpc.CompileRequest{
 			Instance:        instance,
 			Fqbn:            expectedFqbn,
 			SketchPath:      expectedSketch,

@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	rpc "github.com/arduino/arduino-cli/rpc/commands"
+	rpc "github.com/arduino/arduino-cli/rpc/cc/arduino/cli/commands/v1"
 	"github.com/golang/mock/gomock"
 	"github.com/robgonnella/ardi/v2/testutil"
 	"github.com/stretchr/testify/assert"
@@ -23,7 +23,7 @@ func TestPlatformCore(t *testing.T) {
 		platforms := []*rpc.Platform{&platform2, &platform1}
 
 		instance := &rpc.Instance{Id: int32(1)}
-		req := &rpc.PlatformListReq{
+		req := &rpc.PlatformListRequest{
 			Instance:      instance,
 			UpdatableOnly: false,
 			All:           false,
@@ -51,11 +51,11 @@ func TestPlatformCore(t *testing.T) {
 		platforms := []*rpc.Platform{&platform2, &platform1}
 
 		instance := &rpc.Instance{Id: int32(1)}
-		req := &rpc.PlatformSearchReq{
+		req := &rpc.PlatformSearchRequest{
 			Instance:    instance,
 			AllVersions: true,
 		}
-		resp := &rpc.PlatformSearchResp{
+		resp := &rpc.PlatformSearchResponse{
 			SearchOutput: platforms,
 		}
 		env.Cli.EXPECT().CreateInstanceIgnorePlatformIndexErrors().Return(instance).Times(3)
@@ -73,30 +73,30 @@ func TestPlatformCore(t *testing.T) {
 
 	testutil.RunUnitTest("adds platforms", t, func(env *testutil.UnitTestEnv) {
 		platform1 := &rpc.Platform{
-			ID:        "test:platform1",
+			Id:        "test:platform1",
 			Name:      "Platform1",
 			Installed: "1.3.8",
 		}
 
 		platform2 := &rpc.Platform{
-			ID:        "test:platform2",
+			Id:        "test:platform2",
 			Name:      "Platform2",
 			Installed: "3.1.9",
 		}
 
 		instance := &rpc.Instance{Id: int32(1)}
-		req1 := &rpc.PlatformInstallReq{
+		req1 := &rpc.PlatformInstallRequest{
 			Instance:        instance,
 			PlatformPackage: "test",
 			Architecture:    "platform1",
 		}
-		req2 := &rpc.PlatformInstallReq{
+		req2 := &rpc.PlatformInstallRequest{
 			Instance:        instance,
 			PlatformPackage: "test",
 			Architecture:    "platform2",
 		}
 
-		listReq := &rpc.PlatformListReq{
+		listReq := &rpc.PlatformListRequest{
 			Instance:      instance,
 			UpdatableOnly: false,
 			All:           false,
@@ -117,9 +117,9 @@ func TestPlatformCore(t *testing.T) {
 		env.Cli.EXPECT().GetPlatforms(listReq).Return(platforms, nil)
 
 		for _, p := range platforms {
-			installed, _, err := env.ArdiCore.Platform.Add(p.GetID())
+			installed, _, err := env.ArdiCore.Platform.Add(p.GetId())
 			assert.NoError(env.T, err)
-			assert.Equal(env.T, p.GetID(), installed)
+			assert.Equal(env.T, p.GetId(), installed)
 		}
 	})
 
@@ -128,26 +128,26 @@ func TestPlatformCore(t *testing.T) {
 		dummyErr := errors.New(errString)
 
 		platform1 := &rpc.Platform{
-			ID:        "test:platform1",
+			Id:        "test:platform1",
 			Name:      "Platform1",
 			Installed: "1.3.8",
 		}
 
 		platform2 := &rpc.Platform{
-			ID:        "test:platform2",
+			Id:        "test:platform2",
 			Name:      "Platform2",
 			Installed: "3.1.9",
 		}
 
 		instance := &rpc.Instance{Id: int32(1)}
 
-		req1 := &rpc.PlatformInstallReq{
+		req1 := &rpc.PlatformInstallRequest{
 			Instance:        instance,
 			PlatformPackage: "test",
 			Architecture:    "platform1",
 		}
 
-		req2 := &rpc.PlatformInstallReq{
+		req2 := &rpc.PlatformInstallRequest{
 			Instance:        instance,
 			PlatformPackage: "test",
 			Architecture:    "platform2",
@@ -165,7 +165,7 @@ func TestPlatformCore(t *testing.T) {
 		env.Cli.EXPECT().PlatformInstall(gomock.Any(), req2, gomock.Any(), gomock.Any()).Return(nil, dummyErr)
 
 		for _, p := range platforms {
-			_, _, err := env.ArdiCore.Platform.Add(p.GetID())
+			_, _, err := env.ArdiCore.Platform.Add(p.GetId())
 			assert.Error(env.T, err)
 			assert.EqualError(env.T, err, errString)
 		}
@@ -173,26 +173,26 @@ func TestPlatformCore(t *testing.T) {
 
 	testutil.RunUnitTest("removes a platforms", t, func(env *testutil.UnitTestEnv) {
 		platform1 := &rpc.Platform{
-			ID:        "test:platform1",
+			Id:        "test:platform1",
 			Name:      "Platform1",
 			Installed: "1.3.8",
 		}
 
 		platform2 := &rpc.Platform{
-			ID:        "test:platform2",
+			Id:        "test:platform2",
 			Name:      "Platform2",
 			Installed: "3.1.9",
 		}
 
 		instance := &rpc.Instance{Id: int32(1)}
 
-		req1 := &rpc.PlatformUninstallReq{
+		req1 := &rpc.PlatformUninstallRequest{
 			Instance:        instance,
 			PlatformPackage: "test",
 			Architecture:    "platform1",
 		}
 
-		req2 := &rpc.PlatformUninstallReq{
+		req2 := &rpc.PlatformUninstallRequest{
 			Instance:        instance,
 			PlatformPackage: "test",
 			Architecture:    "platform2",
@@ -207,9 +207,9 @@ func TestPlatformCore(t *testing.T) {
 		env.Cli.EXPECT().PlatformUninstall(gomock.Any(), req2, gomock.Any())
 
 		for _, p := range platforms {
-			removed, err := env.ArdiCore.Platform.Remove(p.GetID())
+			removed, err := env.ArdiCore.Platform.Remove(p.GetId())
 			assert.NoError(env.T, err)
-			assert.Equal(env.T, p.GetID(), removed)
+			assert.Equal(env.T, p.GetId(), removed)
 		}
 	})
 
@@ -218,26 +218,26 @@ func TestPlatformCore(t *testing.T) {
 		dummyErr := errors.New(errString)
 
 		platform1 := &rpc.Platform{
-			ID:        "test:platform1",
+			Id:        "test:platform1",
 			Name:      "Platform1",
 			Installed: "1.3.8",
 		}
 
 		platform2 := &rpc.Platform{
-			ID:        "test:platform2",
+			Id:        "test:platform2",
 			Name:      "Platform2",
 			Installed: "3.1.9",
 		}
 
 		instance := &rpc.Instance{Id: int32(1)}
 
-		req1 := &rpc.PlatformUninstallReq{
+		req1 := &rpc.PlatformUninstallRequest{
 			Instance:        instance,
 			PlatformPackage: "test",
 			Architecture:    "platform1",
 		}
 
-		req2 := &rpc.PlatformUninstallReq{
+		req2 := &rpc.PlatformUninstallRequest{
 			Instance:        instance,
 			PlatformPackage: "test",
 			Architecture:    "platform2",
@@ -252,7 +252,7 @@ func TestPlatformCore(t *testing.T) {
 		env.Cli.EXPECT().PlatformUninstall(gomock.Any(), req2, gomock.Any()).Return(nil, dummyErr)
 
 		for _, p := range platforms {
-			_, err := env.ArdiCore.Platform.Remove(p.GetID())
+			_, err := env.ArdiCore.Platform.Remove(p.GetId())
 			assert.Error(env.T, err)
 			assert.EqualError(env.T, err, errString)
 		}

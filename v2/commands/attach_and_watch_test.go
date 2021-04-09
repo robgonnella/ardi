@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	rpc "github.com/arduino/arduino-cli/rpc/commands"
+	rpc "github.com/arduino/arduino-cli/rpc/cc/arduino/cli/commands/v1"
 	"github.com/golang/mock/gomock"
 	"github.com/robgonnella/ardi/v2/mocks"
 	"github.com/robgonnella/ardi/v2/testutil"
@@ -35,20 +35,20 @@ func TestAttachAndWatchCommand(t *testing.T) {
 		assert.NoError(env.T, err)
 
 		instance := &rpc.Instance{Id: int32(1)}
-		uploadReq := &rpc.UploadReq{
+		uploadReq := &rpc.UploadRequest{
 			Instance:   instance,
 			Fqbn:       fqbn,
 			SketchPath: sketchDir,
 			Port:       board.Port,
 		}
 
-		platformReq := &rpc.PlatformListReq{
+		platformReq := &rpc.PlatformListRequest{
 			Instance:      instance,
 			UpdatableOnly: false,
 			All:           true,
 		}
 
-		compileReq := &rpc.CompileReq{
+		compileReq := &rpc.CompileRequest{
 			Instance:        instance,
 			Fqbn:            board.FQBN,
 			SketchPath:      sketch,
@@ -59,7 +59,7 @@ func TestAttachAndWatchCommand(t *testing.T) {
 
 		boardItem := &rpc.BoardListItem{
 			Name: board.Name,
-			FQBN: board.FQBN,
+			Fqbn: board.FQBN,
 		}
 		port := &rpc.DetectedPort{
 			Address: board.Port,
@@ -102,20 +102,20 @@ func TestAttachAndWatchCommand(t *testing.T) {
 		cpCmd := exec.Command("cp", sketchCopy, sketch)
 
 		instance := &rpc.Instance{Id: int32(1)}
-		uploadReq := &rpc.UploadReq{
+		uploadReq := &rpc.UploadRequest{
 			Instance:   instance,
 			Fqbn:       fqbn,
 			SketchPath: sketchDir,
 			Port:       board.Port,
 		}
 
-		platformReq := &rpc.PlatformListReq{
+		platformReq := &rpc.PlatformListRequest{
 			Instance:      instance,
 			UpdatableOnly: false,
 			All:           true,
 		}
 
-		compileReq := &rpc.CompileReq{
+		compileReq := &rpc.CompileRequest{
 			Instance:        instance,
 			Fqbn:            board.FQBN,
 			SketchPath:      sketch,
@@ -126,7 +126,7 @@ func TestAttachAndWatchCommand(t *testing.T) {
 
 		boardItem := &rpc.BoardListItem{
 			Name: board.Name,
-			FQBN: board.FQBN,
+			Fqbn: board.FQBN,
 		}
 		port := &rpc.DetectedPort{
 			Address: board.Port,

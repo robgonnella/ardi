@@ -42,7 +42,7 @@ func (c *PlatformCore) ListInstalled() error {
 	defer w.Flush()
 	w.Write([]byte("Platform\tID\tInstalled\n"))
 	for _, plat := range platforms {
-		w.Write([]byte(fmt.Sprintf("%s\t%s\t%s\n", plat.GetName(), plat.GetID(), plat.GetInstalled())))
+		w.Write([]byte(fmt.Sprintf("%s\t%s\t%s\n", plat.GetName(), plat.GetId(), plat.GetInstalled())))
 	}
 	return nil
 }
@@ -65,7 +65,7 @@ func (c *PlatformCore) ListAll() error {
 	defer w.Flush()
 	w.Write([]byte("Platform\tID\tLatest\n"))
 	for _, plat := range platforms {
-		w.Write([]byte(fmt.Sprintf("%s\t%s\t%s\n", plat.GetName(), plat.GetID(), plat.GetLatest())))
+		w.Write([]byte(fmt.Sprintf("%s\t%s\t%s\n", plat.GetName(), plat.GetId(), plat.GetLatest())))
 	}
 	return nil
 }

@@ -7,7 +7,7 @@ package mocks
 import (
 	context "context"
 	commands "github.com/arduino/arduino-cli/commands"
-	commands0 "github.com/arduino/arduino-cli/rpc/commands"
+	commands0 "github.com/arduino/arduino-cli/rpc/cc/arduino/cli/commands/v1"
 	gomock "github.com/golang/mock/gomock"
 	io "io"
 	reflect "reflect"
@@ -37,10 +37,10 @@ func (m *MockCli) EXPECT() *MockCliMockRecorder {
 }
 
 // Compile mocks base method
-func (m *MockCli) Compile(arg0 context.Context, arg1 *commands0.CompileReq, arg2, arg3 io.Writer, arg4 bool) (*commands0.CompileResp, error) {
+func (m *MockCli) Compile(arg0 context.Context, arg1 *commands0.CompileRequest, arg2, arg3 io.Writer, arg4 bool) (*commands0.CompileResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Compile", arg0, arg1, arg2, arg3, arg4)
-	ret0, _ := ret[0].(*commands0.CompileResp)
+	ret0, _ := ret[0].(*commands0.CompileResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -96,7 +96,7 @@ func (mr *MockCliMockRecorder) CreateInstanceIgnorePlatformIndexErrors() *gomock
 }
 
 // GetPlatforms mocks base method
-func (m *MockCli) GetPlatforms(arg0 *commands0.PlatformListReq) ([]*commands0.Platform, error) {
+func (m *MockCli) GetPlatforms(arg0 *commands0.PlatformListRequest) ([]*commands0.Platform, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetPlatforms", arg0)
 	ret0, _ := ret[0].([]*commands0.Platform)
@@ -111,7 +111,7 @@ func (mr *MockCliMockRecorder) GetPlatforms(arg0 interface{}) *gomock.Call {
 }
 
 // LibraryInstall mocks base method
-func (m *MockCli) LibraryInstall(arg0 context.Context, arg1 *commands0.LibraryInstallReq, arg2 commands.DownloadProgressCB, arg3 commands.TaskProgressCB) error {
+func (m *MockCli) LibraryInstall(arg0 context.Context, arg1 *commands0.LibraryInstallRequest, arg2 commands.DownloadProgressCB, arg3 commands.TaskProgressCB) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "LibraryInstall", arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].(error)
@@ -125,10 +125,10 @@ func (mr *MockCliMockRecorder) LibraryInstall(arg0, arg1, arg2, arg3 interface{}
 }
 
 // LibraryList mocks base method
-func (m *MockCli) LibraryList(arg0 context.Context, arg1 *commands0.LibraryListReq) (*commands0.LibraryListResp, error) {
+func (m *MockCli) LibraryList(arg0 context.Context, arg1 *commands0.LibraryListRequest) (*commands0.LibraryListResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "LibraryList", arg0, arg1)
-	ret0, _ := ret[0].(*commands0.LibraryListResp)
+	ret0, _ := ret[0].(*commands0.LibraryListResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -140,10 +140,10 @@ func (mr *MockCliMockRecorder) LibraryList(arg0, arg1 interface{}) *gomock.Call 
 }
 
 // LibrarySearch mocks base method
-func (m *MockCli) LibrarySearch(arg0 context.Context, arg1 *commands0.LibrarySearchReq) (*commands0.LibrarySearchResp, error) {
+func (m *MockCli) LibrarySearch(arg0 context.Context, arg1 *commands0.LibrarySearchRequest) (*commands0.LibrarySearchResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "LibrarySearch", arg0, arg1)
-	ret0, _ := ret[0].(*commands0.LibrarySearchResp)
+	ret0, _ := ret[0].(*commands0.LibrarySearchResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -155,7 +155,7 @@ func (mr *MockCliMockRecorder) LibrarySearch(arg0, arg1 interface{}) *gomock.Cal
 }
 
 // LibraryUninstall mocks base method
-func (m *MockCli) LibraryUninstall(arg0 context.Context, arg1 *commands0.LibraryUninstallReq, arg2 commands.TaskProgressCB) error {
+func (m *MockCli) LibraryUninstall(arg0 context.Context, arg1 *commands0.LibraryUninstallRequest, arg2 commands.TaskProgressCB) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "LibraryUninstall", arg0, arg1, arg2)
 	ret0, _ := ret[0].(error)
@@ -169,10 +169,10 @@ func (mr *MockCliMockRecorder) LibraryUninstall(arg0, arg1, arg2 interface{}) *g
 }
 
 // PlatformInstall mocks base method
-func (m *MockCli) PlatformInstall(arg0 context.Context, arg1 *commands0.PlatformInstallReq, arg2 commands.DownloadProgressCB, arg3 commands.TaskProgressCB) (*commands0.PlatformInstallResp, error) {
+func (m *MockCli) PlatformInstall(arg0 context.Context, arg1 *commands0.PlatformInstallRequest, arg2 commands.DownloadProgressCB, arg3 commands.TaskProgressCB) (*commands0.PlatformInstallResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "PlatformInstall", arg0, arg1, arg2, arg3)
-	ret0, _ := ret[0].(*commands0.PlatformInstallResp)
+	ret0, _ := ret[0].(*commands0.PlatformInstallResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -184,10 +184,10 @@ func (mr *MockCliMockRecorder) PlatformInstall(arg0, arg1, arg2, arg3 interface{
 }
 
 // PlatformSearch mocks base method
-func (m *MockCli) PlatformSearch(arg0 *commands0.PlatformSearchReq) (*commands0.PlatformSearchResp, error) {
+func (m *MockCli) PlatformSearch(arg0 *commands0.PlatformSearchRequest) (*commands0.PlatformSearchResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "PlatformSearch", arg0)
-	ret0, _ := ret[0].(*commands0.PlatformSearchResp)
+	ret0, _ := ret[0].(*commands0.PlatformSearchResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -199,10 +199,10 @@ func (mr *MockCliMockRecorder) PlatformSearch(arg0 interface{}) *gomock.Call {
 }
 
 // PlatformUninstall mocks base method
-func (m *MockCli) PlatformUninstall(arg0 context.Context, arg1 *commands0.PlatformUninstallReq, arg2 func(*commands0.TaskProgress)) (*commands0.PlatformUninstallResp, error) {
+func (m *MockCli) PlatformUninstall(arg0 context.Context, arg1 *commands0.PlatformUninstallRequest, arg2 func(*commands0.TaskProgress)) (*commands0.PlatformUninstallResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "PlatformUninstall", arg0, arg1, arg2)
-	ret0, _ := ret[0].(*commands0.PlatformUninstallResp)
+	ret0, _ := ret[0].(*commands0.PlatformUninstallResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -214,10 +214,10 @@ func (mr *MockCliMockRecorder) PlatformUninstall(arg0, arg1, arg2 interface{}) *
 }
 
 // PlatformUpgrade mocks base method
-func (m *MockCli) PlatformUpgrade(arg0 context.Context, arg1 *commands0.PlatformUpgradeReq, arg2 commands.DownloadProgressCB, arg3 commands.TaskProgressCB) (*commands0.PlatformUpgradeResp, error) {
+func (m *MockCli) PlatformUpgrade(arg0 context.Context, arg1 *commands0.PlatformUpgradeRequest, arg2 commands.DownloadProgressCB, arg3 commands.TaskProgressCB) (*commands0.PlatformUpgradeResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "PlatformUpgrade", arg0, arg1, arg2, arg3)
-	ret0, _ := ret[0].(*commands0.PlatformUpgradeResp)
+	ret0, _ := ret[0].(*commands0.PlatformUpgradeResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -229,10 +229,10 @@ func (mr *MockCliMockRecorder) PlatformUpgrade(arg0, arg1, arg2, arg3 interface{
 }
 
 // UpdateIndex mocks base method
-func (m *MockCli) UpdateIndex(arg0 context.Context, arg1 *commands0.UpdateIndexReq, arg2 commands.DownloadProgressCB) (*commands0.UpdateIndexResp, error) {
+func (m *MockCli) UpdateIndex(arg0 context.Context, arg1 *commands0.UpdateIndexRequest, arg2 commands.DownloadProgressCB) (*commands0.UpdateIndexResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdateIndex", arg0, arg1, arg2)
-	ret0, _ := ret[0].(*commands0.UpdateIndexResp)
+	ret0, _ := ret[0].(*commands0.UpdateIndexResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -244,7 +244,7 @@ func (mr *MockCliMockRecorder) UpdateIndex(arg0, arg1, arg2 interface{}) *gomock
 }
 
 // UpdateLibrariesIndex mocks base method
-func (m *MockCli) UpdateLibrariesIndex(arg0 context.Context, arg1 *commands0.UpdateLibrariesIndexReq, arg2 commands.DownloadProgressCB) error {
+func (m *MockCli) UpdateLibrariesIndex(arg0 context.Context, arg1 *commands0.UpdateLibrariesIndexRequest, arg2 commands.DownloadProgressCB) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdateLibrariesIndex", arg0, arg1, arg2)
 	ret0, _ := ret[0].(error)
@@ -258,10 +258,10 @@ func (mr *MockCliMockRecorder) UpdateLibrariesIndex(arg0, arg1, arg2 interface{}
 }
 
 // Upload mocks base method
-func (m *MockCli) Upload(arg0 context.Context, arg1 *commands0.UploadReq, arg2, arg3 io.Writer) (*commands0.UploadResp, error) {
+func (m *MockCli) Upload(arg0 context.Context, arg1 *commands0.UploadRequest, arg2, arg3 io.Writer) (*commands0.UploadResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Upload", arg0, arg1, arg2, arg3)
-	ret0, _ := ret[0].(*commands0.UploadResp)
+	ret0, _ := ret[0].(*commands0.UploadResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

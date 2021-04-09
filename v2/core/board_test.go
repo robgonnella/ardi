@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	rpc "github.com/arduino/arduino-cli/rpc/commands"
+	rpc "github.com/arduino/arduino-cli/rpc/cc/arduino/cli/commands/v1"
 	"github.com/golang/mock/gomock"
 	"github.com/robgonnella/ardi/v2/testutil"
 	"github.com/stretchr/testify/assert"
@@ -15,7 +15,7 @@ func TestBoardCore(t *testing.T) {
 		fqbn := "someboardfqbn"
 
 		instance := &rpc.Instance{Id: int32(1)}
-		platformReq := &rpc.PlatformListReq{
+		platformReq := &rpc.PlatformListRequest{
 			Instance: instance,
 			All:      true,
 		}
@@ -35,7 +35,7 @@ func TestBoardCore(t *testing.T) {
 		connectedBoard := testutil.GenerateRPCBoard(boardName, fqbn)
 
 		instance := &rpc.Instance{Id: int32(1)}
-		platformReq := &rpc.PlatformListReq{
+		platformReq := &rpc.PlatformListRequest{
 			Instance: instance,
 			All:      true,
 		}
@@ -45,7 +45,7 @@ func TestBoardCore(t *testing.T) {
 				Boards: []*rpc.BoardListItem{
 					&rpc.BoardListItem{
 						Name: connectedBoard.Name,
-						FQBN: connectedBoard.FQBN,
+						Fqbn: connectedBoard.FQBN,
 					},
 				},
 			},
@@ -64,7 +64,7 @@ func TestBoardCore(t *testing.T) {
 		fqbn := "someboardfqbn"
 
 		instance := &rpc.Instance{Id: int32(1)}
-		platformReq := &rpc.PlatformListReq{
+		platformReq := &rpc.PlatformListRequest{
 			Instance: instance,
 			All:      true,
 		}
@@ -84,7 +84,7 @@ func TestBoardCore(t *testing.T) {
 		connectedBoard := testutil.GenerateRPCBoard(boardName, boardFQBN)
 
 		instance := &rpc.Instance{Id: int32(1)}
-		platformReq := &rpc.PlatformListReq{
+		platformReq := &rpc.PlatformListRequest{
 			Instance: instance,
 			All:      true,
 		}
@@ -94,7 +94,7 @@ func TestBoardCore(t *testing.T) {
 				Boards: []*rpc.BoardListItem{
 					&rpc.BoardListItem{
 						Name: connectedBoard.Name,
-						FQBN: connectedBoard.FQBN,
+						Fqbn: connectedBoard.FQBN,
 					},
 				},
 			},
@@ -119,7 +119,7 @@ func TestBoardCore(t *testing.T) {
 		connectedBoard2 := testutil.GenerateRPCBoard(board2Name, board2FQBN)
 
 		instance := &rpc.Instance{Id: int32(1)}
-		platformReq := &rpc.PlatformListReq{
+		platformReq := &rpc.PlatformListRequest{
 			Instance: instance,
 			All:      true,
 		}
@@ -129,7 +129,7 @@ func TestBoardCore(t *testing.T) {
 				Boards: []*rpc.BoardListItem{
 					&rpc.BoardListItem{
 						Name: connectedBoard1.Name,
-						FQBN: connectedBoard1.FQBN,
+						Fqbn: connectedBoard1.FQBN,
 					},
 				},
 			},
@@ -138,7 +138,7 @@ func TestBoardCore(t *testing.T) {
 				Boards: []*rpc.BoardListItem{
 					&rpc.BoardListItem{
 						Name: connectedBoard2.Name,
-						FQBN: connectedBoard2.FQBN,
+						Fqbn: connectedBoard2.FQBN,
 					},
 				},
 			},
@@ -164,14 +164,14 @@ func TestBoardCore(t *testing.T) {
 		platformBoard := testutil.GenerateRPCBoard("board-name", "board-fqbn")
 
 		instance := &rpc.Instance{Id: int32(1)}
-		platformReq := &rpc.PlatformListReq{
+		platformReq := &rpc.PlatformListRequest{
 			Instance: instance,
 			All:      true,
 		}
 
 		platforms := []*rpc.Platform{
 			&rpc.Platform{
-				ID: "test:platform",
+				Id: "test:platform",
 				Boards: []*rpc.Board{
 					&rpc.Board{
 						Name: platformBoard.Name,
@@ -200,14 +200,14 @@ func TestBoardCore(t *testing.T) {
 		platformBoard2 := testutil.GenerateRPCBoard("board2-name", "board2-fqbn")
 
 		instance := &rpc.Instance{Id: int32(1)}
-		platformReq := &rpc.PlatformListReq{
+		platformReq := &rpc.PlatformListRequest{
 			Instance: instance,
 			All:      true,
 		}
 
 		platforms := []*rpc.Platform{
 			&rpc.Platform{
-				ID: "test:platform",
+				Id: "test:platform",
 				Boards: []*rpc.Board{
 					&rpc.Board{
 						Name: platformBoard1.Name,
@@ -243,11 +243,11 @@ func TestBoardCore(t *testing.T) {
 		platforms := []*rpc.Platform{platform}
 
 		instance := &rpc.Instance{Id: int32(1)}
-		req := &rpc.PlatformSearchReq{
+		req := &rpc.PlatformSearchRequest{
 			Instance:    instance,
 			AllVersions: true,
 		}
-		resp := &rpc.PlatformSearchResp{SearchOutput: platforms}
+		resp := &rpc.PlatformSearchResponse{SearchOutput: platforms}
 
 		env.Cli.EXPECT().CreateInstance().Return(instance, nil)
 		env.Cli.EXPECT().CreateInstanceIgnorePlatformIndexErrors().Return(instance).Times(2)
@@ -267,11 +267,11 @@ func TestBoardCore(t *testing.T) {
 		errString := "dummy error"
 		dummyErr := errors.New(errString)
 		instance := &rpc.Instance{Id: int32(1)}
-		req := &rpc.PlatformSearchReq{
+		req := &rpc.PlatformSearchRequest{
 			Instance:    instance,
 			AllVersions: true,
 		}
-		var resp *rpc.PlatformSearchResp
+		var resp *rpc.PlatformSearchResponse
 
 		env.Cli.EXPECT().CreateInstance().Return(instance, nil)
 		env.Cli.EXPECT().CreateInstanceIgnorePlatformIndexErrors().Return(instance).Times(2)
@@ -290,11 +290,11 @@ func TestBoardCore(t *testing.T) {
 		platforms := []*rpc.Platform{platform}
 
 		instance := &rpc.Instance{Id: int32(1)}
-		req := &rpc.PlatformSearchReq{
+		req := &rpc.PlatformSearchRequest{
 			Instance:    instance,
 			AllVersions: true,
 		}
-		resp := &rpc.PlatformSearchResp{SearchOutput: platforms}
+		resp := &rpc.PlatformSearchResponse{SearchOutput: platforms}
 
 		env.Cli.EXPECT().CreateInstance().Return(instance, nil)
 		env.Cli.EXPECT().CreateInstanceIgnorePlatformIndexErrors().Return(instance).Times(2)
@@ -306,7 +306,7 @@ func TestBoardCore(t *testing.T) {
 
 		for _, b := range boards {
 			assert.Contains(env.T, env.Stdout.String(), b.GetName())
-			assert.Contains(env.T, env.Stdout.String(), platform.GetID())
+			assert.Contains(env.T, env.Stdout.String(), platform.GetId())
 		}
 	})
 
@@ -314,11 +314,11 @@ func TestBoardCore(t *testing.T) {
 		errString := "dummy error"
 		dummyErr := errors.New(errString)
 		instance := &rpc.Instance{Id: int32(1)}
-		req := &rpc.PlatformSearchReq{
+		req := &rpc.PlatformSearchRequest{
 			Instance:    instance,
 			AllVersions: true,
 		}
-		var resp *rpc.PlatformSearchResp
+		var resp *rpc.PlatformSearchResponse
 
 		env.Cli.EXPECT().CreateInstance().Return(instance, nil)
 		env.Cli.EXPECT().CreateInstanceIgnorePlatformIndexErrors().Return(instance).Times(2)
