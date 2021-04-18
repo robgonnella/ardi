@@ -127,11 +127,11 @@ func GenerateCmdPlatform(name string, boards []*rpccommands.Board) *rpccommands.
 }
 
 // GenerateRPCBoard returns a single ardi rpc Board
-func GenerateRPCBoard(name, fqbn string) *cli.Board {
+func GenerateRPCBoard(name, fqbn string) *cli.BoardWithPort {
 	if fqbn == "" {
 		fqbn = fmt.Sprintf("%s-fqbn", name)
 	}
-	return &cli.Board{
+	return &cli.BoardWithPort{
 		Name: name,
 		FQBN: fqbn,
 		Port: "/dev/null",
@@ -139,8 +139,8 @@ func GenerateRPCBoard(name, fqbn string) *cli.Board {
 }
 
 // GenerateRPCBoards generate a list of ardi rpc boards
-func GenerateRPCBoards(n int) []*cli.Board {
-	var boards []*cli.Board
+func GenerateRPCBoards(n int) []*cli.BoardWithPort {
+	var boards []*cli.BoardWithPort
 	for i := 0; i < n; i++ {
 		name := fmt.Sprintf("test-board-%02d", i)
 		b := GenerateRPCBoard(name, "")
@@ -189,6 +189,7 @@ func RunUnitTest(name string, t *testing.T, f func(env *UnitTestEnv)) {
 		ardiConfig, svrSettings := util.GetAllSettings()
 		settingsPath := util.GetCliSettingsPath()
 
+		cliInstance.EXPECT().InitSettings(settingsPath)
 		cliWrapper := cli.NewCli(ctx, settingsPath, svrSettings, logger, cliInstance)
 
 		coreOpts := core.NewArdiCoreOpts{
@@ -262,6 +263,7 @@ func (e *IntegrationTestEnv) Execute(args []string) error {
 
 // ExecuteWithMockCli executes command with injected mock cli instance
 func (e *IntegrationTestEnv) ExecuteWithMockCli(args []string, inst *mocks.MockCli) error {
+	inst.EXPECT().InitSettings(gomock.Any())
 	rootCmd := commands.GetRootCmd(e.logger, inst)
 	rootCmd.SetOut(e.logger.Out)
 	rootCmd.SetArgs(args)

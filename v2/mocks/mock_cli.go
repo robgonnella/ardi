@@ -110,6 +110,18 @@ func (mr *MockCliMockRecorder) GetPlatforms(arg0 interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPlatforms", reflect.TypeOf((*MockCli)(nil).GetPlatforms), arg0)
 }
 
+// InitSettings mocks base method
+func (m *MockCli) InitSettings(arg0 string) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "InitSettings", arg0)
+}
+
+// InitSettings indicates an expected call of InitSettings
+func (mr *MockCliMockRecorder) InitSettings(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InitSettings", reflect.TypeOf((*MockCli)(nil).InitSettings), arg0)
+}
+
 // LibraryInstall mocks base method
 func (m *MockCli) LibraryInstall(arg0 context.Context, arg1 *commands0.LibraryInstallRequest, arg2 commands.DownloadProgressCB, arg3 commands.TaskProgressCB) error {
 	m.ctrl.T.Helper()

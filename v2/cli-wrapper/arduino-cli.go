@@ -12,12 +12,14 @@ import (
 	"github.com/arduino/arduino-cli/commands/core"
 	"github.com/arduino/arduino-cli/commands/lib"
 	"github.com/arduino/arduino-cli/commands/upload"
+	"github.com/arduino/arduino-cli/configuration"
 	rpc "github.com/arduino/arduino-cli/rpc/cc/arduino/cli/commands/v1"
 )
 
 // Cli reprents our wrapper around arduino-cli
 //go:generate mockgen -destination=../mocks/mock_cli.go -package=mocks github.com/robgonnella/ardi/v2/cli-wrapper Cli
 type Cli interface {
+	InitSettings(string)
 	CreateInstance() (*rpc.Instance, error)
 	CreateInstanceIgnorePlatformIndexErrors() *rpc.Instance
 	UpdateIndex(context.Context, *rpc.UpdateIndexRequest, commands.DownloadProgressCB) (*rpc.UpdateIndexResponse, error)
@@ -42,6 +44,11 @@ type ArduinoCli struct{}
 
 func newArduinoCli() *ArduinoCli {
 	return &ArduinoCli{}
+}
+
+// InitSettings initializes settings from the path to arduino-cli.yaml
+func (c *ArduinoCli) InitSettings(settingsPath string) {
+	configuration.Settings = configuration.Init(settingsPath)
 }
 
 // CreateInstance wrapper around arduino-cli CreateInstance
