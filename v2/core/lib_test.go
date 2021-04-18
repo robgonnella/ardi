@@ -29,7 +29,7 @@ func TestLibCore(t *testing.T) {
 		}
 		listResp := &rpc.LibraryListResponse{
 			InstalledLibraries: []*rpc.InstalledLibrary{
-				&rpc.InstalledLibrary{
+				{
 					Library: &rpc.Library{Name: lib, Version: installedVersion},
 				},
 			},
@@ -147,7 +147,7 @@ func TestLibCore(t *testing.T) {
 		}
 		resp := &rpc.LibraryListResponse{
 			InstalledLibraries: []*rpc.InstalledLibrary{
-				&rpc.InstalledLibrary{
+				{
 					Library: &rpc.Library{
 						Name:     installedLib.Library.Name,
 						Version:  installedLib.Library.Version,

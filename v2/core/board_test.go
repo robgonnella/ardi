@@ -40,10 +40,10 @@ func TestBoardCore(t *testing.T) {
 			All:      true,
 		}
 		detectedPorts := []*rpc.DetectedPort{
-			&rpc.DetectedPort{
+			{
 				Address: connectedBoard.Port,
 				Boards: []*rpc.BoardListItem{
-					&rpc.BoardListItem{
+					{
 						Name: connectedBoard.Name,
 						Fqbn: connectedBoard.FQBN,
 					},
@@ -89,10 +89,10 @@ func TestBoardCore(t *testing.T) {
 			All:      true,
 		}
 		detectedPorts := []*rpc.DetectedPort{
-			&rpc.DetectedPort{
+			{
 				Address: connectedBoard.Port,
 				Boards: []*rpc.BoardListItem{
-					&rpc.BoardListItem{
+					{
 						Name: connectedBoard.Name,
 						Fqbn: connectedBoard.FQBN,
 					},
@@ -124,19 +124,19 @@ func TestBoardCore(t *testing.T) {
 			All:      true,
 		}
 		detectedPorts := []*rpc.DetectedPort{
-			&rpc.DetectedPort{
+			{
 				Address: connectedBoard1.Port,
 				Boards: []*rpc.BoardListItem{
-					&rpc.BoardListItem{
+					{
 						Name: connectedBoard1.Name,
 						Fqbn: connectedBoard1.FQBN,
 					},
 				},
 			},
-			&rpc.DetectedPort{
+			{
 				Address: connectedBoard2.Port,
 				Boards: []*rpc.BoardListItem{
-					&rpc.BoardListItem{
+					{
 						Name: connectedBoard2.Name,
 						Fqbn: connectedBoard2.FQBN,
 					},
@@ -170,10 +170,10 @@ func TestBoardCore(t *testing.T) {
 		}
 
 		platforms := []*rpc.Platform{
-			&rpc.Platform{
+			{
 				Id: "test:platform",
 				Boards: []*rpc.Board{
-					&rpc.Board{
+					{
 						Name: platformBoard.Name,
 						Fqbn: platformBoard.FQBN,
 					},
@@ -206,14 +206,14 @@ func TestBoardCore(t *testing.T) {
 		}
 
 		platforms := []*rpc.Platform{
-			&rpc.Platform{
+			{
 				Id: "test:platform",
 				Boards: []*rpc.Board{
-					&rpc.Board{
+					{
 						Name: platformBoard1.Name,
 						Fqbn: platformBoard1.FQBN,
 					},
-					&rpc.Board{
+					{
 						Name: platformBoard2.Name,
 						Fqbn: platformBoard2.FQBN,
 					},

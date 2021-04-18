@@ -24,7 +24,7 @@ func NewUploadCore(cli *cli.Wrapper, logger *log.Logger) *UploadCore {
 }
 
 // Upload compiled sketches to the specified board
-func (c *UploadCore) Upload(board *cli.Board, buildDir string) error {
+func (c *UploadCore) Upload(board *cli.BoardWithPort, buildDir string) error {
 	fqbn := board.FQBN
 	device := board.Port
 

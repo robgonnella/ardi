@@ -12,7 +12,6 @@ import (
 
 	"github.com/arduino/arduino-cli/cli/output"
 	"github.com/arduino/arduino-cli/commands"
-	"github.com/arduino/arduino-cli/configuration"
 	rpc "github.com/arduino/arduino-cli/rpc/cc/arduino/cli/commands/v1"
 	"github.com/robgonnella/ardi/v2/types"
 	log "github.com/sirupsen/logrus"
@@ -26,8 +25,8 @@ type Wrapper struct {
 	logger       *log.Logger
 }
 
-// Board represents a single arduino Board
-type Board struct {
+// BoardWithPort represents a single arduino Board with associated port
+type BoardWithPort struct {
 	FQBN string
 	Name string
 	Port string
@@ -35,10 +34,11 @@ type Board struct {
 
 // NewCli return new arduino-cli wrapper
 func NewCli(ctx context.Context, settingsPath string, svrSettings *types.ArduinoCliSettings, logger *log.Logger, cli Cli) *Wrapper {
-	configuration.Settings = configuration.Init(settingsPath)
 	if cli == nil {
 		cli = newArduinoCli()
 	}
+	cli.InitSettings(settingsPath)
+
 	return &Wrapper{
 		ctx:          ctx,
 		settingsPath: settingsPath,
@@ -212,12 +212,12 @@ func (c *Wrapper) GetInstalledPlatforms() ([]*rpc.Platform, error) {
 
 // SearchPlatforms returns specified platform or all platforms if unspecified
 func (c *Wrapper) SearchPlatforms() ([]*rpc.Platform, error) {
-	inst, err := c.cli.CreateInstance()
-	if err != nil {
+	if err := c.UpdateIndexFiles(); err != nil {
 		return nil, err
 	}
 
-	if err := c.UpdateIndexFiles(); err != nil {
+	inst, err := c.cli.CreateInstance()
+	if err != nil {
 		return nil, err
 	}
 
@@ -232,14 +232,14 @@ func (c *Wrapper) SearchPlatforms() ([]*rpc.Platform, error) {
 }
 
 // ConnectedBoards returns a list of connected arduino boards
-func (c *Wrapper) ConnectedBoards() []*Board {
+func (c *Wrapper) ConnectedBoards() []*BoardWithPort {
 	inst, err := c.cli.CreateInstance()
 	if err != nil {
 		c.logger.WithError(err).Warn("failed to get list of connected boards")
 		return nil
 	}
 
-	boardList := []*Board{}
+	boardList := []*BoardWithPort{}
 
 	ports, err := c.cli.ConnectedBoards(inst.GetId())
 	if err != nil {
@@ -248,7 +248,7 @@ func (c *Wrapper) ConnectedBoards() []*Board {
 
 	for _, port := range ports {
 		for _, board := range port.GetBoards() {
-			boardWithPort := Board{
+			boardWithPort := BoardWithPort{
 				FQBN: board.GetFqbn(),
 				Name: board.GetName(),
 				Port: port.GetAddress(),
@@ -261,7 +261,7 @@ func (c *Wrapper) ConnectedBoards() []*Board {
 }
 
 // AllBoards returns a list of all supported boards
-func (c *Wrapper) AllBoards() []*Board {
+func (c *Wrapper) AllBoards() []*BoardWithPort {
 	inst, err := c.cli.CreateInstance()
 	if err != nil {
 		return nil
@@ -269,7 +269,7 @@ func (c *Wrapper) AllBoards() []*Board {
 
 	c.logger.Debug("Getting list of supported boards...")
 
-	boardList := []*Board{}
+	boardList := []*BoardWithPort{}
 
 	req := &rpc.PlatformListRequest{
 		Instance:      inst,
@@ -285,7 +285,7 @@ func (c *Wrapper) AllBoards() []*Board {
 
 	for _, p := range platforms {
 		for _, b := range p.GetBoards() {
-			b := Board{
+			b := BoardWithPort{
 				FQBN: b.GetFqbn(),
 				Name: b.GetName(),
 			}
@@ -449,9 +449,9 @@ func (c *Wrapper) GetInstalledLibs() ([]*rpc.InstalledLibrary, error) {
 }
 
 // GetTargetBoard returns target info for a connected & disconnected boards
-func (c *Wrapper) GetTargetBoard(fqbn, port string, onlyConnected bool) (*Board, error) {
+func (c *Wrapper) GetTargetBoard(fqbn, port string, onlyConnected bool) (*BoardWithPort, error) {
 	if fqbn != "" && port != "" {
-		return &Board{
+		return &BoardWithPort{
 			FQBN: fqbn,
 			Port: port,
 		}, nil
@@ -471,7 +471,7 @@ func (c *Wrapper) GetTargetBoard(fqbn, port string, onlyConnected bool) (*Board,
 			}
 			return nil, connectedBoardsErr
 		}
-		return &Board{FQBN: fqbn}, nil
+		return &BoardWithPort{FQBN: fqbn}, nil
 	}
 
 	if len(connectedBoards) == 0 {
@@ -486,12 +486,9 @@ func (c *Wrapper) GetTargetBoard(fqbn, port string, onlyConnected bool) (*Board,
 		return connectedBoards[0], nil
 	}
 
-	if len(connectedBoards) > 1 {
-		c.printFQBNs(connectedBoards, c.logger)
-		return nil, fqbnErr
-	}
-
-	return nil, errors.New("error parsing target")
+	// more than one board is connected
+	c.printFQBNs(connectedBoards, c.logger)
+	return nil, fqbnErr
 }
 
 // ClientVersion returns version of arduino-cli
@@ -519,7 +516,7 @@ func (c *Wrapper) getTaskProgressFn() commands.TaskProgressCB {
 }
 
 // private helpers
-func (c *Wrapper) printFQBNs(boardList []*Board, logger *log.Logger) {
+func (c *Wrapper) printFQBNs(boardList []*BoardWithPort, logger *log.Logger) {
 	sort.Slice(boardList, func(i, j int) bool {
 		return boardList[i].Name < boardList[j].Name
 	})
@@ -527,7 +524,7 @@ func (c *Wrapper) printFQBNs(boardList []*Board, logger *log.Logger) {
 	c.printBoardsWithIndices(boardList, logger)
 }
 
-func (c *Wrapper) printBoardsWithIndices(boards []*Board, logger *log.Logger) {
+func (c *Wrapper) printBoardsWithIndices(boards []*BoardWithPort, logger *log.Logger) {
 	w := tabwriter.NewWriter(logger.Out, 0, 0, 8, ' ', 0)
 	defer w.Flush()
 	w.Write([]byte("No.\tName\tFQBN\n"))

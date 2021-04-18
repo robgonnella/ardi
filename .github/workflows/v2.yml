@@ -24,4 +24,4 @@ jobs:
       - name: install golint
         run: go get -u golang.org/x/lint/golint
       - name: run ardi v2 tests
-        run: 'make test-all'
+        run: 'ci=true make test-all'

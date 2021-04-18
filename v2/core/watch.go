@@ -14,14 +14,14 @@ type WatchCore struct {
 	compiler    *CompileCore
 	port        SerialPort
 	watcher     *FileWatcher
-	board       *cli.Board
+	board       *cli.BoardWithPort
 	compileOpts *cli.CompileOpts
 	baud        int
 }
 
 // WatchCoreTargets targets for watching, recompiling, and reuploading
 type WatchCoreTargets struct {
-	Board       *cli.Board
+	Board       *cli.BoardWithPort
 	CompileOpts *cli.CompileOpts
 	Baud        int
 	Port        SerialPort
