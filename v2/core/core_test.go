@@ -41,7 +41,7 @@ func TestArdiCore(t *testing.T) {
 			Verbose:         true,
 		}
 
-		env.Cli.EXPECT().CreateInstance().Return(instance, nil)
+		env.Cli.EXPECT().CreateInstance().Return(instance).AnyTimes()
 		env.Cli.EXPECT().Compile(gomock.Any(), req, gomock.Any(), gomock.Any(), gomock.Any())
 
 		compileOpts, err := env.ArdiCore.CompileArdiBuild(buildName)
@@ -84,7 +84,7 @@ func TestArdiCore(t *testing.T) {
 			Verbose:         true,
 		}
 
-		env.Cli.EXPECT().CreateInstance().Return(instance, nil)
+		env.Cli.EXPECT().CreateInstance().Return(instance).AnyTimes()
 		env.Cli.EXPECT().Compile(gomock.Any(), req, gomock.Any(), gomock.Any(), gomock.Any())
 
 		compileOpts, err := env.ArdiCore.CompileSketch(sketchOpts)

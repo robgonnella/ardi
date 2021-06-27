@@ -45,7 +45,7 @@ func TestCompileCore(t *testing.T) {
 			Verbose:         true,
 		}
 
-		env.Cli.EXPECT().CreateInstance().Return(instance, nil)
+		env.Cli.EXPECT().CreateInstance().Return(instance).AnyTimes()
 		env.Cli.EXPECT().Compile(gomock.Any(), req, gomock.Any(), gomock.Any(), gomock.Any())
 
 		err := env.ArdiCore.Compiler.Compile(compileOpts)
@@ -82,7 +82,7 @@ func TestCompileCore(t *testing.T) {
 			Verbose:         true,
 		}
 
-		env.Cli.EXPECT().CreateInstance().Return(instance, nil)
+		env.Cli.EXPECT().CreateInstance().Return(instance).AnyTimes()
 		env.Cli.EXPECT().Compile(gomock.Any(), req, gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, dummyErr)
 
 		err := env.ArdiCore.Compiler.Compile(compileOpts)
@@ -129,14 +129,13 @@ func TestCompileCore(t *testing.T) {
 			Verbose:         true,
 		}
 
-		env.Cli.EXPECT().CreateInstance().Return(instance, nil)
+		env.Cli.EXPECT().CreateInstance().Return(instance).AnyTimes()
 		env.Cli.EXPECT().Compile(gomock.Any(), req, gomock.Any(), gomock.Any(), gomock.Any())
 
 		err = env.ArdiCore.Compiler.Compile(compileOpts)
 		assert.NoError(env.T, err)
 
 		env.ClearStdout()
-		env.Cli.EXPECT().CreateInstance().Return(instance, nil)
 		env.Cli.EXPECT().Compile(gomock.Any(), req, gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, dummyErr)
 
 		go env.ArdiCore.Compiler.WatchForChanges(compileOpts)

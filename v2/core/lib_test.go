@@ -34,7 +34,7 @@ func TestLibCore(t *testing.T) {
 				},
 			},
 		}
-		env.Cli.EXPECT().CreateInstanceIgnorePlatformIndexErrors().Return(instance).Times(3)
+		env.Cli.EXPECT().CreateInstance().Return(instance).AnyTimes()
 		env.Cli.EXPECT().UpdateLibrariesIndex(gomock.Any(), gomock.Any(), gomock.Any())
 		env.Cli.EXPECT().LibraryInstall(gomock.Any(), req, gomock.Any(), gomock.Any())
 		env.Cli.EXPECT().LibraryList(gomock.Any(), listReq).Return(listResp, nil)
@@ -59,7 +59,7 @@ func TestLibCore(t *testing.T) {
 			Name:     lib,
 			Version:  version,
 		}
-		env.Cli.EXPECT().CreateInstanceIgnorePlatformIndexErrors().Return(instance).Times(2)
+		env.Cli.EXPECT().CreateInstance().Return(instance).AnyTimes()
 		env.Cli.EXPECT().UpdateLibrariesIndex(gomock.Any(), gomock.Any(), gomock.Any())
 		env.Cli.EXPECT().LibraryInstall(gomock.Any(), req, gomock.Any(), gomock.Any()).Return(dummyErr)
 
@@ -75,7 +75,7 @@ func TestLibCore(t *testing.T) {
 			Instance: instance,
 			Name:     libName,
 		}
-		env.Cli.EXPECT().CreateInstanceIgnorePlatformIndexErrors().Return(instance)
+		env.Cli.EXPECT().CreateInstance().Return(instance).AnyTimes()
 		env.Cli.EXPECT().LibraryUninstall(gomock.Any(), req, gomock.Any()).Return(nil)
 		err := env.ArdiCore.Lib.Remove(libName)
 		assert.NoError(env.T, err)
@@ -90,7 +90,7 @@ func TestLibCore(t *testing.T) {
 			Instance: instance,
 			Name:     libName,
 		}
-		env.Cli.EXPECT().CreateInstanceIgnorePlatformIndexErrors().Return(instance)
+		env.Cli.EXPECT().CreateInstance().Return(instance).AnyTimes()
 		env.Cli.EXPECT().LibraryUninstall(gomock.Any(), req, gomock.Any()).Return(dummyErr)
 		err := env.ArdiCore.Lib.Remove(libName)
 		assert.Error(env.T, err)
@@ -121,9 +121,8 @@ func TestLibCore(t *testing.T) {
 		resp := &rpc.LibrarySearchResponse{
 			Libraries: searchedLibs,
 		}
-		env.Cli.EXPECT().CreateInstanceIgnorePlatformIndexErrors().Return(instance)
+		env.Cli.EXPECT().CreateInstance().Return(instance).AnyTimes()
 		env.Cli.EXPECT().UpdateLibrariesIndex(gomock.Any(), gomock.Any(), gomock.Any())
-		env.Cli.EXPECT().CreateInstance().Return(instance, nil)
 		env.Cli.EXPECT().LibrarySearch(gomock.Any(), req).Return(resp, nil)
 
 		err := env.ArdiCore.Lib.Search(searchQuery)
@@ -156,7 +155,7 @@ func TestLibCore(t *testing.T) {
 				},
 			},
 		}
-		env.Cli.EXPECT().CreateInstanceIgnorePlatformIndexErrors().Return(instance)
+		env.Cli.EXPECT().CreateInstance().Return(instance).AnyTimes()
 		env.Cli.EXPECT().LibraryList(gomock.Any(), req).Return(resp, nil)
 
 		env.ArdiCore.Lib.ListInstalled()

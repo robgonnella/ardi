@@ -56,7 +56,7 @@ func TestUploadCommand(t *testing.T) {
 		detectedPorts := []*rpc.DetectedPort{port}
 
 		env.T.Run("uploads a build", func(st *testing.T) {
-			inst.EXPECT().CreateInstance().Return(instance, nil).AnyTimes()
+			inst.EXPECT().CreateInstance().Return(instance).AnyTimes()
 			inst.EXPECT().ConnectedBoards(instance.GetId()).Return(detectedPorts, nil)
 			inst.EXPECT().GetPlatforms(platformReq)
 			inst.EXPECT().Upload(gomock.Any(), req, gomock.Any(), gomock.Any())
@@ -67,7 +67,7 @@ func TestUploadCommand(t *testing.T) {
 		})
 
 		env.T.Run("uploads a sketch", func(st *testing.T) {
-			inst.EXPECT().CreateInstance().Return(instance, nil).AnyTimes()
+			inst.EXPECT().CreateInstance().Return(instance).AnyTimes()
 			inst.EXPECT().ConnectedBoards(instance.GetId()).Return(detectedPorts, nil)
 			inst.EXPECT().GetPlatforms(platformReq)
 			inst.EXPECT().Upload(gomock.Any(), req, gomock.Any(), gomock.Any())
@@ -79,7 +79,7 @@ func TestUploadCommand(t *testing.T) {
 
 		env.T.Run("returns upload errors", func(st *testing.T) {
 			dummyErr := errors.New("dummy")
-			inst.EXPECT().CreateInstance().Return(instance, nil).AnyTimes()
+			inst.EXPECT().CreateInstance().Return(instance).AnyTimes()
 			inst.EXPECT().ConnectedBoards(instance.GetId()).Return(detectedPorts, nil)
 			inst.EXPECT().GetPlatforms(platformReq)
 			inst.EXPECT().Upload(gomock.Any(), req, gomock.Any(), gomock.Any()).Return(nil, dummyErr)
@@ -97,7 +97,7 @@ func TestUploadCommand(t *testing.T) {
 		})
 
 		env.T.Run("errors if no board connected", func(st *testing.T) {
-			inst.EXPECT().CreateInstance().Return(instance, nil).AnyTimes()
+			inst.EXPECT().CreateInstance().Return(instance).AnyTimes()
 			inst.EXPECT().ConnectedBoards(instance.GetId()).Return([]*rpc.DetectedPort{}, nil)
 			inst.EXPECT().GetPlatforms(platformReq)
 

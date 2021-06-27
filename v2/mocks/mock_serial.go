@@ -5,34 +5,35 @@
 package mocks
 
 import (
-	gomock "github.com/golang/mock/gomock"
 	reflect "reflect"
+
+	gomock "github.com/golang/mock/gomock"
 )
 
-// MockSerialPort is a mock of SerialPort interface
+// MockSerialPort is a mock of SerialPort interface.
 type MockSerialPort struct {
 	ctrl     *gomock.Controller
 	recorder *MockSerialPortMockRecorder
 }
 
-// MockSerialPortMockRecorder is the mock recorder for MockSerialPort
+// MockSerialPortMockRecorder is the mock recorder for MockSerialPort.
 type MockSerialPortMockRecorder struct {
 	mock *MockSerialPort
 }
 
-// NewMockSerialPort creates a new mock instance
+// NewMockSerialPort creates a new mock instance.
 func NewMockSerialPort(ctrl *gomock.Controller) *MockSerialPort {
 	mock := &MockSerialPort{ctrl: ctrl}
 	mock.recorder = &MockSerialPortMockRecorder{mock}
 	return mock
 }
 
-// EXPECT returns an object that allows the caller to indicate expected use
+// EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockSerialPort) EXPECT() *MockSerialPortMockRecorder {
 	return m.recorder
 }
 
-// IsStreaming mocks base method
+// IsStreaming mocks base method.
 func (m *MockSerialPort) IsStreaming() bool {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "IsStreaming")
@@ -40,25 +41,25 @@ func (m *MockSerialPort) IsStreaming() bool {
 	return ret0
 }
 
-// IsStreaming indicates an expected call of IsStreaming
+// IsStreaming indicates an expected call of IsStreaming.
 func (mr *MockSerialPortMockRecorder) IsStreaming() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsStreaming", reflect.TypeOf((*MockSerialPort)(nil).IsStreaming))
 }
 
-// Stop mocks base method
+// Stop mocks base method.
 func (m *MockSerialPort) Stop() {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "Stop")
 }
 
-// Stop indicates an expected call of Stop
+// Stop indicates an expected call of Stop.
 func (mr *MockSerialPortMockRecorder) Stop() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Stop", reflect.TypeOf((*MockSerialPort)(nil).Stop))
 }
 
-// Watch mocks base method
+// Watch mocks base method.
 func (m *MockSerialPort) Watch() error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Watch")
@@ -66,7 +67,7 @@ func (m *MockSerialPort) Watch() error {
 	return ret0
 }
 
-// Watch indicates an expected call of Watch
+// Watch indicates an expected call of Watch.
 func (mr *MockSerialPortMockRecorder) Watch() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Watch", reflect.TypeOf((*MockSerialPort)(nil).Watch))

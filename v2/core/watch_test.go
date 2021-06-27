@@ -57,7 +57,7 @@ func TestWatchCore(t *testing.T) {
 			Verbose:    true,
 		}
 
-		env.Cli.EXPECT().CreateInstance().Return(instance, nil).AnyTimes()
+		env.Cli.EXPECT().CreateInstance().Return(instance).AnyTimes()
 		env.Cli.EXPECT().Compile(gomock.Any(), compileReq, gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 		env.Cli.EXPECT().Upload(gomock.Any(), uploadReq, gomock.Any(), gomock.Any()).AnyTimes()
 
@@ -109,7 +109,7 @@ func TestWatchCore(t *testing.T) {
 			Verbose:    true,
 		}
 
-		env.Cli.EXPECT().CreateInstance().Return(instance, nil).AnyTimes()
+		env.Cli.EXPECT().CreateInstance().Return(instance).AnyTimes()
 		env.Cli.EXPECT().Compile(gomock.Any(), compileReq, gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(nil, dummyErr)
 		env.Cli.EXPECT().Upload(gomock.Any(), uploadReq, gomock.Any(), gomock.Any()).AnyTimes()
 

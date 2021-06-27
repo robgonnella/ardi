@@ -20,7 +20,7 @@ func TestBoardCore(t *testing.T) {
 			All:      true,
 		}
 
-		env.Cli.EXPECT().CreateInstance().Return(instance, nil).AnyTimes()
+		env.Cli.EXPECT().CreateInstance().Return(instance).AnyTimes()
 		env.Cli.EXPECT().GetPlatforms(platformReq)
 		env.Cli.EXPECT().ConnectedBoards(instance.GetId()).Times(1)
 
@@ -51,7 +51,7 @@ func TestBoardCore(t *testing.T) {
 			},
 		}
 
-		env.Cli.EXPECT().CreateInstance().Return(instance, nil).AnyTimes()
+		env.Cli.EXPECT().CreateInstance().Return(instance).AnyTimes()
 		env.Cli.EXPECT().GetPlatforms(platformReq)
 		env.Cli.EXPECT().ConnectedBoards(instance.GetId()).Return(detectedPorts, nil)
 
@@ -69,7 +69,7 @@ func TestBoardCore(t *testing.T) {
 			All:      true,
 		}
 
-		env.Cli.EXPECT().CreateInstance().Return(instance, nil).AnyTimes()
+		env.Cli.EXPECT().CreateInstance().Return(instance).AnyTimes()
 		env.Cli.EXPECT().GetPlatforms(platformReq)
 		env.Cli.EXPECT().ConnectedBoards(instance.GetId())
 
@@ -100,7 +100,7 @@ func TestBoardCore(t *testing.T) {
 			},
 		}
 
-		env.Cli.EXPECT().CreateInstance().Return(instance, nil).AnyTimes()
+		env.Cli.EXPECT().CreateInstance().Return(instance).AnyTimes()
 		env.Cli.EXPECT().GetPlatforms(platformReq)
 		env.Cli.EXPECT().ConnectedBoards(instance.GetId()).Return(detectedPorts, nil)
 
@@ -144,7 +144,7 @@ func TestBoardCore(t *testing.T) {
 			},
 		}
 
-		env.Cli.EXPECT().CreateInstance().Return(instance, nil).AnyTimes()
+		env.Cli.EXPECT().CreateInstance().Return(instance).AnyTimes()
 		env.Cli.EXPECT().GetPlatforms(platformReq)
 		env.Cli.EXPECT().ConnectedBoards(instance.GetId()).Return(detectedPorts, nil)
 
@@ -181,7 +181,7 @@ func TestBoardCore(t *testing.T) {
 			},
 		}
 
-		env.Cli.EXPECT().CreateInstance().Return(instance, nil).AnyTimes()
+		env.Cli.EXPECT().CreateInstance().Return(instance).AnyTimes()
 		env.Cli.EXPECT().GetPlatforms(platformReq).Return(platforms, nil)
 		env.Cli.EXPECT().ConnectedBoards(instance.GetId())
 
@@ -221,7 +221,7 @@ func TestBoardCore(t *testing.T) {
 			},
 		}
 
-		env.Cli.EXPECT().CreateInstance().Return(instance, nil).AnyTimes()
+		env.Cli.EXPECT().CreateInstance().Return(instance).AnyTimes()
 		env.Cli.EXPECT().GetPlatforms(platformReq).Return(platforms, nil)
 		env.Cli.EXPECT().ConnectedBoards(instance.GetId())
 
@@ -249,8 +249,7 @@ func TestBoardCore(t *testing.T) {
 		}
 		resp := &rpc.PlatformSearchResponse{SearchOutput: platforms}
 
-		env.Cli.EXPECT().CreateInstance().Return(instance, nil)
-		env.Cli.EXPECT().CreateInstanceIgnorePlatformIndexErrors().Return(instance).Times(2)
+		env.Cli.EXPECT().CreateInstance().Return(instance).AnyTimes()
 		env.Cli.EXPECT().UpdateIndex(gomock.Any(), gomock.Any(), gomock.Any())
 		env.Cli.EXPECT().UpdateLibrariesIndex(gomock.Any(), gomock.Any(), gomock.Any())
 		env.Cli.EXPECT().PlatformSearch(req).Return(resp, nil)
@@ -273,8 +272,7 @@ func TestBoardCore(t *testing.T) {
 		}
 		var resp *rpc.PlatformSearchResponse
 
-		env.Cli.EXPECT().CreateInstance().Return(instance, nil)
-		env.Cli.EXPECT().CreateInstanceIgnorePlatformIndexErrors().Return(instance).Times(2)
+		env.Cli.EXPECT().CreateInstance().Return(instance).AnyTimes()
 		env.Cli.EXPECT().UpdateIndex(gomock.Any(), gomock.Any(), gomock.Any())
 		env.Cli.EXPECT().UpdateLibrariesIndex(gomock.Any(), gomock.Any(), gomock.Any())
 		env.Cli.EXPECT().PlatformSearch(req).Return(resp, dummyErr)
@@ -296,8 +294,7 @@ func TestBoardCore(t *testing.T) {
 		}
 		resp := &rpc.PlatformSearchResponse{SearchOutput: platforms}
 
-		env.Cli.EXPECT().CreateInstance().Return(instance, nil)
-		env.Cli.EXPECT().CreateInstanceIgnorePlatformIndexErrors().Return(instance).Times(2)
+		env.Cli.EXPECT().CreateInstance().Return(instance).AnyTimes()
 		env.Cli.EXPECT().UpdateIndex(gomock.Any(), gomock.Any(), gomock.Any())
 		env.Cli.EXPECT().UpdateLibrariesIndex(gomock.Any(), gomock.Any(), gomock.Any())
 		env.Cli.EXPECT().PlatformSearch(req).Return(resp, nil)
@@ -320,8 +317,7 @@ func TestBoardCore(t *testing.T) {
 		}
 		var resp *rpc.PlatformSearchResponse
 
-		env.Cli.EXPECT().CreateInstance().Return(instance, nil)
-		env.Cli.EXPECT().CreateInstanceIgnorePlatformIndexErrors().Return(instance).Times(2)
+		env.Cli.EXPECT().CreateInstance().Return(instance).AnyTimes()
 		env.Cli.EXPECT().UpdateIndex(gomock.Any(), gomock.Any(), gomock.Any())
 		env.Cli.EXPECT().UpdateLibrariesIndex(gomock.Any(), gomock.Any(), gomock.Any())
 		env.Cli.EXPECT().PlatformSearch(req).Return(resp, dummyErr)

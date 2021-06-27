@@ -67,7 +67,7 @@ func TestCliWrapperTest(t *testing.T) {
 		platIndexReq := &rpc.UpdateIndexRequest{Instance: inst}
 		libIndexReq := &rpc.UpdateLibrariesIndexRequest{Instance: inst}
 
-		env.ArduinoCli.EXPECT().CreateInstanceIgnorePlatformIndexErrors().Return(inst).Times(2)
+		env.ArduinoCli.EXPECT().CreateInstance().Return(inst).AnyTimes()
 		env.ArduinoCli.EXPECT().UpdateIndex(gomock.Any(), platIndexReq, gomock.Any())
 		env.ArduinoCli.EXPECT().UpdateLibrariesIndex(gomock.Any(), libIndexReq, gomock.Any())
 
@@ -79,7 +79,7 @@ func TestCliWrapperTest(t *testing.T) {
 		inst := &rpc.Instance{Id: int32(1)}
 		libIndexReq := &rpc.UpdateLibrariesIndexRequest{Instance: inst}
 
-		env.ArduinoCli.EXPECT().CreateInstanceIgnorePlatformIndexErrors().Return(inst)
+		env.ArduinoCli.EXPECT().CreateInstance().Return(inst).AnyTimes()
 		env.ArduinoCli.EXPECT().UpdateLibrariesIndex(gomock.Any(), libIndexReq, gomock.Any())
 
 		err := env.CliWrapper.UpdateLibraryIndex()
@@ -90,7 +90,7 @@ func TestCliWrapperTest(t *testing.T) {
 		inst := &rpc.Instance{Id: int32(1)}
 		platIndexReq := &rpc.UpdateIndexRequest{Instance: inst}
 
-		env.ArduinoCli.EXPECT().CreateInstanceIgnorePlatformIndexErrors().Return(inst)
+		env.ArduinoCli.EXPECT().CreateInstance().Return(inst).AnyTimes()
 		env.ArduinoCli.EXPECT().UpdateIndex(gomock.Any(), platIndexReq, gomock.Any())
 
 		err := env.CliWrapper.UpdatePlatformIndex()
@@ -108,7 +108,7 @@ func TestCliWrapperTest(t *testing.T) {
 			Architecture:    arch,
 		}
 
-		env.ArduinoCli.EXPECT().CreateInstance().Return(inst, nil)
+		env.ArduinoCli.EXPECT().CreateInstance().Return(inst).AnyTimes()
 		env.ArduinoCli.EXPECT().PlatformUpgrade(gomock.Any(), req, gomock.Any(), gomock.Any())
 
 		err := env.CliWrapper.UpgradePlatform(platform)
@@ -141,7 +141,7 @@ func TestCliWrapperTest(t *testing.T) {
 			},
 		}
 
-		env.ArduinoCli.EXPECT().CreateInstance().Return(inst, nil).Times(2)
+		env.ArduinoCli.EXPECT().CreateInstance().Return(inst).AnyTimes()
 		env.ArduinoCli.EXPECT().PlatformInstall(gomock.Any(), req, gomock.Any(), gomock.Any())
 		env.ArduinoCli.EXPECT().GetPlatforms(listReq).Return(installed, nil)
 
@@ -162,7 +162,7 @@ func TestCliWrapperTest(t *testing.T) {
 			Architecture:    arch,
 		}
 
-		env.ArduinoCli.EXPECT().CreateInstance().Return(inst, nil)
+		env.ArduinoCli.EXPECT().CreateInstance().Return(inst).AnyTimes()
 		env.ArduinoCli.EXPECT().PlatformUninstall(gomock.Any(), req, gomock.Any())
 
 		removedPlatform, err := env.CliWrapper.UninstallPlatform(platform)
@@ -183,7 +183,7 @@ func TestCliWrapperTest(t *testing.T) {
 				Installed: "2.3.6",
 			},
 		}
-		env.ArduinoCli.EXPECT().CreateInstance().Return(inst, nil)
+		env.ArduinoCli.EXPECT().CreateInstance().Return(inst).AnyTimes()
 		env.ArduinoCli.EXPECT().GetPlatforms(listReq).Return(installed, nil)
 
 		list, err := env.CliWrapper.GetInstalledPlatforms()
@@ -215,10 +215,9 @@ func TestCliWrapperTest(t *testing.T) {
 			},
 		}
 
-		env.ArduinoCli.EXPECT().CreateInstanceIgnorePlatformIndexErrors().Return(inst).Times(2)
+		env.ArduinoCli.EXPECT().CreateInstance().Return(inst).AnyTimes()
 		env.ArduinoCli.EXPECT().UpdateIndex(gomock.Any(), platIndexReq, gomock.Any())
 		env.ArduinoCli.EXPECT().UpdateLibrariesIndex(gomock.Any(), libIndexReq, gomock.Any())
-		env.ArduinoCli.EXPECT().CreateInstance().Return(inst, nil)
 		env.ArduinoCli.EXPECT().PlatformSearch(searchReq).Return(expectedResp, nil)
 
 		resp, err := env.CliWrapper.SearchPlatforms()
@@ -249,7 +248,7 @@ func TestCliWrapperTest(t *testing.T) {
 			},
 		}
 
-		env.ArduinoCli.EXPECT().CreateInstance().Return(inst, nil)
+		env.ArduinoCli.EXPECT().CreateInstance().Return(inst).AnyTimes()
 		env.ArduinoCli.EXPECT().ConnectedBoards(inst.GetId()).Return(resp, nil)
 
 		boards := env.CliWrapper.ConnectedBoards()
@@ -283,7 +282,7 @@ func TestCliWrapperTest(t *testing.T) {
 			},
 		}
 
-		env.ArduinoCli.EXPECT().CreateInstance().Return(inst, nil)
+		env.ArduinoCli.EXPECT().CreateInstance().Return(inst).AnyTimes()
 		env.ArduinoCli.EXPECT().GetPlatforms(req).Return(resp, nil)
 
 		boards := env.CliWrapper.AllBoards()
@@ -304,7 +303,7 @@ func TestCliWrapperTest(t *testing.T) {
 			Verbose:    false,
 		}
 
-		env.ArduinoCli.EXPECT().CreateInstance().Return(inst, nil)
+		env.ArduinoCli.EXPECT().CreateInstance().Return(inst).AnyTimes()
 		env.ArduinoCli.EXPECT().Upload(gomock.Any(), req, gomock.Any(), gomock.Any())
 
 		err := env.CliWrapper.Upload(fqbn, sketchDir, device)
@@ -330,7 +329,7 @@ func TestCliWrapperTest(t *testing.T) {
 			Verbose:         false,
 		}
 
-		env.ArduinoCli.EXPECT().CreateInstance().Return(inst, nil)
+		env.ArduinoCli.EXPECT().CreateInstance().Return(inst).AnyTimes()
 		env.ArduinoCli.EXPECT().Compile(gomock.Any(), req, gomock.Any(), gomock.Any(), gomock.Any())
 
 		err := env.CliWrapper.Compile(opts)
@@ -353,7 +352,7 @@ func TestCliWrapperTest(t *testing.T) {
 			},
 		}
 
-		env.ArduinoCli.EXPECT().CreateInstance().Return(inst, nil)
+		env.ArduinoCli.EXPECT().CreateInstance().Return(inst).AnyTimes()
 		env.ArduinoCli.EXPECT().LibrarySearch(gomock.Any(), req).Return(resp, nil)
 
 		libs, err := env.CliWrapper.SearchLibraries(query)
@@ -387,7 +386,7 @@ func TestCliWrapperTest(t *testing.T) {
 			},
 		}
 
-		env.ArduinoCli.EXPECT().CreateInstanceIgnorePlatformIndexErrors().Return(inst).Times(2)
+		env.ArduinoCli.EXPECT().CreateInstance().Return(inst).AnyTimes()
 		env.ArduinoCli.EXPECT().LibraryInstall(gomock.Any(), req, gomock.Any(), gomock.Any())
 		env.ArduinoCli.EXPECT().LibraryList(gomock.Any(), listReq).Return(listResp, nil)
 
@@ -404,7 +403,7 @@ func TestCliWrapperTest(t *testing.T) {
 			Name:     lib,
 		}
 
-		env.ArduinoCli.EXPECT().CreateInstanceIgnorePlatformIndexErrors().Return(inst)
+		env.ArduinoCli.EXPECT().CreateInstance().Return(inst).AnyTimes()
 		env.ArduinoCli.EXPECT().LibraryUninstall(gomock.Any(), req, gomock.Any())
 
 		err := env.CliWrapper.UninstallLibrary(lib)
@@ -427,7 +426,7 @@ func TestCliWrapperTest(t *testing.T) {
 			},
 		}
 
-		env.ArduinoCli.EXPECT().CreateInstanceIgnorePlatformIndexErrors().Return(inst)
+		env.ArduinoCli.EXPECT().CreateInstance().Return(inst).AnyTimes()
 		env.ArduinoCli.EXPECT().LibraryList(gomock.Any(), req).Return(resp, nil)
 
 		libs, err := env.CliWrapper.GetInstalledLibs()
@@ -476,7 +475,7 @@ func TestCliWrapperTest(t *testing.T) {
 			Port: resp[0].Address,
 		}
 
-		env.ArduinoCli.EXPECT().CreateInstance().Return(inst, nil).Times(2)
+		env.ArduinoCli.EXPECT().CreateInstance().Return(inst).AnyTimes()
 		env.ArduinoCli.EXPECT().ConnectedBoards(inst.GetId()).Return(resp, nil)
 		env.ArduinoCli.EXPECT().GetPlatforms(gomock.Any())
 
@@ -488,7 +487,7 @@ func TestCliWrapperTest(t *testing.T) {
 	runCliTest("returns error if no match for provided fqbn and onlyConnected=true", t, func(env cliTestEnv, st *testing.T) {
 		inst := &rpc.Instance{Id: int32(1)}
 		resp := []*rpc.DetectedPort{}
-		env.ArduinoCli.EXPECT().CreateInstance().Return(inst, nil).Times(2)
+		env.ArduinoCli.EXPECT().CreateInstance().Return(inst).AnyTimes()
 		env.ArduinoCli.EXPECT().ConnectedBoards(inst.GetId()).Return(resp, nil)
 		env.ArduinoCli.EXPECT().GetPlatforms(gomock.Any())
 
@@ -500,7 +499,7 @@ func TestCliWrapperTest(t *testing.T) {
 	runCliTest("returns board without port if fqbn provided and onlyConnected=false", t, func(env cliTestEnv, st *testing.T) {
 		inst := &rpc.Instance{Id: int32(1)}
 		resp := []*rpc.DetectedPort{}
-		env.ArduinoCli.EXPECT().CreateInstance().Return(inst, nil).Times(2)
+		env.ArduinoCli.EXPECT().CreateInstance().Return(inst).AnyTimes()
 		env.ArduinoCli.EXPECT().ConnectedBoards(inst.GetId()).Return(resp, nil)
 		env.ArduinoCli.EXPECT().GetPlatforms(gomock.Any())
 
@@ -517,7 +516,7 @@ func TestCliWrapperTest(t *testing.T) {
 
 		resp := []*rpc.DetectedPort{}
 
-		env.ArduinoCli.EXPECT().CreateInstance().Return(inst, nil).Times(2)
+		env.ArduinoCli.EXPECT().CreateInstance().Return(inst).AnyTimes()
 		env.ArduinoCli.EXPECT().ConnectedBoards(inst.GetId()).Return(resp, nil)
 		env.ArduinoCli.EXPECT().GetPlatforms(gomock.Any())
 
@@ -541,7 +540,7 @@ func TestCliWrapperTest(t *testing.T) {
 				},
 			},
 		}
-		env.ArduinoCli.EXPECT().CreateInstance().Return(inst, nil).Times(2)
+		env.ArduinoCli.EXPECT().CreateInstance().Return(inst).AnyTimes()
 		env.ArduinoCli.EXPECT().ConnectedBoards(inst.GetId())
 		env.ArduinoCli.EXPECT().GetPlatforms(gomock.Any()).Return(installed, nil)
 
@@ -569,7 +568,7 @@ func TestCliWrapperTest(t *testing.T) {
 				},
 			},
 		}
-		env.ArduinoCli.EXPECT().CreateInstance().Return(inst, nil).Times(4)
+		env.ArduinoCli.EXPECT().CreateInstance().Return(inst).AnyTimes()
 		env.ArduinoCli.EXPECT().ConnectedBoards(inst.GetId()).Return(resp, nil).Times(2)
 		env.ArduinoCli.EXPECT().GetPlatforms(gomock.Any()).Times(2)
 
@@ -606,7 +605,7 @@ func TestCliWrapperTest(t *testing.T) {
 				},
 			},
 		}
-		env.ArduinoCli.EXPECT().CreateInstance().Return(inst, nil).Times(4)
+		env.ArduinoCli.EXPECT().CreateInstance().Return(inst).AnyTimes()
 		env.ArduinoCli.EXPECT().ConnectedBoards(inst.GetId()).Return(resp, nil).Times(2)
 		env.ArduinoCli.EXPECT().GetPlatforms(gomock.Any()).Times(2)
 
