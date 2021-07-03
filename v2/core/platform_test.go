@@ -29,7 +29,7 @@ func TestPlatformCore(t *testing.T) {
 			All:           false,
 		}
 
-		env.Cli.EXPECT().CreateInstance().Return(instance, nil)
+		env.Cli.EXPECT().CreateInstance().Return(instance).AnyTimes()
 		env.Cli.EXPECT().GetPlatforms(req).Return(platforms, nil)
 
 		err := env.ArdiCore.Platform.ListInstalled()
@@ -58,10 +58,9 @@ func TestPlatformCore(t *testing.T) {
 		resp := &rpc.PlatformSearchResponse{
 			SearchOutput: platforms,
 		}
-		env.Cli.EXPECT().CreateInstanceIgnorePlatformIndexErrors().Return(instance).Times(3)
+		env.Cli.EXPECT().CreateInstance().Return(instance).AnyTimes()
 		env.Cli.EXPECT().UpdateIndex(gomock.Any(), gomock.Any(), gomock.Any()).Times(2)
 		env.Cli.EXPECT().UpdateLibrariesIndex(gomock.Any(), gomock.Any(), gomock.Any())
-		env.Cli.EXPECT().CreateInstance().Return(instance, nil)
 		env.Cli.EXPECT().PlatformSearch(req).Return(resp, nil)
 
 		err := env.ArdiCore.Platform.ListAll()
@@ -103,17 +102,13 @@ func TestPlatformCore(t *testing.T) {
 		}
 		platforms := []*rpc.Platform{platform1, platform2}
 
-		env.Cli.EXPECT().CreateInstanceIgnorePlatformIndexErrors().Return(instance)
+		env.Cli.EXPECT().CreateInstance().Return(instance).AnyTimes()
 		env.Cli.EXPECT().UpdateIndex(gomock.Any(), gomock.Any(), gomock.Any())
 
-		env.Cli.EXPECT().CreateInstance().Return(instance, nil)
 		env.Cli.EXPECT().PlatformInstall(gomock.Any(), req1, gomock.Any(), gomock.Any())
-		env.Cli.EXPECT().CreateInstance().Return(instance, nil)
 		env.Cli.EXPECT().GetPlatforms(listReq).Return([]*rpc.Platform{platform1}, nil)
 
-		env.Cli.EXPECT().CreateInstance().Return(instance, nil)
 		env.Cli.EXPECT().PlatformInstall(gomock.Any(), req2, gomock.Any(), gomock.Any())
-		env.Cli.EXPECT().CreateInstance().Return(instance, nil)
 		env.Cli.EXPECT().GetPlatforms(listReq).Return(platforms, nil)
 
 		for _, p := range platforms {
@@ -155,13 +150,9 @@ func TestPlatformCore(t *testing.T) {
 
 		platforms := []*rpc.Platform{platform1, platform2}
 
-		env.Cli.EXPECT().CreateInstanceIgnorePlatformIndexErrors().Return(instance)
+		env.Cli.EXPECT().CreateInstance().Return(instance).AnyTimes()
 		env.Cli.EXPECT().UpdateIndex(gomock.Any(), gomock.Any(), gomock.Any())
-
-		env.Cli.EXPECT().CreateInstance().Return(instance, nil)
 		env.Cli.EXPECT().PlatformInstall(gomock.Any(), req1, gomock.Any(), gomock.Any()).Return(nil, dummyErr)
-
-		env.Cli.EXPECT().CreateInstance().Return(instance, nil)
 		env.Cli.EXPECT().PlatformInstall(gomock.Any(), req2, gomock.Any(), gomock.Any()).Return(nil, dummyErr)
 
 		for _, p := range platforms {
@@ -200,10 +191,8 @@ func TestPlatformCore(t *testing.T) {
 
 		platforms := []*rpc.Platform{platform1, platform2}
 
-		env.Cli.EXPECT().CreateInstance().Return(instance, nil)
+		env.Cli.EXPECT().CreateInstance().Return(instance).AnyTimes()
 		env.Cli.EXPECT().PlatformUninstall(gomock.Any(), req1, gomock.Any())
-
-		env.Cli.EXPECT().CreateInstance().Return(instance, nil)
 		env.Cli.EXPECT().PlatformUninstall(gomock.Any(), req2, gomock.Any())
 
 		for _, p := range platforms {
@@ -245,10 +234,8 @@ func TestPlatformCore(t *testing.T) {
 
 		platforms := []*rpc.Platform{platform1, platform2}
 
-		env.Cli.EXPECT().CreateInstance().Return(instance, nil)
+		env.Cli.EXPECT().CreateInstance().Return(instance).AnyTimes()
 		env.Cli.EXPECT().PlatformUninstall(gomock.Any(), req1, gomock.Any()).Return(nil, dummyErr)
-
-		env.Cli.EXPECT().CreateInstance().Return(instance, nil)
 		env.Cli.EXPECT().PlatformUninstall(gomock.Any(), req2, gomock.Any()).Return(nil, dummyErr)
 
 		for _, p := range platforms {

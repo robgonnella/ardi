@@ -67,7 +67,7 @@ func TestAttachAndWatchCommand(t *testing.T) {
 		}
 		detectedPorts := []*rpc.DetectedPort{port}
 
-		inst.EXPECT().CreateInstance().Return(instance, nil).AnyTimes()
+		inst.EXPECT().CreateInstance().Return(instance).AnyTimes()
 		inst.EXPECT().Compile(gomock.Any(), compileReq, gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 		inst.EXPECT().ConnectedBoards(instance.GetId()).Return(detectedPorts, nil)
 		inst.EXPECT().GetPlatforms(platformReq)
@@ -139,7 +139,7 @@ func TestAttachAndWatchCommand(t *testing.T) {
 		err := env.RunProjectInit()
 		assert.NoError(env.T, err)
 
-		inst.EXPECT().CreateInstance().Return(instance, nil).AnyTimes()
+		inst.EXPECT().CreateInstance().Return(instance).AnyTimes()
 		inst.EXPECT().Compile(gomock.Any(), compileReq, gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 		inst.EXPECT().ConnectedBoards(instance.GetId()).Return(detectedPorts, nil)
 		inst.EXPECT().GetPlatforms(platformReq)

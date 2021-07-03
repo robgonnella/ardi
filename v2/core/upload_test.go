@@ -25,7 +25,7 @@ func TestUploadCore(t *testing.T) {
 			Verbose:    true,
 		}
 
-		env.Cli.EXPECT().CreateInstance().Return(instance, nil)
+		env.Cli.EXPECT().CreateInstance().Return(instance).AnyTimes()
 		env.Cli.EXPECT().Upload(gomock.Any(), req, gomock.Any(), gomock.Any())
 
 		err := env.ArdiCore.Uploader.Upload(connectedBoard, projectDir)
@@ -46,7 +46,7 @@ func TestUploadCore(t *testing.T) {
 			Verbose:    true,
 		}
 
-		env.Cli.EXPECT().CreateInstance().Return(instance, nil)
+		env.Cli.EXPECT().CreateInstance().Return(instance).AnyTimes()
 		env.Cli.EXPECT().Upload(gomock.Any(), req, gomock.Any(), gomock.Any()).Return(nil, dummyErr)
 
 		err := env.ArdiCore.Uploader.Upload(board, projectDir)

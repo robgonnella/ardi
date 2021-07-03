@@ -20,8 +20,7 @@ import (
 //go:generate mockgen -destination=../mocks/mock_cli.go -package=mocks github.com/robgonnella/ardi/v2/cli-wrapper Cli
 type Cli interface {
 	InitSettings(string)
-	CreateInstance() (*rpc.Instance, error)
-	CreateInstanceIgnorePlatformIndexErrors() *rpc.Instance
+	CreateInstance() *rpc.Instance
 	UpdateIndex(context.Context, *rpc.UpdateIndexRequest, commands.DownloadProgressCB) (*rpc.UpdateIndexResponse, error)
 	UpdateLibrariesIndex(context.Context, *rpc.UpdateLibrariesIndexRequest, commands.DownloadProgressCB) error
 	PlatformUpgrade(context.Context, *rpc.PlatformUpgradeRequest, commands.DownloadProgressCB, commands.TaskProgressCB) (*rpc.PlatformUpgradeResponse, error)
@@ -52,13 +51,8 @@ func (c *ArduinoCli) InitSettings(settingsPath string) {
 }
 
 // CreateInstance wrapper around arduino-cli CreateInstance
-func (c *ArduinoCli) CreateInstance() (*rpc.Instance, error) {
-	return instance.CreateInstance()
-}
-
-// CreateInstanceIgnorePlatformIndexErrors wrapper around arduino-cli CreateInstanceIgnorePlatformIndexErrors
-func (c *ArduinoCli) CreateInstanceIgnorePlatformIndexErrors() *rpc.Instance {
-	return instance.CreateInstanceIgnorePlatformIndexErrors()
+func (c *ArduinoCli) CreateInstance() *rpc.Instance {
+	return instance.CreateAndInit()
 }
 
 // UpdateIndex wrapper around arduino-cli UpdateIndex
