@@ -121,8 +121,10 @@ func getRootCommand() *cobra.Command {
 		PersistentPreRunE: preRun,
 		DisableAutoGenTag: true,
 	}
+
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "Print all logs")
 	rootCmd.PersistentFlags().BoolVarP(&quiet, "quiet", "q", false, "Silence all logs")
+	rootCmd.SetHelpFunc(help)
 	return rootCmd
 }
 
