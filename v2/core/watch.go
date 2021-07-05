@@ -62,7 +62,7 @@ func (w *WatchCore) SetTargets(targets WatchCoreTargets) error {
 	w.board = board
 	w.compileOpts = compileOpts
 	w.baud = baud
-	watcher.AddListener(w.onFileChange)
+	w.watcher.AddListener(w.onFileChange)
 	return nil
 }
 
