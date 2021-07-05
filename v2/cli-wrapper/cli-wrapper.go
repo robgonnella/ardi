@@ -22,6 +22,7 @@ type Wrapper struct {
 	ctx          context.Context
 	settingsPath string
 	cli          Cli
+	inst         *rpc.Instance
 	logger       *log.Logger
 }
 
@@ -61,7 +62,7 @@ func (c *Wrapper) UpdateIndexFiles() error {
 // UpdateLibraryIndex updates library index file
 func (c *Wrapper) UpdateLibraryIndex() error {
 	c.logger.Debug("Updating library index...")
-	inst := c.cli.CreateInstance()
+	inst := c.getRPCInstance()
 
 	return c.cli.UpdateLibrariesIndex(
 		c.ctx,
@@ -75,7 +76,8 @@ func (c *Wrapper) UpdateLibraryIndex() error {
 // UpdatePlatformIndex updates platform index file
 func (c *Wrapper) UpdatePlatformIndex() error {
 	c.logger.Debug("Updating platform index...")
-	inst := c.cli.CreateInstance()
+	inst := c.getRPCInstance()
+
 	_, err := c.cli.UpdateIndex(
 		c.ctx,
 		&rpc.UpdateIndexRequest{
@@ -88,7 +90,7 @@ func (c *Wrapper) UpdatePlatformIndex() error {
 
 // UpgradePlatform upgrades a given platform
 func (c *Wrapper) UpgradePlatform(platform string) error {
-	inst := c.cli.CreateInstance()
+	inst := c.getRPCInstance()
 
 	pkg, arch, _ := parsePlatform(platform)
 	c.logger.Debugf("Upgrading platform: %s:%s\n", pkg, arch)
@@ -108,7 +110,7 @@ func (c *Wrapper) UpgradePlatform(platform string) error {
 
 // InstallPlatform installs a given platform
 func (c *Wrapper) InstallPlatform(platform string) (string, string, error) {
-	inst := c.cli.CreateInstance()
+	inst := c.getRPCInstance()
 
 	if platform == "" {
 		err := errors.New("must specify a platform to install")
@@ -154,7 +156,7 @@ func (c *Wrapper) InstallPlatform(platform string) (string, string, error) {
 
 // UninstallPlatform installs a given platform
 func (c *Wrapper) UninstallPlatform(platform string) (string, error) {
-	inst := c.cli.CreateInstance()
+	inst := c.getRPCInstance()
 
 	if platform == "" {
 		err := errors.New("must specify a platform to install")
@@ -187,7 +189,7 @@ func (c *Wrapper) UninstallPlatform(platform string) (string, error) {
 
 // GetInstalledPlatforms lists all installed platforms
 func (c *Wrapper) GetInstalledPlatforms() ([]*rpc.Platform, error) {
-	inst := c.cli.CreateInstance()
+	inst := c.getRPCInstance()
 
 	req := &rpc.PlatformListRequest{
 		Instance:      inst,
@@ -204,7 +206,7 @@ func (c *Wrapper) SearchPlatforms() ([]*rpc.Platform, error) {
 		return nil, err
 	}
 
-	inst := c.cli.CreateInstance()
+	inst := c.getRPCInstance()
 
 	req := &rpc.PlatformSearchRequest{
 		Instance:    inst,
@@ -218,7 +220,7 @@ func (c *Wrapper) SearchPlatforms() ([]*rpc.Platform, error) {
 
 // ConnectedBoards returns a list of connected arduino boards
 func (c *Wrapper) ConnectedBoards() []*BoardWithPort {
-	inst := c.cli.CreateInstance()
+	inst := c.getRPCInstance()
 
 	boardList := []*BoardWithPort{}
 
@@ -243,7 +245,7 @@ func (c *Wrapper) ConnectedBoards() []*BoardWithPort {
 
 // AllBoards returns a list of all supported boards
 func (c *Wrapper) AllBoards() []*BoardWithPort {
-	inst := c.cli.CreateInstance()
+	inst := c.getRPCInstance()
 
 	c.logger.Debug("Getting list of supported boards...")
 
@@ -275,7 +277,7 @@ func (c *Wrapper) AllBoards() []*BoardWithPort {
 
 // Upload a sketch to target board
 func (c *Wrapper) Upload(fqbn, sketchDir, device string) error {
-	inst := c.cli.CreateInstance()
+	inst := c.getRPCInstance()
 
 	req := &rpc.UploadRequest{
 		Instance:   inst,
@@ -306,7 +308,7 @@ type CompileOpts struct {
 
 // Compile the specified sketch
 func (c *Wrapper) Compile(opts CompileOpts) error {
-	inst := c.cli.CreateInstance()
+	inst := c.getRPCInstance()
 
 	exportDir := path.Join(opts.SketchDir, "build")
 
@@ -333,7 +335,7 @@ func (c *Wrapper) Compile(opts CompileOpts) error {
 
 // SearchLibraries searches available libraries for download
 func (c *Wrapper) SearchLibraries(query string) ([]*rpc.SearchedLibrary, error) {
-	inst := c.cli.CreateInstance()
+	inst := c.getRPCInstance()
 
 	req := &rpc.LibrarySearchRequest{
 		Instance: inst,
@@ -347,7 +349,7 @@ func (c *Wrapper) SearchLibraries(query string) ([]*rpc.SearchedLibrary, error) 
 
 // InstallLibrary installs specified version of a library
 func (c *Wrapper) InstallLibrary(name, version string) (string, error) {
-	inst := c.cli.CreateInstance()
+	inst := c.getRPCInstance()
 
 	req := &rpc.LibraryInstallRequest{
 		Instance: inst,
@@ -384,7 +386,7 @@ func (c *Wrapper) InstallLibrary(name, version string) (string, error) {
 
 // UninstallLibrary removes specified library
 func (c *Wrapper) UninstallLibrary(name string) error {
-	inst := c.cli.CreateInstance()
+	inst := c.getRPCInstance()
 
 	req := &rpc.LibraryUninstallRequest{
 		Instance: inst,
@@ -407,7 +409,7 @@ func (c *Wrapper) UninstallLibrary(name string) error {
 
 // GetInstalledLibs returns a list of installed libraries
 func (c *Wrapper) GetInstalledLibs() ([]*rpc.InstalledLibrary, error) {
-	inst := c.cli.CreateInstance()
+	inst := c.getRPCInstance()
 
 	req := &rpc.LibraryListRequest{
 		Instance: inst,
@@ -484,7 +486,7 @@ func (c *Wrapper) getTaskProgressFn() commands.TaskProgressCB {
 	return noTaskOutput
 }
 
-// private helpers
+// private methods
 func (c *Wrapper) printFQBNs(boardList []*BoardWithPort, logger *log.Logger) {
 	sort.Slice(boardList, func(i, j int) bool {
 		return boardList[i].Name < boardList[j].Name
@@ -500,6 +502,14 @@ func (c *Wrapper) printBoardsWithIndices(boards []*BoardWithPort, logger *log.Lo
 	for i, b := range boards {
 		w.Write([]byte(fmt.Sprintf("%d\t%s\t%s\n", i, b.Name, b.FQBN)))
 	}
+}
+
+func (c *Wrapper) getRPCInstance() *rpc.Instance {
+	if c.inst == nil {
+		c.inst = c.cli.CreateInstance()
+	}
+
+	return c.inst
 }
 
 // private helpers
