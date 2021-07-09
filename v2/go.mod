@@ -30,9 +30,8 @@ require (
 	github.com/spf13/cobra v1.1.3
 	github.com/spf13/viper v1.8.1 // indirect
 	github.com/stretchr/testify v1.7.0
-	github.com/tarm/serial v0.0.0-20180830185346-98f6abe2eb07
 	github.com/xanzy/ssh-agent v0.3.0 // indirect
-	go.bug.st/serial v1.1.3 // indirect
+	go.bug.st/serial v1.1.3
 	go.bug.st/serial.v1 v0.0.0-20191202182710-24a6610f0541 // indirect
 	golang.org/x/crypto v0.0.0-20210616213533-5ff15b29337e // indirect
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616

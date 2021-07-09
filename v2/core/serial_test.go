@@ -29,8 +29,8 @@ func TestSerialPort(t *testing.T) {
 		port := core.NewArdiSerialPort(device, baud, logger)
 
 		st.Cleanup(func() {
-			if port.IsStreaming() {
-				port.Stop()
+			if port.Streaming() {
+				port.Close()
 			}
 			port = nil
 		})
@@ -38,14 +38,14 @@ func TestSerialPort(t *testing.T) {
 		go port.Watch()
 
 		time.Sleep(time.Second)
-		assert.True(st, port.IsStreaming())
+		assert.True(st, port.Streaming())
 
 		msg := "this is a tty message\n"
 		cmd := exec.Command("echo", "-e", msg, ">>", device)
 		err := cmd.Run()
 		assert.NoError(st, err)
 
-		port.Stop()
-		assert.False(st, port.IsStreaming())
+		port.Close()
+		assert.False(st, port.Streaming())
 	})
 }

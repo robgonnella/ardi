@@ -12,6 +12,7 @@ type UploadCore struct {
 	logger    *log.Logger
 	cli       *cli.Wrapper
 	uploading bool
+	port      SerialPort
 }
 
 // NewUploadCore returns new ardi upload core
@@ -43,11 +44,20 @@ func (c *UploadCore) Upload(board *cli.BoardWithPort, buildDir string) error {
 // Attach attaches to the associated board port and prints logs
 func (c *UploadCore) Attach(device string, baud int, port SerialPort) {
 	if port == nil {
-		port = NewArdiSerialPort(device, baud, c.logger)
+		c.port = NewArdiSerialPort(device, baud, c.logger)
 	} else {
-		port.Stop()
+		c.port = port
+		port.Close()
 	}
-	port.Watch()
+	c.port.Watch()
+}
+
+// Detach detaches from the associated board port
+func (c *UploadCore) Detach() {
+	if c.port != nil {
+		c.port.Close()
+		c.port = nil
+	}
 }
 
 // IsUploading returns whether or not core is currently uploading

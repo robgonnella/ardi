@@ -32,7 +32,7 @@ func TestFileWatcher(t *testing.T) {
 
 		listener := func() {
 			env.Logger.Info(successMsg)
-			watcher.Close()
+			watcher.Stop()
 		}
 		watcher.AddListener(listener)
 

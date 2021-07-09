@@ -33,30 +33,30 @@ func (m *MockSerialPort) EXPECT() *MockSerialPortMockRecorder {
 	return m.recorder
 }
 
-// IsStreaming mocks base method.
-func (m *MockSerialPort) IsStreaming() bool {
+// Close mocks base method.
+func (m *MockSerialPort) Close() {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "IsStreaming")
+	m.ctrl.Call(m, "Close")
+}
+
+// Close indicates an expected call of Close.
+func (mr *MockSerialPortMockRecorder) Close() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Close", reflect.TypeOf((*MockSerialPort)(nil).Close))
+}
+
+// Streaming mocks base method.
+func (m *MockSerialPort) Streaming() bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Streaming")
 	ret0, _ := ret[0].(bool)
 	return ret0
 }
 
-// IsStreaming indicates an expected call of IsStreaming.
-func (mr *MockSerialPortMockRecorder) IsStreaming() *gomock.Call {
+// Streaming indicates an expected call of Streaming.
+func (mr *MockSerialPortMockRecorder) Streaming() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsStreaming", reflect.TypeOf((*MockSerialPort)(nil).IsStreaming))
-}
-
-// Stop mocks base method.
-func (m *MockSerialPort) Stop() {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "Stop")
-}
-
-// Stop indicates an expected call of Stop.
-func (mr *MockSerialPortMockRecorder) Stop() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Stop", reflect.TypeOf((*MockSerialPort)(nil).Stop))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Streaming", reflect.TypeOf((*MockSerialPort)(nil).Streaming))
 }
 
 // Watch mocks base method.

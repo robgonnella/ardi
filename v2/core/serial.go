@@ -1,107 +1,102 @@
 package core
 
 import (
+	"errors"
 	"fmt"
-	"os"
-	"os/signal"
-	"syscall"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/tarm/serial"
+	"go.bug.st/serial"
 )
 
 // SerialPort represents a board port on which to stream logs
 //go:generate mockgen -destination=../mocks/mock_serial.go -package=mocks github.com/robgonnella/ardi/v2/core SerialPort
 type SerialPort interface {
 	Watch() error
-	Stop()
-	IsStreaming() bool
+	Close()
+	Streaming() bool
 }
 
 // ArdiSerialPort represents our serial port wrapper
 type ArdiSerialPort struct {
-	stream *serial.Port
-	name   string
-	baud   int
-	logger *log.Logger
+	name          string
+	baud          int
+	stream        serial.Port
+	stopChan      chan bool
+	expectingStop bool
+	logger        *log.Logger
 }
 
 // NewArdiSerialPort returns instance of serial port wrapper
 func NewArdiSerialPort(name string, baud int, logger *log.Logger) SerialPort {
-	sigs := make(chan os.Signal, 1)
-	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
-
-	serialPort := &ArdiSerialPort{
-		name:   name,
-		baud:   baud,
-		logger: logger,
+	return &ArdiSerialPort{
+		name:          name,
+		baud:          baud,
+		stopChan:      make(chan bool),
+		expectingStop: false,
+		logger:        logger,
 	}
-
-	go func() {
-		<-sigs
-		logger.Debug("gracefully shutting down serial port stream")
-		serialPort.Stop()
-	}()
-
-	return serialPort
 }
 
 // Watch connects to a serial port and prints any logs received.
 func (p *ArdiSerialPort) Watch() error {
-	defer p.Stop()
-
 	logFields := log.Fields{"baud": p.baud, "name": p.name}
 
-	p.Stop()
-	p.logger.Info("Watching logs...")
+	if p.Streaming() {
+		p.Close()
+	}
 
-	config := &serial.Config{Name: p.name, Baud: p.baud}
+	p.logger.WithField("port", p.name).Info("Attaching to port")
 
-	stream, err := serial.OpenPort(config)
+	mode := &serial.Mode{
+		BaudRate: p.baud,
+	}
+
+	stream, err := serial.Open(p.name, mode)
 	if err != nil {
 		p.logger.WithError(err).WithFields(logFields).Warn("Failed to read from device")
 		return err
 	}
-
 	p.stream = stream
+	buf := make([]byte, 100)
 
 	for {
-		if p.stream == nil {
-			break
+		if !p.Streaming() {
+			return nil
 		}
-		var buf = make([]byte, 128)
-		n, err := stream.Read(buf)
+		n, err := p.stream.Read(buf)
 		if err != nil {
-			p.logger.WithError(err).WithFields(logFields).Warn("Failed to read from serial port")
+			p.logger.WithError(err).WithFields(logFields).Debug("Failed to read from serial port")
+			p.stream = nil
+			if p.expectingStop {
+				p.stopChan <- true
+			}
 			return err
 		}
-		fmt.Printf("%s", buf[:n])
+		if n == 0 {
+			err := errors.New("EOF")
+			p.logger.WithError(err).WithField("port", p.name).Error("error reading from serial port")
+			p.stream.Close()
+			p.stream = nil
+			return nil
+		}
+		fmt.Printf("%v", string(buf[:n]))
 	}
-
-	return nil
 }
 
-// Stop printing serial port logs
-func (p *ArdiSerialPort) Stop() {
+// Close closees serial port logger
+func (p *ArdiSerialPort) Close() {
 	logWithField := p.logger.WithField("name", p.name)
-
-	if p.stream != nil {
-		logWithField.Debug("Closing serial port connection")
-
-		if err := p.stream.Flush(); err != nil {
-			logWithField.WithError(err).Debug("Failed to flush serial port connection")
-		}
-
-		if err := p.stream.Close(); err != nil {
-			logWithField.WithError(err).Debug("Failed to close serial port connection")
-		}
-
-		p.stream = nil
-		logWithField.Debug("Serial port closed")
+	if p.Streaming() {
+		logWithField.Info("Closing serial port connection")
+		p.expectingStop = true
+		p.stream.Close()
+		<-p.stopChan
+		p.expectingStop = false
 	}
+	logWithField.Info("Serial port closed")
 }
 
-// IsStreaming returns whether or not we are currently printing logs from port
-func (p *ArdiSerialPort) IsStreaming() bool {
+// Streaming returns whether or not we are attached to the port and streaming logs
+func (p *ArdiSerialPort) Streaming() bool {
 	return p.stream != nil
 }

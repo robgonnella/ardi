@@ -9,14 +9,15 @@ import (
 
 // WatchCore represents core module for adi go commands
 type WatchCore struct {
-	logger      *log.Logger
-	uploader    *UploadCore
-	compiler    *CompileCore
-	port        SerialPort
-	watcher     *FileWatcher
-	board       *cli.BoardWithPort
-	compileOpts *cli.CompileOpts
-	baud        int
+	logger           *log.Logger
+	uploader         *UploadCore
+	compiler         *CompileCore
+	port             SerialPort
+	watcher          *FileWatcher
+	board            *cli.BoardWithPort
+	compileOpts      *cli.CompileOpts
+	baud             int
+	processingUpdate bool
 }
 
 // WatchCoreTargets targets for watching, recompiling, and reuploading
@@ -30,16 +31,17 @@ type WatchCoreTargets struct {
 // NewWatchCore returns new Project instance
 func NewWatchCore(compiler *CompileCore, uploader *UploadCore, logger *log.Logger) *WatchCore {
 	return &WatchCore{
-		uploader: uploader,
-		compiler: compiler,
-		logger:   logger,
+		uploader:         uploader,
+		compiler:         compiler,
+		logger:           logger,
+		processingUpdate: false,
 	}
 }
 
 // SetTargets sets the board and compile options for the watcher
 func (w *WatchCore) SetTargets(targets WatchCoreTargets) error {
 	if w.watcher != nil {
-		w.watcher.Close()
+		w.watcher.Stop()
 		w.watcher = nil
 	}
 
@@ -73,22 +75,22 @@ func (w *WatchCore) Watch() error {
 		return errors.New("must call SetTargets before calling watch")
 	}
 
-	w.port.Stop()
 	go w.port.Watch()
-	w.watcher.Watch()
-	return nil
+	return w.watcher.Watch()
 }
 
 // Stop deletes watcher and unattaches from port
 func (w *WatchCore) Stop() {
+	if w.port != nil {
+		w.port.Close()
+		w.port = nil
+	}
+
 	if w.watcher != nil {
 		w.watcher.Close()
 		w.watcher = nil
 	}
-	if w.port != nil {
-		w.port.Stop()
-		w.port = nil
-	}
+
 	w.baud = 0
 	w.board = nil
 	w.compileOpts = nil
@@ -102,15 +104,20 @@ func (w *WatchCore) onFileChange() {
 		return
 	}
 
-	w.logger.Info("Stopping file watcher")
-	w.watcher.Stop()
+	if w.processingUpdate {
+		w.logger.Debug("already processing file change...")
+		return
+	}
 
-	w.logger.Info("Stopping serial port")
-	w.port.Stop()
+	w.processingUpdate = true
+	w.watcher.Stop()
+	w.port.Close()
 
 	defer func() {
-		w.logger.Info("Restarting file watcher")
-		w.watcher.Restart()
+		w.processingUpdate = false
+		if w.watcher != nil {
+			w.watcher.Restart()
+		}
 	}()
 
 	w.logger.Info("Recompiling")
@@ -129,8 +136,9 @@ func (w *WatchCore) onFileChange() {
 	}
 	w.logger.Info("Upload successful")
 
-	w.logger.Info("Restarting port watcher")
-	go w.port.Watch()
+	if w.port != nil {
+		go w.port.Watch()
+	}
 }
 
 func (w *WatchCore) hasTargets() bool {

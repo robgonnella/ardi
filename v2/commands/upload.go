@@ -1,6 +1,10 @@
 package commands
 
 import (
+	"os"
+	"os/signal"
+	"syscall"
+
 	"github.com/robgonnella/ardi/v2/types"
 	"github.com/robgonnella/ardi/v2/util"
 	"github.com/sirupsen/logrus"
@@ -62,6 +66,15 @@ func getUploadCmd() *cobra.Command {
 			logger.Info("Upload successful")
 
 			if attach {
+				sigs := make(chan os.Signal, 1)
+				signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+
+				go func() {
+					<-sigs
+					logger.Debug("gracefully shutting down serail port logger")
+					ardiCore.Uploader.Detach()
+				}()
+
 				ardiCore.Uploader.Attach(board.Port, project.Baud, nil)
 			}
 

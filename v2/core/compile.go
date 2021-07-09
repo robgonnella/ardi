@@ -12,6 +12,7 @@ import (
 type CompileCore struct {
 	logger    *log.Logger
 	cli       *cli.Wrapper
+	watcher   *FileWatcher
 	compiling bool
 }
 
@@ -42,8 +43,9 @@ func (c *CompileCore) WatchForChanges(opts cli.CompileOpts) error {
 	if err != nil {
 		return nil
 	}
+	c.watcher = watcher
 
-	watcher.AddListener(func() {
+	c.watcher.AddListener(func() {
 		c.logger.Infof("Recompiling %s", opts.SketchPath)
 		if err := c.Compile(opts); err != nil {
 			c.logger.WithError(err).Error("Compilation failed")
@@ -51,9 +53,17 @@ func (c *CompileCore) WatchForChanges(opts cli.CompileOpts) error {
 		c.logger.Info("Compilation successful")
 	})
 
-	watcher.Watch()
+	c.watcher.Watch()
 
 	return nil
+}
+
+// StopWatching stop watching for file changes
+func (c *CompileCore) StopWatching() {
+	if c.watcher != nil {
+		c.watcher.Stop()
+		c.watcher = nil
+	}
 }
 
 // IsCompiling returns if core is currently compiling
