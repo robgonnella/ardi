@@ -35,7 +35,7 @@ func TestWatchCore(t *testing.T) {
 		cpCmd := exec.Command("cp", sketchCopy, sketch)
 		env.ClearStdout()
 		port := mocks.NewMockSerialPort(env.Ctrl)
-		port.EXPECT().Stop().AnyTimes()
+		port.EXPECT().Close().AnyTimes()
 		port.EXPECT().Watch().AnyTimes()
 
 		instance := &rpc.Instance{Id: int32(1)}
@@ -79,14 +79,13 @@ func TestWatchCore(t *testing.T) {
 
 		assert.Contains(env.T, env.Stdout.String(), "Reuploading")
 		assert.Contains(env.T, env.Stdout.String(), "Upload successful")
-		env.ArdiCore.Watcher.Stop()
 	})
 
 	testutil.RunUnitTest("does not reupload on compilation error", t, func(env *testutil.UnitTestEnv) {
 		cpCmd := exec.Command("cp", sketchCopy, sketch)
 		env.ClearStdout()
 		port := mocks.NewMockSerialPort(env.Ctrl)
-		port.EXPECT().Stop().AnyTimes()
+		port.EXPECT().Close().AnyTimes()
 		port.EXPECT().Watch().Times(1)
 
 		dummyErr := errors.New("dummy errror")
@@ -131,6 +130,5 @@ func TestWatchCore(t *testing.T) {
 
 		assert.NotContains(env.T, env.Stdout.String(), "Reuploading")
 		assert.NotContains(env.T, env.Stdout.String(), "Upload successful")
-		env.ArdiCore.Watcher.Stop()
 	})
 }

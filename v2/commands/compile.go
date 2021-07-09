@@ -2,6 +2,9 @@ package commands
 
 import (
 	"errors"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/robgonnella/ardi/v2/core"
 	"github.com/spf13/cobra"
@@ -49,6 +52,14 @@ func getCompileCmd() *cobra.Command {
 					return err
 				}
 				if watch {
+					sigs := make(chan os.Signal, 1)
+					signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+
+					go func() {
+						<-sigs
+						logger.Debug("gracefully shutting down file watcher")
+						ardiCore.Compiler.StopWatching()
+					}()
 					return ardiCore.Compiler.WatchForChanges(*opts)
 				}
 				return nil

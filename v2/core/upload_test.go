@@ -58,7 +58,7 @@ func TestUploadCore(t *testing.T) {
 		baud := 9600
 		port := mocks.NewMockSerialPort(env.Ctrl)
 
-		port.EXPECT().Stop().Times(1)
+		port.EXPECT().Close().Times(1)
 		port.EXPECT().Watch().Times(1)
 		env.ArdiCore.Uploader.Attach(device, baud, port)
 	})
