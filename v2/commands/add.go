@@ -19,7 +19,6 @@ func getAddPlatformCmd() *cobra.Command {
 					logger.WithError(err).Errorf("Failed to add arduino platform %s", p)
 					return err
 				}
-				logger.Infof("Successfully installed %s@%s", installed, vers)
 				if err := ardiCore.Config.AddPlatform(installed, vers); err != nil {
 					return err
 				}
