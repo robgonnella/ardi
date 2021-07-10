@@ -83,6 +83,7 @@ func (c *PlatformCore) Add(platform string) (string, string, error) {
 		return "", "", err
 	}
 
+	c.logger.Infof("Installed Platform: %s %s", installed, vers)
 	return installed, vers, nil
 }
 
