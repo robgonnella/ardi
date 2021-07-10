@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"path"
+	"path/filepath"
 	"testing"
 
 	rpc "github.com/arduino/arduino-cli/rpc/cc/arduino/cli/commands/v1"
@@ -293,12 +294,13 @@ func TestCliWrapperTest(t *testing.T) {
 		inst := &rpc.Instance{Id: int32(1)}
 		fqbn := "some:fqbn"
 		sketchDir := "."
+		resolvedSketchDir, _ := filepath.Abs(sketchDir)
 		device := "/dev/null"
 
 		req := &rpc.UploadRequest{
 			Instance:   inst,
 			Fqbn:       fqbn,
-			SketchPath: sketchDir,
+			SketchPath: resolvedSketchDir,
 			Port:       device,
 			Verbose:    false,
 		}
@@ -312,18 +314,22 @@ func TestCliWrapperTest(t *testing.T) {
 
 	runCliTest("compiles sketches", t, func(env cliTestEnv, st *testing.T) {
 		inst := &rpc.Instance{Id: int32(1)}
+		sketchDir := "."
+		resolvedSketchDir, _ := filepath.Abs(sketchDir)
+		resolvedSketchPath := path.Join(resolvedSketchDir, "some_sketch.ino")
+		resolvedBuildDir := path.Join(resolvedSketchDir, "build")
 
 		opts := cli.CompileOpts{
 			FQBN:       "some:fqbn",
-			SketchDir:  ".",
+			SketchDir:  sketchDir,
 			SketchPath: "./some_sketch.ino",
 		}
 
 		req := &rpc.CompileRequest{
 			Instance:        inst,
 			Fqbn:            opts.FQBN,
-			SketchPath:      opts.SketchPath,
-			ExportDir:       path.Join(opts.SketchDir, "build"),
+			SketchPath:      resolvedSketchPath,
+			ExportDir:       resolvedBuildDir,
 			BuildProperties: opts.BuildProps,
 			ShowProperties:  opts.ShowProps,
 			Verbose:         false,

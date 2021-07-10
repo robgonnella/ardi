@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"path/filepath"
 	"sort"
 	"strings"
 	"text/tabwriter"
@@ -279,15 +280,20 @@ func (c *Wrapper) AllBoards() []*BoardWithPort {
 func (c *Wrapper) Upload(fqbn, sketchDir, device string) error {
 	inst := c.getRPCInstance()
 
+	resolvedSketch, err := filepath.Abs(sketchDir)
+	if err != nil {
+		return errors.New("could not resolve sketch directory")
+	}
+
 	req := &rpc.UploadRequest{
 		Instance:   inst,
 		Fqbn:       fqbn,
-		SketchPath: sketchDir,
+		SketchPath: resolvedSketch,
 		Port:       device,
 		Verbose:    c.isVerbose(),
 	}
 
-	_, err := c.cli.Upload(
+	_, err = c.cli.Upload(
 		c.ctx,
 		req,
 		os.Stdout,
@@ -310,19 +316,29 @@ type CompileOpts struct {
 func (c *Wrapper) Compile(opts CompileOpts) error {
 	inst := c.getRPCInstance()
 
-	exportDir := path.Join(opts.SketchDir, "build")
+	resolvedSketchPath, err := filepath.Abs(opts.SketchPath)
+	if err != nil {
+		return errors.New("could not resolve sketch path")
+	}
+
+	resolvedSketchDir, err := filepath.Abs(opts.SketchDir)
+	if err != nil {
+		return errors.New("could not resolve sketch directory")
+	}
+
+	exportDir := path.Join(resolvedSketchDir, "build")
 
 	req := &rpc.CompileRequest{
 		Instance:        inst,
 		Fqbn:            opts.FQBN,
-		SketchPath:      opts.SketchPath,
+		SketchPath:      resolvedSketchPath,
 		ExportDir:       exportDir,
 		BuildProperties: opts.BuildProps,
 		ShowProperties:  opts.ShowProps,
 		Verbose:         c.isVerbose(),
 	}
 
-	_, err := c.cli.Compile(
+	_, err = c.cli.Compile(
 		c.ctx,
 		req,
 		os.Stdout,

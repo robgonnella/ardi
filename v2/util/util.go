@@ -262,14 +262,6 @@ func ProcessSketch(filePath string) (*types.Project, error) {
 
 	sketchBaud := ParseSketchBaud(sketchFile)
 
-	if sketchFile, err = filepath.Abs(sketchFile); err != nil {
-		return nil, errors.New("could not resolve sketch file path")
-	}
-
-	if sketchDir, err = filepath.Abs(sketchDir); err != nil {
-		return nil, errors.New("could not resolve sketch directory")
-	}
-
 	return &types.Project{
 		Directory: sketchDir,
 		Sketch:    sketchFile,
