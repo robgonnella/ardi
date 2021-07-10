@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"errors"
 	"os"
 	"os/signal"
 	"syscall"
@@ -35,16 +36,23 @@ func getWatchCmd() *cobra.Command {
 				sketch = args[0]
 			}
 
+			// Ignore errors here as user may have provided fqbn via build to mitigate
+			// custom boards that don't show up via auto detect for some reason
+			board, _ := ardiCore.Cli.GetTargetBoard(fqbn, port, true)
+
 			if build, ok := builds[sketch]; ok {
 				baud = util.ParseSketchBaud(build.Sketch)
 				if compileOpts, err = ardiCore.CompileArdiBuild(sketch); err != nil {
 					return err
 				}
+				if board == nil {
+					board = &cli.BoardWithPort{FQBN: compileOpts.FQBN, Port: port}
+				}
 			} else {
 				baud = util.ParseSketchBaud(sketch)
 				sketchOpts := core.CompileSketchOpts{
 					Sketch:    sketch,
-					FQBN:      fqbn,
+					FQBN:      board.FQBN,
 					BuildPros: buildProps,
 					ShowProps: false,
 				}
@@ -53,9 +61,8 @@ func getWatchCmd() *cobra.Command {
 				}
 			}
 
-			board, err := ardiCore.Cli.GetTargetBoard(compileOpts.FQBN, port, true)
-			if err != nil || board == nil {
-				return err
+			if board == nil || board.FQBN == "" || board.Port == "" {
+				return errors.New("no connected boards detected")
 			}
 
 			if err := ardiCore.Uploader.Upload(board, compileOpts.SketchDir); err != nil {

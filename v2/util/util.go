@@ -315,7 +315,8 @@ func findSketch(directory string) (string, error) {
 	}
 
 	sketchFile := ""
-	searchName := fmt.Sprintf("%s.ino", filepath.Base(directory))
+	absPath, _ := filepath.Abs(directory)
+	searchName := fmt.Sprintf("%s.ino", filepath.Base(absPath))
 
 	d, err := os.Open(directory)
 	if err != nil {

@@ -1,10 +1,12 @@
 package commands
 
 import (
+	"errors"
 	"os"
 	"os/signal"
 	"syscall"
 
+	cli "github.com/robgonnella/ardi/v2/cli-wrapper"
 	"github.com/robgonnella/ardi/v2/types"
 	"github.com/robgonnella/ardi/v2/util"
 	"github.com/sirupsen/logrus"
@@ -29,6 +31,10 @@ func getUploadCmd() *cobra.Command {
 				build = args[0]
 			}
 
+			// Ignore errors here as user may have provided fqbn via build to mitigate
+			// custom boards that don't show up via auto detect for some reason
+			board, _ := ardiCore.Cli.GetTargetBoard(fqbn, port, true)
+
 			project := &types.Project{}
 			var err error
 
@@ -36,19 +42,14 @@ func getUploadCmd() *cobra.Command {
 				project.Directory = ardiBuild.Directory
 				project.Sketch = ardiBuild.Sketch
 				project.Baud = ardiBuild.Baud
-				if fqbn == "" {
-					fqbn = ardiBuild.FQBN
+				if board == nil {
+					board = &cli.BoardWithPort{FQBN: ardiBuild.FQBN, Port: port}
 				}
 			} else {
 				project, err = util.ProcessSketch(build)
 				if err != nil {
 					return err
 				}
-			}
-
-			board, err := ardiCore.Cli.GetTargetBoard(fqbn, port, true)
-			if err != nil {
-				return err
 			}
 
 			fields := logrus.Fields{
@@ -58,6 +59,9 @@ func getUploadCmd() *cobra.Command {
 			}
 
 			logger.WithFields(fields).Info("Uploading...")
+			if board == nil || board.FQBN == "" || board.Port == "" {
+				return errors.New("no connected boards detected")
+			}
 
 			if err := ardiCore.Uploader.Upload(board, project.Directory); err != nil {
 				return err

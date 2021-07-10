@@ -77,6 +77,17 @@ func TestUploadCommand(t *testing.T) {
 			assert.NoError(st, err)
 		})
 
+		env.T.Run("uploads a sketch using auto detected values", func(st *testing.T) {
+			inst.EXPECT().CreateInstance().Return(instance).AnyTimes()
+			inst.EXPECT().ConnectedBoards(instance.GetId()).Return(detectedPorts, nil)
+			inst.EXPECT().GetPlatforms(platformReq)
+			inst.EXPECT().Upload(gomock.Any(), req, gomock.Any(), gomock.Any())
+
+			args = []string{"upload", sketch}
+			err = env.ExecuteWithMockCli(args, inst)
+			assert.NoError(st, err)
+		})
+
 		env.T.Run("returns upload errors", func(st *testing.T) {
 			dummyErr := errors.New("dummy")
 			inst.EXPECT().CreateInstance().Return(instance).AnyTimes()
@@ -91,6 +102,9 @@ func TestUploadCommand(t *testing.T) {
 		})
 
 		env.T.Run("errors if sketch not found", func(st *testing.T) {
+			inst.EXPECT().CreateInstance().Return(instance).AnyTimes()
+			inst.EXPECT().ConnectedBoards(instance.GetId()).Return([]*rpc.DetectedPort{}, nil)
+			inst.EXPECT().GetPlatforms(platformReq)
 			args = []string{"upload", "--fqbn", fqbn, bogusSketch}
 			err = env.ExecuteWithMockCli(args, inst)
 			assert.Error(st, err)
