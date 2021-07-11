@@ -13,6 +13,7 @@ func getWatchCmd() *cobra.Command {
 	var fqbn string
 	var buildProps []string
 	var port string
+	var baud int
 	var watchCmd = &cobra.Command{
 		Use:   "attach-and-watch [sketch|build]",
 		Short: "Compile, upload, watch board logs, and watch for sketch changes",
@@ -23,7 +24,6 @@ func getWatchCmd() *cobra.Command {
 			"used for compilation, upload, and watch path",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var compileOpts *cli.CompileOpts
-			var baud int
 			var err error
 
 			builds := ardiCore.Config.GetBuilds()
@@ -38,7 +38,10 @@ func getWatchCmd() *cobra.Command {
 			board, _ := ardiCore.Cli.GetTargetBoard(fqbn, port, true)
 
 			if build, ok := builds[sketch]; ok {
-				baud = util.ParseSketchBaud(build.Sketch)
+				if baud == 0 {
+					baud = util.ParseSketchBaud(build.Sketch)
+					logger.WithField("baud", baud).Info("Using parsed baud from sketch")
+				}
 				if compileOpts, err = ardiCore.CompileArdiBuild(sketch); err != nil {
 					return err
 				}
@@ -46,7 +49,10 @@ func getWatchCmd() *cobra.Command {
 					board = &cli.BoardWithPort{FQBN: compileOpts.FQBN, Port: port}
 				}
 			} else {
-				baud = util.ParseSketchBaud(sketch)
+				if baud == 0 {
+					baud = util.ParseSketchBaud(sketch)
+					logger.WithField("baud", baud).Info("Using parsed baud from sketch")
+				}
 				sketchOpts := core.CompileSketchOpts{
 					Sketch:    sketch,
 					FQBN:      board.FQBN,
@@ -79,6 +85,7 @@ func getWatchCmd() *cobra.Command {
 	}
 
 	watchCmd.Flags().StringVarP(&fqbn, "fqbn", "f", "", "Specify fully qualified board name")
+	watchCmd.Flags().IntVarP(&baud, "baud", "b", 0, "Specify baud rate")
 	watchCmd.Flags().StringArrayVarP(&buildProps, "build-prop", "p", []string{}, "Specify build property to compiler")
 	watchCmd.Flags().StringVar(&port, "port", "", "The port your arduino board is connected to")
 	return watchCmd
