@@ -2,9 +2,6 @@ package commands
 
 import (
 	"errors"
-	"os"
-	"os/signal"
-	"syscall"
 
 	cli "github.com/robgonnella/ardi/v2/cli-wrapper"
 	"github.com/robgonnella/ardi/v2/core"
@@ -76,15 +73,7 @@ func getWatchCmd() *cobra.Command {
 			}
 			ardiCore.Watcher.SetTargets(targets)
 
-			sigs := make(chan os.Signal, 1)
-			signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
-
-			go func() {
-				<-sigs
-				logger.Debug("gracefully shutting down attach-and-watch")
-				ardiCore.Watcher.Stop()
-			}()
-
+			defer ardiCore.Watcher.Stop()
 			return ardiCore.Watcher.Watch()
 		},
 	}

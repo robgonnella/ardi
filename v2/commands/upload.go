@@ -2,9 +2,6 @@ package commands
 
 import (
 	"errors"
-	"os"
-	"os/signal"
-	"syscall"
 
 	cli "github.com/robgonnella/ardi/v2/cli-wrapper"
 	"github.com/robgonnella/ardi/v2/types"
@@ -24,6 +21,8 @@ func getUploadCmd() *cobra.Command {
 			"the sketch argument matches a user defined build in ardi.json, the " +
 			"build values will be used to find the appropraite build to upload",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			defer ardiCore.Uploader.Detach() // noop if not attached
+
 			builds := ardiCore.Config.GetBuilds()
 
 			build := "."
@@ -52,16 +51,16 @@ func getUploadCmd() *cobra.Command {
 				}
 			}
 
+			if board == nil || board.FQBN == "" || board.Port == "" {
+				return errors.New("no connected boards detected")
+			}
+
 			fields := logrus.Fields{
 				"build":  project.Directory,
 				"fqbn":   board.FQBN,
 				"device": board.Port,
 			}
-
 			logger.WithFields(fields).Info("Uploading...")
-			if board == nil || board.FQBN == "" || board.Port == "" {
-				return errors.New("no connected boards detected")
-			}
 
 			if err := ardiCore.Uploader.Upload(board, project.Directory); err != nil {
 				return err
@@ -70,15 +69,6 @@ func getUploadCmd() *cobra.Command {
 			logger.Info("Upload successful")
 
 			if attach {
-				sigs := make(chan os.Signal, 1)
-				signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
-
-				go func() {
-					<-sigs
-					logger.Debug("gracefully shutting down serail port logger")
-					ardiCore.Uploader.Detach()
-				}()
-
 				ardiCore.Uploader.Attach(board.Port, project.Baud, nil)
 			}
 
