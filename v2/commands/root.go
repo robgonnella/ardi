@@ -67,9 +67,14 @@ func cmdIsVersion(cmd string) bool {
 	return cmd == "ardi version"
 }
 
+func cmdIsArdiAttach(cmd string) bool {
+	return cmd == "ardi attach"
+}
+
 func shouldShowProjectError(cmd string) bool {
 	return !util.IsProjectDirectory() &&
 		!cmdIsProjectInit(cmd) &&
+		!cmdIsArdiAttach(cmd) &&
 		!cmdIsHelp(cmd) &&
 		!cmdIsVersion(cmd)
 }
@@ -144,5 +149,6 @@ func GetRootCmd(cmdLogger *log.Logger, instance cli.Cli) *cobra.Command {
 	rootCmd.AddCommand(getUploadCmd())
 	rootCmd.AddCommand(getVersionCmd())
 	rootCmd.AddCommand(getWatchCmd())
+	rootCmd.AddCommand(getAttachCmd())
 	return rootCmd
 }
