@@ -127,13 +127,8 @@ coverage:
 
 .PHONY: badge
 badge:
-ifeq ($(ci),false)
 	total=$$(go tool cover -func $(coverage_out) | grep total: | awk '{print $$3}') \
-		&& virtualenv .venv \
-		&& source .venv/bin/activate \
-		&& pip install -r requirements.txt \
-		&& python ./scripts/gen_badge.py $$total
-endif
+		&& ./scripts/gen_badge.sh $$total
 
 .PHONY: test-report
 test-report:
