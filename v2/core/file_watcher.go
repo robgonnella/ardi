@@ -72,21 +72,30 @@ func (f *FileWatcher) Watch() error {
 					f.logger.Error("unknown file watch error")
 					return
 				}
+
 				f.logger.Debugf("event: %+v", event)
-				if event.Op&fsnotify.Write == fsnotify.Write {
-					f.logger.Debugf("modified file: %s", event.Name)
-					for _, l := range f.listeners {
-						go l()
+
+				writeEvt := event.Op&fsnotify.Write == fsnotify.Write
+				removeEvt := event.Op&fsnotify.Remove == fsnotify.Remove
+
+				// Remove evts are fired as the last event in atomic updates
+				// i.e. mv file.tmp file
+				// In this case we want to make sure the file still exists after
+				// the remove by re-adding it to the watcher
+				if removeEvt {
+					if err := f.watcher.Add(f.file); err != nil {
+						f.logger.WithError(err).Error("file watcher error")
+						f.close <- true
+						return
 					}
 				}
-			case err, ok := <-f.watcher.Errors:
-				if !ok {
-					f.logger.Debug("unknown file watch error")
-					return
+
+				if writeEvt || removeEvt {
+					f.executeListeners()
 				}
-				f.watcher.Close()
-				f.watcher = nil
+			case err, _ := <-f.watcher.Errors:
 				f.logger.WithError(err).Error("Watch error")
+				f.close <- true
 				return
 			}
 		}
@@ -96,17 +105,29 @@ func (f *FileWatcher) Watch() error {
 	for {
 		select {
 		case <-f.stop:
-			f.watcher.Remove(f.file)
-			f.stop <- true
+			if f.watcher != nil {
+				f.watcher.Remove(f.file)
+				f.stop <- true
+			}
 		case <-f.restart:
-			f.watcher.Add(f.file)
-			f.restart <- true
+			if f.watcher != nil {
+				f.watcher.Add(f.file)
+				f.restart <- true
+			}
 		case <-f.close:
-			f.watcher.Remove(f.file)
-			f.watcher.Close()
-			f.watcher = nil
+			if f.watcher != nil {
+				f.watcher.Remove(f.file)
+				f.watcher.Close()
+				f.watcher = nil
+			}
 			return nil
 		}
+	}
+}
+
+func (f *FileWatcher) executeListeners() {
+	for _, l := range f.listeners {
+		go l()
 	}
 }
 
