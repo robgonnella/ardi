@@ -32,4 +32,4 @@ jobs:
           token: ${{ secrets.GIST_SECRET }}
           gist_id: 4209bcb6a7198958ec0770b963684389
           gist_file_name: badge.json
-          file_path: ./badge.json
+          file_path: ./v2/badge.json
