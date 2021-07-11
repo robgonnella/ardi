@@ -24,4 +24,12 @@ jobs:
       - name: install golint
         run: go get -u golang.org/x/lint/golint
       - name: run ardi v2 tests
-        run: 'ci=true make test-all'
+        run: 'make test-all'
+      - name: coverage badge
+        if: ${{ github.ref == 'refs/heads/main' }}
+        uses: exuanbo/actions-deploy-gist@v1
+        with:
+          token: ${{ secrets.GIST_SECRET }}
+          gist_id: 4209bcb6a7198958ec0770b963684389
+          gist_file_name: badge.json
+          file_path: ./badge.json
