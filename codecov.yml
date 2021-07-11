@@ -1,0 +1,11 @@
+ignore:
+  - .github/**/*
+  - ardi/**/*
+  - arguments/**/*
+  - commands/**/*
+  - **/docs/**/*
+  - **/main.go
+  - **/Makefile
+  - **/*.md
+  - v2/cli-wrapper/arduino-cli.go
+  - v2/command/help.go
