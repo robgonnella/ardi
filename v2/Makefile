@@ -31,9 +31,9 @@ $(foreach o,$(objects), $(eval zips += $(o).zip))
 
 #### Test Objects ####
 test_output_dir = test_artifacts
-coverage_out = $(test_output_dir)/coverage.out
-integration_out = $(test_output_dir)/int.out
-unit_out = $(test_output_dir)/unit.out
+coverage_out = $(test_output_dir)/coverage.txt
+integration_out = $(test_output_dir)/int.txt
+unit_out = $(test_output_dir)/unit.txt
 
 #### Test Packages ####
 unit_test_pkgs = github.com/robgonnella/ardi/v2/core \
@@ -91,6 +91,7 @@ test-unit:
 		-v \
 		-p 1 \
 		-coverprofile $(unit_out) \
+		-covermode=atomic \
 		$(unit_test_pkgs)
 
 .PHONY: test-int
@@ -101,6 +102,7 @@ test-integration:
 		-v \
 		-p 1 \
 		-coverprofile $(integration_out) \
+		-covermode=atomic \
 		$(integration_test_pkgs)
 
 .PHONY: test-e2e
@@ -115,6 +117,7 @@ test-all: lint
 		-v \
 		-p 1 \
 		-coverprofile $(coverage_out) \
+		-covermode=atomic \
 		$(unit_test_pkgs) \
 		$(integration_test_pkgs)
 	$(MAKE) test-e2e

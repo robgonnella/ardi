@@ -12,7 +12,7 @@ request_badge() {
   if (( $(echo "${coverage} > 85.0" | bc -l) )); then
     color='brightgreen'
   fi
-  cat <<-EOF > badge.json
+  cat <<-EOF > test_artifacts/badge.json
   {
     "schemaVersion": 1,
     "label": "coverage",
