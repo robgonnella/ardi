@@ -57,12 +57,43 @@ func (f *FileWatcher) Watch() error {
 
 	f.logger.Infof("Watching %s for changes", f.file)
 
-	for {
-		if f.watcher == nil {
-			f.logger.Debug("file watcher already closed")
-			return nil
-		}
+	// Run select statement for fsnotify events in separate goroutine
+	// as recommended here : https://github.com/fsnotify/fsnotify#faq
+	go func() {
+		for {
+			if f.watcher == nil {
+				f.logger.Debug("file watcher already closed")
+				return
+			}
 
+			select {
+			case event, ok := <-f.watcher.Events:
+				if !ok {
+					f.logger.Error("unknown file watch error")
+					return
+				}
+				f.logger.Debugf("event: %+v", event)
+				if event.Op&fsnotify.Write == fsnotify.Write {
+					f.logger.Debugf("modified file: %s", event.Name)
+					for _, l := range f.listeners {
+						go l()
+					}
+				}
+			case err, ok := <-f.watcher.Errors:
+				if !ok {
+					f.logger.Debug("unknown file watch error")
+					return
+				}
+				f.watcher.Close()
+				f.watcher = nil
+				f.logger.WithError(err).Error("Watch error")
+				return
+			}
+		}
+	}()
+
+	// Block and wait for requests
+	for {
 		select {
 		case <-f.stop:
 			f.watcher.Remove(f.file)
@@ -75,27 +106,6 @@ func (f *FileWatcher) Watch() error {
 			f.watcher.Close()
 			f.watcher = nil
 			return nil
-		case event, ok := <-f.watcher.Events:
-			if !ok {
-				f.logger.Error("unknown file watch error")
-				return nil
-			}
-			f.logger.Debugf("event: %+v", event)
-			if event.Op&fsnotify.Write == fsnotify.Write {
-				f.logger.Debugf("modified file: %s", event.Name)
-				for _, l := range f.listeners {
-					go l()
-				}
-			}
-		case err, ok := <-f.watcher.Errors:
-			if !ok {
-				f.logger.Debug("unknown file watch error")
-				return nil
-			}
-			f.watcher.Close()
-			f.watcher = nil
-			f.logger.WithError(err).Error("Watch error")
-			return err
 		}
 	}
 }
