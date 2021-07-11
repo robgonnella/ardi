@@ -34,18 +34,20 @@ func getAddBuildCmd() *cobra.Command {
 	var name string
 	var fqbn string
 	var sketch string
+	var baud int
 	var buildProps []string
 	addCmd := &cobra.Command{
 		Use:   "build",
 		Long:  "\nAdd build config to project",
 		Short: "Add build config to project",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return ardiCore.Config.AddBuild(name, sketch, fqbn, buildProps)
+			return ardiCore.Config.AddBuild(name, sketch, fqbn, baud, buildProps)
 		},
 	}
 	addCmd.Flags().StringVarP(&name, "name", "n", "", "Custom name for the build")
 	addCmd.Flags().StringVarP(&fqbn, "fqbn", "f", "", "Specify fully qualified board name")
 	addCmd.Flags().StringVarP(&sketch, "sketch", "s", "", "Path to .ino file or sketch directory")
+	addCmd.Flags().IntVarP(&baud, "baud", "b", 0, "Specify baud rate for build")
 	addCmd.Flags().StringArrayVarP(&buildProps, "build-prop", "p", []string{}, "Specify build property to compiler")
 	addCmd.MarkFlagRequired("name")
 	addCmd.MarkFlagRequired("fqbn")

@@ -20,10 +20,10 @@ func TestArdiConfigBuilds(t *testing.T) {
 		fqbn := "somefqbn"
 		buildProps := []string{"someprop=somevalue"}
 
-		err := env.ArdiCore.Config.AddBuild(name1, dir1, fqbn, buildProps)
+		err := env.ArdiCore.Config.AddBuild(name1, dir1, fqbn, 0, buildProps)
 		assert.NoError(env.T, err)
 
-		err = env.ArdiCore.Config.AddBuild(name2, dir2, fqbn, buildProps)
+		err = env.ArdiCore.Config.AddBuild(name2, dir2, fqbn, 0, buildProps)
 		assert.NoError(env.T, err)
 
 		builds := env.ArdiCore.Config.GetBuilds()
@@ -31,6 +31,8 @@ func TestArdiConfigBuilds(t *testing.T) {
 		assert.True(env.T, ok)
 		assert.Equal(env.T, dir1, build.Directory)
 		assert.Equal(env.T, fqbn, build.FQBN)
+		assert.Equal(env.T, 9600, build.Baud)
+
 		assert.Contains(env.T, build.Props, "someprop")
 		assert.Equal(env.T, build.Props["someprop"], "somevalue")
 
@@ -38,6 +40,7 @@ func TestArdiConfigBuilds(t *testing.T) {
 		assert.True(env.T, ok)
 		assert.Equal(env.T, dir2, build.Directory)
 		assert.Equal(env.T, fqbn, build.FQBN)
+		assert.Equal(env.T, 14400, build.Baud)
 		assert.Contains(env.T, build.Props, "someprop")
 		assert.Equal(env.T, build.Props["someprop"], "somevalue")
 
@@ -70,6 +73,25 @@ func TestArdiConfigBuilds(t *testing.T) {
 		assert.False(env.T, ok)
 	})
 
+	testutil.RunUnitTest("overrides baud", t, func(env *testutil.UnitTestEnv) {
+		util.InitProjectDirectory()
+		name := "somename"
+		dir := testutil.Blink14400ProjectDir()
+		fqbn := "somefqbn"
+		buildProps := []string{}
+		baud := 9600
+
+		err := env.ArdiCore.Config.AddBuild(name, dir, fqbn, baud, buildProps)
+		assert.NoError(env.T, err)
+
+		builds := env.ArdiCore.Config.GetBuilds()
+		build, ok := builds[name]
+		assert.True(env.T, ok)
+		assert.Equal(env.T, dir, build.Directory)
+		assert.Equal(env.T, fqbn, build.FQBN)
+		assert.Equal(env.T, baud, build.Baud)
+	})
+
 	testutil.RunUnitTest("errors if sketch not found", t, func(env *testutil.UnitTestEnv) {
 		util.InitProjectDirectory()
 		name := "somename"
@@ -77,7 +99,7 @@ func TestArdiConfigBuilds(t *testing.T) {
 		fqbn := "somefqbn"
 		buildProps := []string{"someprop=somevalue"}
 
-		err := env.ArdiCore.Config.AddBuild(name, dir, fqbn, buildProps)
+		err := env.ArdiCore.Config.AddBuild(name, dir, fqbn, 0, buildProps)
 		assert.Error(env.T, err)
 	})
 }
@@ -170,7 +192,7 @@ func TestArdiConfigCompileOpts(t *testing.T) {
 			BuildProps: buildProps,
 		}
 
-		err := env.ArdiCore.Config.AddBuild(name, dir, fqbn, buildProps)
+		err := env.ArdiCore.Config.AddBuild(name, dir, fqbn, 0, buildProps)
 		assert.NoError(env.T, err)
 
 		compileOpts, err := env.ArdiCore.Config.GetCompileOpts(name)

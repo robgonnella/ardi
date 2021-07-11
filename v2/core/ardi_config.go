@@ -31,10 +31,15 @@ func NewArdiConfig(confPath string, initialConfig types.ArdiConfig, logger *log.
 }
 
 // AddBuild to ardi.json
-func (a *ArdiConfig) AddBuild(name, sketch, fqbn string, buildProps []string) error {
+func (a *ArdiConfig) AddBuild(name, sketch, fqbn string, baud int, buildProps []string) error {
 	project, err := util.ProcessSketch(sketch)
 	if err != nil {
 		return err
+	}
+	if baud != 0 {
+		project.Baud = baud
+	} else {
+		a.logger.WithField("baud", baud).Info("using parsed baud from sketch")
 	}
 
 	newBuild := types.ArdiBuild{

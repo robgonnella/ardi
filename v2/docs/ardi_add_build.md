@@ -14,6 +14,7 @@ ardi add build [flags]
 ### Options
 
 ```
+  -b, --baud int                 Specify baud rate for build
   -p, --build-prop stringArray   Specify build property to compiler
   -f, --fqbn string              Specify fully qualified board name
   -h, --help                     help for build

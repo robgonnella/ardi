@@ -11,6 +11,7 @@ import (
 )
 
 func getUploadCmd() *cobra.Command {
+	var baud int
 	var attach bool
 	var fqbn string
 	var port string
@@ -49,6 +50,15 @@ func getUploadCmd() *cobra.Command {
 				if err != nil {
 					return err
 				}
+				if baud != 0 {
+					project.Baud = baud
+				} else {
+					logger.WithField("baud", project.Baud).Info("Using parsed baud from sketch")
+				}
+			}
+
+			if board == nil || board.FQBN == "" || board.Port == "" {
+				return errors.New("no connected boards detected")
 			}
 
 			if board == nil || board.FQBN == "" || board.Port == "" {
@@ -76,6 +86,7 @@ func getUploadCmd() *cobra.Command {
 		},
 	}
 	uploadCmd.Flags().BoolVarP(&attach, "attach", "a", false, "Attach to board port and print logs")
+	uploadCmd.Flags().IntVarP(&baud, "baud", "b", 0, "Specify baud rate when using \"attach\" flag")
 	uploadCmd.Flags().StringVarP(&fqbn, "fqbn", "f", "", "The FQBN of the board you want to upload to")
 	uploadCmd.Flags().StringVarP(&port, "port", "p", "", "The port your arduino board is connected to")
 

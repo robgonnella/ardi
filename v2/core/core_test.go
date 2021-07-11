@@ -19,7 +19,7 @@ func TestArdiCore(t *testing.T) {
 		fqbn := "someboardfqbn"
 		exportDir := path.Join(testutil.BlinkProjectDir(), "build")
 
-		err := env.ArdiCore.Config.AddBuild(buildName, sketch, fqbn, []string{})
+		err := env.ArdiCore.Config.AddBuild(buildName, sketch, fqbn, 0, []string{})
 		assert.NoError(env.T, err)
 
 		expectedCompileOpts := cli.CompileOpts{
@@ -55,7 +55,7 @@ func TestArdiCore(t *testing.T) {
 		fqbn := "someboardfqbn"
 		exportDir := path.Join(testutil.BlinkProjectDir(), "build")
 
-		err := env.ArdiCore.Config.AddBuild(buildName, sketch, fqbn, []string{})
+		err := env.ArdiCore.Config.AddBuild(buildName, sketch, fqbn, 0, []string{})
 		assert.NoError(env.T, err)
 
 		sketchOpts := core.CompileSketchOpts{
