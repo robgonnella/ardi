@@ -25,14 +25,6 @@ jobs:
         run: go get -u golang.org/x/lint/golint
       - name: run ardi v2 tests
         run: 'make test-all'
-      - name: generate coverage badge
-        if: ${{ github.ref == 'refs/heads/main' }}
-        uses: exuanbo/actions-deploy-gist@v1
-        with:
-          token: ${{ secrets.GIST_SECRET }}
-          gist_id: 4209bcb6a7198958ec0770b963684389
-          gist_file_name: badge.json
-          file_path: ./v2/test_artifacts/badge.json
       - name: upload codecov report
         if: ${{ github.ref == 'refs/heads/main' }}
         run: ./scripts/upload-codecov.sh
