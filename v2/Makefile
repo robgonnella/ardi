@@ -122,16 +122,10 @@ test-all: lint
 		$(integration_test_pkgs)
 	$(MAKE) test-e2e
 	$(MAKE) coverage
-	$(MAKE) badge
 
 .PHONY: coverage
 coverage:
 	go tool cover -func $(coverage_out)
-
-.PHONY: badge
-badge:
-	total=$$(go tool cover -func $(coverage_out) | grep total: | awk '{print $$3}') \
-		&& ./scripts/gen_badge.sh $$total
 
 .PHONY: test-report
 test-report:

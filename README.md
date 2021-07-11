@@ -1,5 +1,5 @@
 ![V2](https://github.com/robgonnella/ardi/workflows/V2/badge.svg)
-![badge](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/robgonnella/4209bcb6a7198958ec0770b963684389/raw/badge.json?sanitize=true)
+[![codecov](https://codecov.io/gh/robgonnella/ardi/branch/main/graph/badge.svg?token=YMMFDIKX3A)](https://codecov.io/gh/robgonnella/ardi)
 
 # Ardi
 
