@@ -135,6 +135,12 @@ test-report:
 docs:
 	go run docs/gen.go
 
+.PHONY: deps
+deps:
+	go install github.com/golang/mock/mockgen@latest
+	go install golang.org/x/lint/golint@latest
+
+
 .PHONY: clean
 clean:
 	rm -rf build
