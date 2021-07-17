@@ -3,7 +3,6 @@ package commands
 import (
 	"errors"
 
-	"github.com/robgonnella/ardi/v2/core"
 	"github.com/spf13/cobra"
 )
 
@@ -25,77 +24,48 @@ func getCompileCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			defer ardiCore.Compiler.StopWatching() // noop if not watching
 
-			ardiBuilds := ardiCore.Config.GetBuilds()
+			board, _ := ardiCore.Cli.GetTargetBoard(fqbn, "", true)
+
+			if board != nil {
+				fqbn = board.FQBN
+			}
 
 			if all {
 				if watch {
 					return errors.New("cannot watch all builds. You can only watch one build at a time")
 				}
+
+				ardiBuilds := ardiCore.Config.GetBuilds()
+
 				for name := range ardiBuilds {
-					if _, err := ardiCore.CompileArdiBuild(name); err != nil {
-						return err
-					}
-				}
-				return nil
-			}
-
-			if len(args) == 0 {
-				sketchOpts := core.CompileSketchOpts{
-					Sketch:    ".",
-					FQBN:      fqbn,
-					BuildPros: buildProps,
-					ShowProps: showProps,
-				}
-				opts, err := ardiCore.CompileSketch(sketchOpts)
-				if err != nil {
-					return err
-				}
-
-				if watch {
-					return ardiCore.Compiler.WatchForChanges(*opts)
-				}
-
-				return nil
-			}
-
-			if len(args) == 1 {
-				sketch := args[0]
-				if _, ok := ardiBuilds[sketch]; ok {
-					compileOpts, err := ardiCore.CompileArdiBuild(sketch)
+					opts, err := ardiCore.Config.GetCompileOpts(name)
 					if err != nil {
 						return err
 					}
-					if watch {
-						return ardiCore.Compiler.WatchForChanges(*compileOpts)
+					if err := ardiCore.Compiler.Compile(*opts); err != nil {
+						return err
 					}
-					return nil
 				}
-
-				sketchOpts := core.CompileSketchOpts{
-					Sketch:    sketch,
-					FQBN:      fqbn,
-					BuildPros: buildProps,
-					ShowProps: showProps,
-				}
-				compileOpts, err := ardiCore.CompileSketch(sketchOpts)
-				if err != nil {
-					return err
-				}
-				if watch {
-					return ardiCore.Compiler.WatchForChanges(*compileOpts)
-				}
-
 				return nil
 			}
 
-			if watch {
+			opts, err := ardiCore.GetCompileOptsFromArgs(fqbn, buildProps, showProps, args)
+			if err != nil {
+				return err
+			}
+
+			if len(opts) > 1 && watch {
 				return errors.New("cannot specifify watch with mutiple builds. You can only watch one build at a time")
 			}
 
-			for _, buildName := range args {
-				if _, err := ardiCore.CompileArdiBuild(buildName); err != nil {
+			for _, compileOpts := range opts {
+				if err := ardiCore.Compiler.Compile(*compileOpts); err != nil {
 					return err
 				}
+			}
+
+			if watch {
+				return ardiCore.Compiler.WatchForChanges(*opts[0])
 			}
 
 			return nil

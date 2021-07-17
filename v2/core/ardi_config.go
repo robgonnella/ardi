@@ -85,17 +85,22 @@ func (a *ArdiConfig) RemoveBuild(build string) error {
 
 // ListBuilds lists build specifications in ardi.json
 func (a *ArdiConfig) ListBuilds(builds []string) {
+	if len(a.GetBuilds()) == 0 {
+		return
+	}
+
 	a.logger.Println("")
+
 	if len(builds) > 0 {
 		for _, name := range builds {
-			pass := util.ArrayContains(builds, name)
 			b, ok := a.config.Builds[name]
-			if pass && ok {
+			if ok {
 				a.printBuild(name, b)
 			}
 		}
 		return
 	}
+
 	for name, build := range a.config.Builds {
 		a.printBuild(name, build)
 	}

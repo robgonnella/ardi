@@ -29,10 +29,18 @@ func NewCompileCore(cli *cli.Wrapper, logger *log.Logger) *CompileCore {
 func (c *CompileCore) Compile(opts cli.CompileOpts) error {
 	c.waitForCompilationsToFinish()
 	c.compiling = true
+	fields := log.Fields{
+		"sketch": opts.SketchPath,
+		"fqbn":   opts.FQBN,
+	}
+	fieldsLogger := c.logger.WithFields(fields)
+	fieldsLogger.Info("Compiling...")
 	if err := c.cli.Compile(opts); err != nil {
+		fieldsLogger.WithError(err).Error("failed to compile")
 		c.compiling = false
 		return err
 	}
+	fieldsLogger.Info("Compilation successful")
 	c.compiling = false
 	return nil
 }

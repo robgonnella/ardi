@@ -71,13 +71,14 @@ func TestWatchCore(t *testing.T) {
 		go env.ArdiCore.Watcher.Watch()
 
 		time.Sleep(time.Second)
+		env.ClearStdout()
 		err := cpCmd.Run()
 		assert.NoError(env.T, err)
 
 		// wait a second for watcher to trigger
 		time.Sleep(time.Second)
 
-		assert.Contains(env.T, env.Stdout.String(), "Reuploading")
+		assert.Contains(env.T, env.Stdout.String(), "Uploading...")
 		assert.Contains(env.T, env.Stdout.String(), "Upload successful")
 	})
 
@@ -122,13 +123,14 @@ func TestWatchCore(t *testing.T) {
 		go env.ArdiCore.Watcher.Watch()
 
 		time.Sleep(time.Second)
+		env.ClearStdout()
 		err := cpCmd.Run()
 		assert.NoError(env.T, err)
 
 		// wait a second for watcher to trigger
 		time.Sleep(time.Second)
 
-		assert.NotContains(env.T, env.Stdout.String(), "Reuploading")
+		assert.NotContains(env.T, env.Stdout.String(), "Uploading...")
 		assert.NotContains(env.T, env.Stdout.String(), "Upload successful")
 	})
 }

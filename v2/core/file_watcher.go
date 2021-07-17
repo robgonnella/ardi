@@ -93,7 +93,7 @@ func (f *FileWatcher) Watch() error {
 				if writeEvt || removeEvt {
 					f.executeListeners()
 				}
-			case err, _ := <-f.watcher.Errors:
+			case err := <-f.watcher.Errors:
 				f.logger.WithError(err).Error("Watch error")
 				f.close <- true
 				return
