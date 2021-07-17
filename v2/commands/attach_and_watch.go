@@ -23,60 +23,45 @@ func getWatchCmd() *cobra.Command {
 			"matches a user defined build in ardi.json, the build values will be " +
 			"used for compilation, upload, and watch path",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			var compileOpts *cli.CompileOpts
-			var err error
+			optsList, err := ardiCore.GetCompileOptsFromArgs(fqbn, buildProps, false, args)
+			if err != nil {
+				return err
+			}
 
-			builds := ardiCore.Config.GetBuilds()
-			sketch := "."
+			opts := optsList[0]
 
-			if len(args) > 0 {
-				sketch = args[0]
+			if baud == 0 {
+				baud = util.ParseSketchBaud(opts.SketchPath)
 			}
 
 			// Ignore errors here as user may have provided fqbn via build to mitigate
 			// custom boards that don't show up via auto detect for some reason
 			board, _ := ardiCore.Cli.GetTargetBoard(fqbn, port, true)
 
-			if build, ok := builds[sketch]; ok {
-				if baud == 0 {
-					baud = util.ParseSketchBaud(build.Sketch)
-					logger.WithField("baud", baud).Info("Using parsed baud from sketch")
-				}
-				if compileOpts, err = ardiCore.CompileArdiBuild(sketch); err != nil {
-					return err
-				}
-				if board == nil {
-					board = &cli.BoardWithPort{FQBN: compileOpts.FQBN, Port: port}
-				}
-			} else {
-				if baud == 0 {
-					baud = util.ParseSketchBaud(sketch)
-					logger.WithField("baud", baud).Info("Using parsed baud from sketch")
-				}
-				sketchOpts := core.CompileSketchOpts{
-					Sketch:    sketch,
-					FQBN:      board.FQBN,
-					BuildPros: buildProps,
-					ShowProps: false,
-				}
-				if compileOpts, err = ardiCore.CompileSketch(sketchOpts); err != nil {
-					return err
-				}
+			if board == nil && opts.FQBN != "" && port != "" {
+				board = &cli.BoardWithPort{FQBN: opts.FQBN, Port: port}
 			}
 
-			if board == nil || board.FQBN == "" || board.Port == "" {
+			if board == nil {
 				return errors.New("no connected boards detected")
 			}
 
-			if err := ardiCore.Uploader.Upload(board, compileOpts.SketchDir); err != nil {
+			opts.FQBN = board.FQBN
+
+			if err := ardiCore.Compiler.Compile(*opts); err != nil {
+				return err
+			}
+
+			if err := ardiCore.Uploader.Upload(board, opts.SketchDir); err != nil {
 				return err
 			}
 
 			targets := core.WatchCoreTargets{
 				Board:       board,
-				CompileOpts: compileOpts,
+				CompileOpts: opts,
 				Baud:        baud,
 			}
+
 			ardiCore.Watcher.SetTargets(targets)
 
 			defer ardiCore.Watcher.Stop()

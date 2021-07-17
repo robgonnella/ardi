@@ -31,12 +31,19 @@ func (c *UploadCore) Upload(board *cli.BoardWithPort, buildDir string) error {
 
 	c.waitForUploadsToFinish()
 	c.uploading = true
+	fields := log.Fields{
+		"build":  buildDir,
+		"fqbn":   board.FQBN,
+		"device": board.Port,
+	}
+	fieldsLogger := c.logger.WithFields(fields)
+	fieldsLogger.Info("Uploading...")
 	if err := c.cli.Upload(fqbn, buildDir, device); err != nil {
-		c.logger.WithError(err).Error("Failed to upload sketch")
+		fieldsLogger.WithError(err).Error("Failed to upload sketch")
 		c.uploading = false
 		return err
 	}
-
+	fieldsLogger.Info("Upload successful")
 	c.uploading = false
 	return nil
 }

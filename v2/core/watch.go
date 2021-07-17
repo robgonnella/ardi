@@ -120,21 +120,14 @@ func (w *WatchCore) onFileChange() {
 		}
 	}()
 
-	w.logger.Info("Recompiling")
 	err := w.compiler.Compile(*w.compileOpts)
 	if err != nil {
-		w.logger.WithError(err).Error("Failed to compile")
 		return
 	}
-	w.logger.Info("Compilation successful")
-
-	w.logger.Info("Reuploading")
 	err = w.uploader.Upload(w.board, w.compileOpts.SketchDir)
 	if err != nil {
-		w.logger.WithError(err).Error("Failed to upload")
 		return
 	}
-	w.logger.Info("Upload successful")
 
 	if w.port != nil {
 		go w.port.Watch()

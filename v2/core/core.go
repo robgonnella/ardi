@@ -30,14 +30,6 @@ type NewArdiCoreOpts struct {
 	Logger             *log.Logger
 }
 
-// CompileSketchOpts options for compiling sketch directory or file
-type CompileSketchOpts struct {
-	Sketch    string
-	FQBN      string
-	BuildPros []string
-	ShowProps bool
-}
-
 // NewArdiCore returns a new ardi core
 func NewArdiCore(opts NewArdiCoreOpts) *ArdiCore {
 	ardiConf := paths.ArdiProjectConfig
@@ -63,50 +55,88 @@ func NewArdiCore(opts NewArdiCoreOpts) *ArdiCore {
 	}
 }
 
-// CompileArdiBuild compiles specified build from ardi.json
-func (c *ArdiCore) CompileArdiBuild(buildName string) (*cli.CompileOpts, error) {
-	compileOpts, err := c.Config.GetCompileOpts(buildName)
-	if err != nil {
-		return nil, err
+// GetCompileOptsFromArgs return a list of compile opts from the given args
+func (c *ArdiCore) GetCompileOptsFromArgs(fqbn string, buildProps []string, showProps bool, args []string) ([]*cli.CompileOpts, error) {
+	ardiBuilds := c.Config.GetBuilds()
+	_, defaultExists := ardiBuilds["default"]
+
+	opts := []*cli.CompileOpts{}
+
+	if len(args) == 0 {
+		if len(ardiBuilds) == 1 {
+			for k := range ardiBuilds {
+				c.logger.Infof("Using build definition: %s", k)
+				compileOpts, err := c.Config.GetCompileOpts(k)
+				if err != nil {
+					return nil, err
+				}
+				opts = append(opts, compileOpts)
+			}
+		} else if defaultExists {
+			c.logger.Info("Using build definition: default")
+			compileOpts, err := c.Config.GetCompileOpts("default")
+			if err != nil {
+				return nil, err
+			}
+			opts = append(opts, compileOpts)
+		} else {
+			c.logger.Info("Using ino file in current directory")
+			project, err := util.ProcessSketch(".")
+			if err != nil {
+				return nil, err
+			}
+			compileOpts := &cli.CompileOpts{
+				FQBN:       fqbn,
+				BuildProps: buildProps,
+				ShowProps:  showProps,
+				SketchDir:  project.Directory,
+				SketchPath: project.Sketch,
+			}
+			opts = append(opts, compileOpts)
+		}
+
+		return opts, nil
 	}
 
-	fields := log.Fields{
-		"sketch": compileOpts.SketchPath,
-		"fqbn":   compileOpts.FQBN,
-	}
-	c.logger.WithFields(fields).Info("Compiling...")
+	if len(args) == 1 {
+		sketch := args[0]
+		if _, ok := ardiBuilds[sketch]; ok {
+			c.logger.Infof("Using build definition: %s", sketch)
+			compileOpts, err := c.Config.GetCompileOpts(sketch)
+			if err != nil {
+				return nil, err
+			}
+			opts = append(opts, compileOpts)
+			return opts, nil
+		}
 
-	if err := c.Compiler.Compile(*compileOpts); err != nil {
-		return nil, err
-	}
+		c.logger.Info("Using ino file in current directory")
+		project, err := util.ProcessSketch(sketch)
+		if err != nil {
+			return nil, err
+		}
 
-	return compileOpts, nil
-}
+		compileOpts := &cli.CompileOpts{
+			FQBN:       fqbn,
+			BuildProps: buildProps,
+			ShowProps:  showProps,
+			SketchDir:  project.Directory,
+			SketchPath: project.Sketch,
+		}
 
-// CompileSketch compiles specified sketch directory or sketch file
-func (c *ArdiCore) CompileSketch(sketchOpts CompileSketchOpts) (*cli.CompileOpts, error) {
-	project, err := util.ProcessSketch(sketchOpts.Sketch)
-	if err != nil {
-		return nil, err
-	}
+		opts = append(opts, compileOpts)
 
-	compileOpts := cli.CompileOpts{
-		FQBN:       sketchOpts.FQBN,
-		SketchDir:  project.Directory,
-		SketchPath: project.Sketch,
-		BuildProps: sketchOpts.BuildPros,
-		ShowProps:  sketchOpts.ShowProps,
-	}
-
-	fields := log.Fields{
-		"sketch": compileOpts.SketchPath,
-		"fqbn":   compileOpts.FQBN,
-	}
-	c.logger.WithFields(fields).Info("Compiling...")
-
-	if err := c.Compiler.Compile(compileOpts); err != nil {
-		return nil, err
+		return opts, nil
 	}
 
-	return &compileOpts, nil
+	for _, buildName := range args {
+		c.logger.Infof("Using build definition: %s", buildName)
+		compileOpts, err := c.Config.GetCompileOpts(buildName)
+		if err != nil {
+			return nil, err
+		}
+		opts = append(opts, compileOpts)
+	}
+
+	return opts, nil
 }

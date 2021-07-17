@@ -112,8 +112,8 @@ func TestUploadCommand(t *testing.T) {
 
 		env.T.Run("errors if no board connected", func(st *testing.T) {
 			inst.EXPECT().CreateInstance().Return(instance).AnyTimes()
-			inst.EXPECT().ConnectedBoards(instance.GetId()).Return([]*rpc.DetectedPort{}, nil)
-			inst.EXPECT().GetPlatforms(platformReq)
+			inst.EXPECT().ConnectedBoards(instance.GetId()).Return([]*rpc.DetectedPort{}, nil).AnyTimes()
+			inst.EXPECT().GetPlatforms(platformReq).AnyTimes()
 
 			args = []string{"upload", buildName, "--attach"}
 			err = env.ExecuteWithMockCli(args, inst)

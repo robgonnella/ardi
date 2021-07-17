@@ -85,7 +85,7 @@ func TestAttachAndWatchCommand(t *testing.T) {
 		// wait a second for watcher to trigger
 		time.Sleep(time.Second)
 
-		assert.Contains(env.T, env.Stdout.String(), "Reuploading")
+		assert.Contains(env.T, env.Stdout.String(), "Uploading...")
 		assert.Contains(env.T, env.Stdout.String(), "Upload successful")
 	})
 
@@ -157,7 +157,7 @@ func TestAttachAndWatchCommand(t *testing.T) {
 		// wait a second for watcher to trigger
 		time.Sleep(time.Second)
 
-		assert.Contains(env.T, env.Stdout.String(), "Reuploading")
+		assert.Contains(env.T, env.Stdout.String(), "Uploading...")
 		assert.Contains(env.T, env.Stdout.String(), "Upload successful")
 		os.Chdir(cwd)
 	})
@@ -230,7 +230,7 @@ func TestAttachAndWatchCommand(t *testing.T) {
 		// wait a second for watcher to trigger
 		time.Sleep(time.Second)
 
-		assert.Contains(env.T, env.Stdout.String(), "Reuploading")
+		assert.Contains(env.T, env.Stdout.String(), "Uploading...")
 		assert.Contains(env.T, env.Stdout.String(), "Upload successful")
 		os.Chdir(cwd)
 	})
