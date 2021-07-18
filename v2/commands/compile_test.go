@@ -153,6 +153,13 @@ func TestCompileCommandProject(t *testing.T) {
 			assert.Error(st, err)
 		})
 
+		groupEnv.T.Run("errors if .ino file not found in current directory", func(st *testing.T) {
+			testutil.CleanBuilds()
+			args = []string{"compile"}
+			err = groupEnv.Execute(args)
+			assert.Error(st, err)
+		})
+
 		groupEnv.T.Run("errors if fqbn is missing", func(st *testing.T) {
 			testutil.CleanBuilds()
 			blinkDir := testutil.BlinkProjectDir()
@@ -195,12 +202,12 @@ func TestCompileCommandProject(t *testing.T) {
 		currentDir, _ := os.Getwd()
 		blinkDir := testutil.BlinkProjectDir()
 		os.Chdir(blinkDir)
+		defer os.Chdir(currentDir)
 		err := env.RunProjectInit()
 		assert.NoError(env.T, err)
 		args := []string{"compile", "--fqbn", testutil.ArduinoMegaFQBN()}
 		err = env.Execute(args)
 		assert.Error(env.T, err)
-		os.Chdir(currentDir)
 	})
 
 	testutil.RunIntegrationTest("errors if not a valid project directory", t, func(env *testutil.IntegrationTestEnv) {

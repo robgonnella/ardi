@@ -102,6 +102,25 @@ func TestArdiConfigBuilds(t *testing.T) {
 		err := env.ArdiCore.Config.AddBuild(name, dir, fqbn, 0, buildProps)
 		assert.Error(env.T, err)
 	})
+
+	testutil.RunUnitTest("allows relative paths", t, func(env *testutil.UnitTestEnv) {
+		util.InitProjectDirectory()
+		name := "somename"
+		dir := "../test_projects/pixie"
+		fqbn := "somefqbn"
+		buildProps := []string{}
+		baud := 9600
+
+		err := env.ArdiCore.Config.AddBuild(name, dir, fqbn, baud, buildProps)
+		assert.NoError(env.T, err)
+
+		builds := env.ArdiCore.Config.GetBuilds()
+		build, ok := builds[name]
+		assert.True(env.T, ok)
+		assert.Equal(env.T, dir, build.Directory)
+		assert.Equal(env.T, fqbn, build.FQBN)
+		assert.Equal(env.T, baud, build.Baud)
+	})
 }
 
 func TestArdiConfigBoardURLS(t *testing.T) {

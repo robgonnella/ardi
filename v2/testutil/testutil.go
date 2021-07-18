@@ -41,7 +41,11 @@ func RunUnitTest(name string, t *testing.T, f func(env *UnitTestEnv)) {
 		ctx := context.Background()
 
 		ctrl := gomock.NewController(st)
-		defer ctrl.Finish()
+
+		st.Cleanup(func() {
+			ctrl.Finish()
+			CleanAll()
+		})
 
 		cliInstance := mocks.NewMockCli(ctrl)
 		logger := log.New()
@@ -55,7 +59,7 @@ func RunUnitTest(name string, t *testing.T, f func(env *UnitTestEnv)) {
 		ardiConfig, svrSettings := util.GetAllSettings()
 		settingsPath := util.GetCliSettingsPath()
 
-		cliInstance.EXPECT().InitSettings(settingsPath)
+		cliInstance.EXPECT().InitSettings(settingsPath).AnyTimes()
 		cliWrapper := cli.NewCli(ctx, settingsPath, svrSettings, logger, cliInstance)
 
 		coreOpts := core.NewArdiCoreOpts{
@@ -77,7 +81,6 @@ func RunUnitTest(name string, t *testing.T, f func(env *UnitTestEnv)) {
 		}
 
 		f(&env)
-		CleanAll()
 	})
 }
 
@@ -85,12 +88,18 @@ func RunUnitTest(name string, t *testing.T, f func(env *UnitTestEnv)) {
 type IntegrationTestEnv struct {
 	T      *testing.T
 	Stdout *bytes.Buffer
+	ctx    context.Context
 	logger *log.Logger
 }
 
 // RunIntegrationTest runs an ardi integration test
 func RunIntegrationTest(name string, t *testing.T, f func(env *IntegrationTestEnv)) {
 	t.Run(name, func(st *testing.T) {
+		ctx := context.Background()
+		st.Cleanup(func() {
+			CleanAll()
+		})
+
 		CleanAll()
 
 		var b bytes.Buffer
@@ -101,11 +110,11 @@ func RunIntegrationTest(name string, t *testing.T, f func(env *IntegrationTestEn
 		env := IntegrationTestEnv{
 			T:      st,
 			Stdout: &b,
+			ctx:    ctx,
 			logger: logger,
 		}
 
 		f(&env)
-		CleanAll()
 	})
 }
 
@@ -121,23 +130,7 @@ func (e *IntegrationTestEnv) Execute(args []string) error {
 	rootCmd.SetOut(e.logger.Out)
 	rootCmd.SetArgs(args)
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	return rootCmd.ExecuteContext(ctx)
-}
-
-// ExecuteWithMockCli executes command with injected mock cli instance
-func (e *IntegrationTestEnv) ExecuteWithMockCli(args []string, inst *mocks.MockCli) error {
-	inst.EXPECT().InitSettings(gomock.Any())
-	rootCmd := commands.GetRootCmd(e.logger, inst)
-	rootCmd.SetOut(e.logger.Out)
-	rootCmd.SetArgs(args)
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	return rootCmd.ExecuteContext(ctx)
+	return rootCmd.ExecuteContext(e.ctx)
 }
 
 // ClearStdout clears integration test env stdout
@@ -145,4 +138,68 @@ func (e *IntegrationTestEnv) ClearStdout() {
 	var b bytes.Buffer
 	e.logger.SetOutput(&b)
 	e.Stdout = &b
+}
+
+// MockCliIntegrationTestEnv represents our integration test environment with a mocked arduino cli
+type MockCliIntegrationTestEnv struct {
+	T      *testing.T
+	Stdout *bytes.Buffer
+	Cli    *mocks.MockCli
+	ctx    context.Context
+	logger *log.Logger
+}
+
+// RunMockCliIntegrationTest runs an ardi integration test with mock cli
+func RunMockCliIntegrationTest(name string, t *testing.T, f func(env *MockCliIntegrationTestEnv)) {
+	t.Run(name, func(st *testing.T) {
+		ctx := context.Background()
+		ctrl := gomock.NewController(st)
+		cliInstance := mocks.NewMockCli(ctrl)
+
+		cliInstance.EXPECT().InitSettings(gomock.Any()).AnyTimes()
+
+		st.Cleanup(func() {
+			ctrl.Finish()
+			CleanAll()
+		})
+
+		CleanAll()
+
+		var b bytes.Buffer
+		logger := log.New()
+		logger.Out = &b
+		logger.SetLevel(log.InfoLevel)
+
+		env := MockCliIntegrationTestEnv{
+			T:      st,
+			Stdout: &b,
+			Cli:    cliInstance,
+			logger: logger,
+			ctx:    ctx,
+		}
+
+		f(&env)
+	})
+}
+
+// RunProjectInit initializes and ardi project directory in mock cli test
+func (e *MockCliIntegrationTestEnv) RunProjectInit() error {
+	projectInitArgs := []string{"project-init"}
+	return e.Execute(projectInitArgs)
+}
+
+// ClearStdout clears integration test env stdout in mock cli test
+func (e *MockCliIntegrationTestEnv) ClearStdout() {
+	var b bytes.Buffer
+	e.logger.SetOutput(&b)
+	e.Stdout = &b
+}
+
+// Execute executes the root command with given arguments for mock cli test
+func (e *MockCliIntegrationTestEnv) Execute(args []string) error {
+	rootCmd := commands.GetRootCmd(e.logger, e.Cli)
+	rootCmd.SetOut(e.logger.Out)
+	rootCmd.SetArgs(args)
+
+	return rootCmd.ExecuteContext(e.ctx)
 }

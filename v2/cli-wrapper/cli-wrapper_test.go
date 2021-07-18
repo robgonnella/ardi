@@ -123,6 +123,9 @@ func TestCliWrapperTest(t *testing.T) {
 		version := "2.3.5"
 		platform := fmt.Sprintf("%s:%s", pkg, arch)
 		platformWithVersion := fmt.Sprintf("%s@%s", platform, version)
+
+		env.Logger.SetLevel(logrus.DebugLevel)
+
 		req := &rpc.PlatformInstallRequest{
 			Instance:        inst,
 			PlatformPackage: pkg,
@@ -312,6 +315,30 @@ func TestCliWrapperTest(t *testing.T) {
 		assert.NoError(st, err)
 	})
 
+	runCliTest("uploads builds verbosely", t, func(env cliTestEnv, st *testing.T) {
+		inst := &rpc.Instance{Id: int32(1)}
+		fqbn := "some:fqbn"
+		sketchDir := "."
+		resolvedSketchDir, _ := filepath.Abs(sketchDir)
+		device := "/dev/null"
+
+		req := &rpc.UploadRequest{
+			Instance:   inst,
+			Fqbn:       fqbn,
+			SketchPath: resolvedSketchDir,
+			Port:       device,
+			Verbose:    true,
+		}
+
+		env.Logger.SetLevel(logrus.DebugLevel)
+
+		env.ArduinoCli.EXPECT().CreateInstance().Return(inst).AnyTimes()
+		env.ArduinoCli.EXPECT().Upload(gomock.Any(), req, gomock.Any(), gomock.Any())
+
+		err := env.CliWrapper.Upload(fqbn, sketchDir, device)
+		assert.NoError(st, err)
+	})
+
 	runCliTest("compiles sketches", t, func(env cliTestEnv, st *testing.T) {
 		inst := &rpc.Instance{Id: int32(1)}
 		sketchDir := "."
@@ -333,6 +360,38 @@ func TestCliWrapperTest(t *testing.T) {
 			BuildProperties: opts.BuildProps,
 			ShowProperties:  opts.ShowProps,
 			Verbose:         false,
+		}
+
+		env.ArduinoCli.EXPECT().CreateInstance().Return(inst).AnyTimes()
+		env.ArduinoCli.EXPECT().Compile(gomock.Any(), req, gomock.Any(), gomock.Any(), gomock.Any())
+
+		err := env.CliWrapper.Compile(opts)
+		assert.NoError(st, err)
+	})
+
+	runCliTest("compiles sketches verbosely", t, func(env cliTestEnv, st *testing.T) {
+		inst := &rpc.Instance{Id: int32(1)}
+		sketchDir := "."
+		resolvedSketchDir, _ := filepath.Abs(sketchDir)
+		resolvedSketchPath := path.Join(resolvedSketchDir, "some_sketch.ino")
+		resolvedBuildDir := path.Join(resolvedSketchDir, "build")
+
+		env.Logger.SetLevel(logrus.DebugLevel)
+
+		opts := cli.CompileOpts{
+			FQBN:       "some:fqbn",
+			SketchDir:  sketchDir,
+			SketchPath: "./some_sketch.ino",
+		}
+
+		req := &rpc.CompileRequest{
+			Instance:        inst,
+			Fqbn:            opts.FQBN,
+			SketchPath:      resolvedSketchPath,
+			ExportDir:       resolvedBuildDir,
+			BuildProperties: opts.BuildProps,
+			ShowProperties:  opts.ShowProps,
+			Verbose:         true,
 		}
 
 		env.ArduinoCli.EXPECT().CreateInstance().Return(inst).AnyTimes()
@@ -636,5 +695,16 @@ func TestCliWrapperTest(t *testing.T) {
 		assert.Contains(st, output, resp[0].Boards[0].Fqbn)
 		assert.Contains(st, output, resp[0].Boards[1].Name)
 		assert.Contains(st, output, resp[0].Boards[1].Fqbn)
+	})
+
+	runCliTest("returns client version", t, func(env cliTestEnv, st *testing.T) {
+		inst := &rpc.Instance{Id: int32(1)}
+		version := "1.8.7"
+
+		env.ArduinoCli.EXPECT().CreateInstance().Return(inst).AnyTimes()
+		env.ArduinoCli.EXPECT().Version().Return(version)
+
+		v := env.CliWrapper.ClientVersion()
+		assert.Equal(st, v, version)
 	})
 }
