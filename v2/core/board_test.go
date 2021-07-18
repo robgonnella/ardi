@@ -20,9 +20,9 @@ func TestBoardCore(t *testing.T) {
 			All:      true,
 		}
 
-		env.Cli.EXPECT().CreateInstance().Return(instance).AnyTimes()
-		env.Cli.EXPECT().GetPlatforms(platformReq)
-		env.Cli.EXPECT().ConnectedBoards(instance.GetId()).Times(1)
+		env.ArduinoCli.EXPECT().CreateInstance().Return(instance).AnyTimes()
+		env.ArduinoCli.EXPECT().GetPlatforms(platformReq)
+		env.ArduinoCli.EXPECT().ConnectedBoards(instance.GetId()).Times(1)
 
 		board, err := env.ArdiCore.Cli.GetTargetBoard(fqbn, "", false)
 		assert.NoError(env.T, err)
@@ -51,9 +51,9 @@ func TestBoardCore(t *testing.T) {
 			},
 		}
 
-		env.Cli.EXPECT().CreateInstance().Return(instance).AnyTimes()
-		env.Cli.EXPECT().GetPlatforms(platformReq)
-		env.Cli.EXPECT().ConnectedBoards(instance.GetId()).Return(detectedPorts, nil)
+		env.ArduinoCli.EXPECT().CreateInstance().Return(instance).AnyTimes()
+		env.ArduinoCli.EXPECT().GetPlatforms(platformReq)
+		env.ArduinoCli.EXPECT().ConnectedBoards(instance.GetId()).Return(detectedPorts, nil)
 
 		board, err := env.ArdiCore.Cli.GetTargetBoard(fqbn, "", true)
 		assert.NoError(env.T, err)
@@ -69,9 +69,9 @@ func TestBoardCore(t *testing.T) {
 			All:      true,
 		}
 
-		env.Cli.EXPECT().CreateInstance().Return(instance).AnyTimes()
-		env.Cli.EXPECT().GetPlatforms(platformReq)
-		env.Cli.EXPECT().ConnectedBoards(instance.GetId())
+		env.ArduinoCli.EXPECT().CreateInstance().Return(instance).AnyTimes()
+		env.ArduinoCli.EXPECT().GetPlatforms(platformReq)
+		env.ArduinoCli.EXPECT().ConnectedBoards(instance.GetId())
 
 		board, err := env.ArdiCore.Cli.GetTargetBoard(fqbn, "", true)
 		assert.Error(env.T, err)
@@ -100,9 +100,9 @@ func TestBoardCore(t *testing.T) {
 			},
 		}
 
-		env.Cli.EXPECT().CreateInstance().Return(instance).AnyTimes()
-		env.Cli.EXPECT().GetPlatforms(platformReq)
-		env.Cli.EXPECT().ConnectedBoards(instance.GetId()).Return(detectedPorts, nil)
+		env.ArduinoCli.EXPECT().CreateInstance().Return(instance).AnyTimes()
+		env.ArduinoCli.EXPECT().GetPlatforms(platformReq)
+		env.ArduinoCli.EXPECT().ConnectedBoards(instance.GetId()).Return(detectedPorts, nil)
 
 		board, err := env.ArdiCore.Cli.GetTargetBoard("", "", false)
 		assert.NoError(env.T, err)
@@ -144,9 +144,9 @@ func TestBoardCore(t *testing.T) {
 			},
 		}
 
-		env.Cli.EXPECT().CreateInstance().Return(instance).AnyTimes()
-		env.Cli.EXPECT().GetPlatforms(platformReq)
-		env.Cli.EXPECT().ConnectedBoards(instance.GetId()).Return(detectedPorts, nil)
+		env.ArduinoCli.EXPECT().CreateInstance().Return(instance).AnyTimes()
+		env.ArduinoCli.EXPECT().GetPlatforms(platformReq)
+		env.ArduinoCli.EXPECT().ConnectedBoards(instance.GetId()).Return(detectedPorts, nil)
 
 		env.ClearStdout()
 		board, err := env.ArdiCore.Cli.GetTargetBoard("", "", false)
@@ -181,9 +181,9 @@ func TestBoardCore(t *testing.T) {
 			},
 		}
 
-		env.Cli.EXPECT().CreateInstance().Return(instance).AnyTimes()
-		env.Cli.EXPECT().GetPlatforms(platformReq).Return(platforms, nil)
-		env.Cli.EXPECT().ConnectedBoards(instance.GetId())
+		env.ArduinoCli.EXPECT().CreateInstance().Return(instance).AnyTimes()
+		env.ArduinoCli.EXPECT().GetPlatforms(platformReq).Return(platforms, nil)
+		env.ArduinoCli.EXPECT().ConnectedBoards(instance.GetId())
 
 		env.ClearStdout()
 		board, err := env.ArdiCore.Cli.GetTargetBoard("", "", false)
@@ -221,9 +221,9 @@ func TestBoardCore(t *testing.T) {
 			},
 		}
 
-		env.Cli.EXPECT().CreateInstance().Return(instance).AnyTimes()
-		env.Cli.EXPECT().GetPlatforms(platformReq).Return(platforms, nil)
-		env.Cli.EXPECT().ConnectedBoards(instance.GetId())
+		env.ArduinoCli.EXPECT().CreateInstance().Return(instance).AnyTimes()
+		env.ArduinoCli.EXPECT().GetPlatforms(platformReq).Return(platforms, nil)
+		env.ArduinoCli.EXPECT().ConnectedBoards(instance.GetId())
 
 		env.ClearStdout()
 		board, err := env.ArdiCore.Cli.GetTargetBoard("", "", true)
@@ -249,10 +249,10 @@ func TestBoardCore(t *testing.T) {
 		}
 		resp := &rpc.PlatformSearchResponse{SearchOutput: platforms}
 
-		env.Cli.EXPECT().CreateInstance().Return(instance).AnyTimes()
-		env.Cli.EXPECT().UpdateIndex(gomock.Any(), gomock.Any(), gomock.Any())
-		env.Cli.EXPECT().UpdateLibrariesIndex(gomock.Any(), gomock.Any(), gomock.Any())
-		env.Cli.EXPECT().PlatformSearch(req).Return(resp, nil)
+		env.ArduinoCli.EXPECT().CreateInstance().Return(instance).AnyTimes()
+		env.ArduinoCli.EXPECT().UpdateIndex(gomock.Any(), gomock.Any(), gomock.Any())
+		env.ArduinoCli.EXPECT().UpdateLibrariesIndex(gomock.Any(), gomock.Any(), gomock.Any())
+		env.ArduinoCli.EXPECT().PlatformSearch(req).Return(resp, nil)
 
 		env.ArdiCore.Board.FQBNS("")
 
@@ -272,10 +272,10 @@ func TestBoardCore(t *testing.T) {
 		}
 		var resp *rpc.PlatformSearchResponse
 
-		env.Cli.EXPECT().CreateInstance().Return(instance).AnyTimes()
-		env.Cli.EXPECT().UpdateIndex(gomock.Any(), gomock.Any(), gomock.Any())
-		env.Cli.EXPECT().UpdateLibrariesIndex(gomock.Any(), gomock.Any(), gomock.Any())
-		env.Cli.EXPECT().PlatformSearch(req).Return(resp, dummyErr)
+		env.ArduinoCli.EXPECT().CreateInstance().Return(instance).AnyTimes()
+		env.ArduinoCli.EXPECT().UpdateIndex(gomock.Any(), gomock.Any(), gomock.Any())
+		env.ArduinoCli.EXPECT().UpdateLibrariesIndex(gomock.Any(), gomock.Any(), gomock.Any())
+		env.ArduinoCli.EXPECT().PlatformSearch(req).Return(resp, dummyErr)
 
 		err := env.ArdiCore.Board.FQBNS("")
 		assert.Error(env.T, err)
@@ -294,10 +294,10 @@ func TestBoardCore(t *testing.T) {
 		}
 		resp := &rpc.PlatformSearchResponse{SearchOutput: platforms}
 
-		env.Cli.EXPECT().CreateInstance().Return(instance).AnyTimes()
-		env.Cli.EXPECT().UpdateIndex(gomock.Any(), gomock.Any(), gomock.Any())
-		env.Cli.EXPECT().UpdateLibrariesIndex(gomock.Any(), gomock.Any(), gomock.Any())
-		env.Cli.EXPECT().PlatformSearch(req).Return(resp, nil)
+		env.ArduinoCli.EXPECT().CreateInstance().Return(instance).AnyTimes()
+		env.ArduinoCli.EXPECT().UpdateIndex(gomock.Any(), gomock.Any(), gomock.Any())
+		env.ArduinoCli.EXPECT().UpdateLibrariesIndex(gomock.Any(), gomock.Any(), gomock.Any())
+		env.ArduinoCli.EXPECT().PlatformSearch(req).Return(resp, nil)
 
 		env.ArdiCore.Board.Platforms("")
 
@@ -317,10 +317,10 @@ func TestBoardCore(t *testing.T) {
 		}
 		var resp *rpc.PlatformSearchResponse
 
-		env.Cli.EXPECT().CreateInstance().Return(instance).AnyTimes()
-		env.Cli.EXPECT().UpdateIndex(gomock.Any(), gomock.Any(), gomock.Any())
-		env.Cli.EXPECT().UpdateLibrariesIndex(gomock.Any(), gomock.Any(), gomock.Any())
-		env.Cli.EXPECT().PlatformSearch(req).Return(resp, dummyErr)
+		env.ArduinoCli.EXPECT().CreateInstance().Return(instance).AnyTimes()
+		env.ArduinoCli.EXPECT().UpdateIndex(gomock.Any(), gomock.Any(), gomock.Any())
+		env.ArduinoCli.EXPECT().UpdateLibrariesIndex(gomock.Any(), gomock.Any(), gomock.Any())
+		env.ArduinoCli.EXPECT().PlatformSearch(req).Return(resp, dummyErr)
 
 		err := env.ArdiCore.Board.Platforms("")
 		assert.Error(env.T, err)

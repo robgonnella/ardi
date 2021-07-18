@@ -18,12 +18,27 @@ type LibCore struct {
 	initialized bool
 }
 
+// LibCoreOption represents options for LibCore
+type LibCoreOption = func(c *LibCore)
+
 // NewLibCore Lib instance
-func NewLibCore(cli *cli.Wrapper, logger *log.Logger) *LibCore {
-	return &LibCore{
+func NewLibCore(logger *log.Logger, options ...LibCoreOption) *LibCore {
+	c := &LibCore{
 		logger:      logger,
-		cli:         cli,
 		initialized: false,
+	}
+
+	for _, o := range options {
+		o(c)
+	}
+
+	return c
+}
+
+// WithLibCliWrapper allows an injectable cli wrapper
+func WithLibCliWrapper(wrapper *cli.Wrapper) LibCoreOption {
+	return func(c *LibCore) {
+		c.cli = wrapper
 	}
 }
 

@@ -30,7 +30,7 @@ func TestInstallCommand(t *testing.T) {
 		assert.NoError(env.T, err)
 
 		lib := "Adafruit Pixie"
-		installedLib := "Adafruit_Pixie"
+		installedLib := "Adafruit Pixie"
 		libArgs := []string{"add", "lib", lib}
 		err = env.Execute(libArgs)
 		assert.NoError(env.T, err)
@@ -77,11 +77,8 @@ func TestInstallCommand(t *testing.T) {
 		byteData, _ := ioutil.ReadFile(paths.ArdiProjectConfig)
 		json.Unmarshal(byteData, &ardiConfig)
 		ardiConfig.Platforms[platform] = "0.1.0"
-		settings := util.WriteSettingsOpts{
-			ArdiConfig:         &ardiConfig,
-			ArduinoCliSettings: util.GenArduinoCliSettings(paths.ArdiProjectDataDir),
-		}
-		util.WriteAllSettings(settings)
+
+		util.WriteAllSettings(&ardiConfig, util.GenArduinoCliSettings(paths.ArdiProjectDataDir))
 
 		// remove data directory
 		os.RemoveAll(paths.ArdiProjectDataDir)
@@ -102,11 +99,7 @@ func TestInstallCommand(t *testing.T) {
 		json.Unmarshal(byteData, &ardiConfig)
 		ardiConfig.Libraries[library] = "1.3.5"
 
-		settings := util.WriteSettingsOpts{
-			ArdiConfig:         &ardiConfig,
-			ArduinoCliSettings: util.GenArduinoCliSettings(paths.ArdiProjectDataDir),
-		}
-		util.WriteAllSettings(settings)
+		util.WriteAllSettings(&ardiConfig, util.GenArduinoCliSettings(paths.ArdiProjectDataDir))
 
 		// remove data directory
 		os.RemoveAll(paths.ArdiProjectDataDir)

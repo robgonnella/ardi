@@ -45,8 +45,8 @@ func TestCompileCore(t *testing.T) {
 			Verbose:         true,
 		}
 
-		env.Cli.EXPECT().CreateInstance().Return(instance).AnyTimes()
-		env.Cli.EXPECT().Compile(gomock.Any(), req, gomock.Any(), gomock.Any(), gomock.Any())
+		env.ArduinoCli.EXPECT().CreateInstance().Return(instance).AnyTimes()
+		env.ArduinoCli.EXPECT().Compile(gomock.Any(), req, gomock.Any(), gomock.Any(), gomock.Any())
 
 		err := env.ArdiCore.Compiler.Compile(compileOpts)
 		assert.Nil(env.T, err)
@@ -82,8 +82,8 @@ func TestCompileCore(t *testing.T) {
 			Verbose:         true,
 		}
 
-		env.Cli.EXPECT().CreateInstance().Return(instance).AnyTimes()
-		env.Cli.EXPECT().Compile(gomock.Any(), req, gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, dummyErr)
+		env.ArduinoCli.EXPECT().CreateInstance().Return(instance).AnyTimes()
+		env.ArduinoCli.EXPECT().Compile(gomock.Any(), req, gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, dummyErr)
 
 		err := env.ArdiCore.Compiler.Compile(compileOpts)
 		assert.Error(env.T, err)
@@ -129,14 +129,14 @@ func TestCompileCore(t *testing.T) {
 			Verbose:         true,
 		}
 
-		env.Cli.EXPECT().CreateInstance().Return(instance).AnyTimes()
-		env.Cli.EXPECT().Compile(gomock.Any(), req, gomock.Any(), gomock.Any(), gomock.Any())
+		env.ArduinoCli.EXPECT().CreateInstance().Return(instance).AnyTimes()
+		env.ArduinoCli.EXPECT().Compile(gomock.Any(), req, gomock.Any(), gomock.Any(), gomock.Any())
 
 		err = env.ArdiCore.Compiler.Compile(compileOpts)
 		assert.NoError(env.T, err)
 
 		env.ClearStdout()
-		env.Cli.EXPECT().Compile(gomock.Any(), req, gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, dummyErr)
+		env.ArduinoCli.EXPECT().Compile(gomock.Any(), req, gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, dummyErr)
 
 		go env.ArdiCore.Compiler.WatchForChanges(compileOpts)
 
@@ -190,14 +190,14 @@ func TestCompileCore(t *testing.T) {
 			Verbose:         true,
 		}
 
-		env.Cli.EXPECT().CreateInstance().Return(instance).AnyTimes()
-		env.Cli.EXPECT().Compile(gomock.Any(), req, gomock.Any(), gomock.Any(), gomock.Any())
+		env.ArduinoCli.EXPECT().CreateInstance().Return(instance).AnyTimes()
+		env.ArduinoCli.EXPECT().Compile(gomock.Any(), req, gomock.Any(), gomock.Any(), gomock.Any())
 
 		err = env.ArdiCore.Compiler.Compile(compileOpts)
 		assert.NoError(env.T, err)
 
 		env.ClearStdout()
-		env.Cli.EXPECT().Compile(gomock.Any(), req, gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, dummyErr)
+		env.ArduinoCli.EXPECT().Compile(gomock.Any(), req, gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, dummyErr)
 
 		go env.ArdiCore.Compiler.WatchForChanges(compileOpts)
 

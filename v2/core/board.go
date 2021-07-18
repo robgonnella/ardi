@@ -18,11 +18,26 @@ type BoardCore struct {
 	logger *log.Logger
 }
 
+// BoardCoreOption represents options for the BoardCore
+type BoardCoreOption = func(c *BoardCore)
+
 // NewBoardCore module instance for board commands
-func NewBoardCore(cli *cli.Wrapper, logger *log.Logger) *BoardCore {
-	return &BoardCore{
+func NewBoardCore(logger *log.Logger, options ...BoardCoreOption) *BoardCore {
+	c := &BoardCore{
 		logger: logger,
-		cli:    cli,
+	}
+
+	for _, o := range options {
+		o(c)
+	}
+
+	return c
+}
+
+// WithBoardCliWrapper allows an injectable cli wrapper
+func WithBoardCliWrapper(wrapper *cli.Wrapper) BoardCoreOption {
+	return func(c *BoardCore) {
+		c.cli = wrapper
 	}
 }
 

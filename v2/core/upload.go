@@ -9,18 +9,40 @@ import (
 
 // UploadCore represents core module for ardi upload commands
 type UploadCore struct {
-	logger    *log.Logger
-	cli       *cli.Wrapper
-	uploading bool
-	port      SerialPort
+	logger      *log.Logger
+	cli         *cli.Wrapper
+	portManager SerialPort
+	uploading   bool
 }
 
+// UploadCoreOption reprents options for UploadCore
+type UploadCoreOption = func(c *UploadCore)
+
 // NewUploadCore returns new ardi upload core
-func NewUploadCore(cli *cli.Wrapper, logger *log.Logger) *UploadCore {
-	return &UploadCore{
-		cli:       cli,
+func NewUploadCore(logger *log.Logger, options ...UploadCoreOption) *UploadCore {
+	c := &UploadCore{
 		logger:    logger,
 		uploading: false,
+	}
+
+	for _, o := range options {
+		o(c)
+	}
+
+	return c
+}
+
+// WithUploadCoreCliWrapper allows an injectable cli wrapper
+func WithUploadCoreCliWrapper(wrapper *cli.Wrapper) UploadCoreOption {
+	return func(c *UploadCore) {
+		c.cli = wrapper
+	}
+}
+
+// WithUploaderSerialPortManager allows and injectable serial port manager
+func WithUploaderSerialPortManager(portManager SerialPort) UploadCoreOption {
+	return func(c *UploadCore) {
+		c.portManager = portManager
 	}
 }
 
@@ -48,23 +70,20 @@ func (c *UploadCore) Upload(board *cli.BoardWithPort, buildDir string) error {
 	return nil
 }
 
+// SetPortTargets sets the device and baud for the port manager
+func (c *UploadCore) SetPortTargets(device string, baud int) {
+	c.portManager.SetTargets(device, baud)
+}
+
 // Attach attaches to the associated board port and prints logs
-func (c *UploadCore) Attach(device string, baud int, mockPort SerialPort) {
-	if mockPort == nil {
-		c.port = NewArdiSerialPort(device, baud, c.logger)
-	} else {
-		c.port = mockPort
-		mockPort.Close()
-	}
-	c.port.Watch()
+func (c *UploadCore) Attach() {
+	c.portManager.Watch()
 }
 
 // Detach detaches from the associated board port
 func (c *UploadCore) Detach() {
-	if c.port != nil {
-		c.port.Close()
-		c.port = nil
-	}
+	c.portManager.Close()
+	c.portManager.SetTargets("", 0)
 }
 
 // IsUploading returns whether or not core is currently uploading

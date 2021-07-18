@@ -11,7 +11,6 @@ import (
 	"github.com/golang/mock/gomock"
 	cli "github.com/robgonnella/ardi/v2/cli-wrapper"
 	"github.com/robgonnella/ardi/v2/core"
-	"github.com/robgonnella/ardi/v2/mocks"
 	"github.com/robgonnella/ardi/v2/testutil"
 	"github.com/stretchr/testify/assert"
 )
@@ -34,9 +33,6 @@ func TestWatchCore(t *testing.T) {
 	testutil.RunUnitTest("recompiles and reuploads on file change", t, func(env *testutil.UnitTestEnv) {
 		cpCmd := exec.Command("cp", sketchCopy, sketch)
 		env.ClearStdout()
-		port := mocks.NewMockSerialPort(env.Ctrl)
-		port.EXPECT().Close().AnyTimes()
-		port.EXPECT().Watch().AnyTimes()
 
 		instance := &rpc.Instance{Id: int32(1)}
 		compileReq := &rpc.CompileRequest{
@@ -57,16 +53,21 @@ func TestWatchCore(t *testing.T) {
 			Verbose:    true,
 		}
 
-		env.Cli.EXPECT().CreateInstance().Return(instance).AnyTimes()
-		env.Cli.EXPECT().Compile(gomock.Any(), compileReq, gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
-		env.Cli.EXPECT().Upload(gomock.Any(), uploadReq, gomock.Any(), gomock.Any()).AnyTimes()
-
 		targets := core.WatchCoreTargets{
 			Board:       board,
 			CompileOpts: &compileOpts,
 			Baud:        9600,
-			Port:        port,
 		}
+
+		env.SerialPort.EXPECT().SetTargets(board.Port, targets.Baud).AnyTimes()
+		env.SerialPort.EXPECT().SetTargets("", 0).AnyTimes()
+		env.SerialPort.EXPECT().Close().AnyTimes()
+		env.SerialPort.EXPECT().Watch().AnyTimes()
+
+		env.ArduinoCli.EXPECT().CreateInstance().Return(instance).AnyTimes()
+		env.ArduinoCli.EXPECT().Compile(gomock.Any(), compileReq, gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+		env.ArduinoCli.EXPECT().Upload(gomock.Any(), uploadReq, gomock.Any(), gomock.Any()).AnyTimes()
+
 		env.ArdiCore.Watcher.SetTargets(targets)
 		go env.ArdiCore.Watcher.Watch()
 
@@ -85,9 +86,6 @@ func TestWatchCore(t *testing.T) {
 	testutil.RunUnitTest("does not reupload on compilation error", t, func(env *testutil.UnitTestEnv) {
 		cpCmd := exec.Command("cp", sketchCopy, sketch)
 		env.ClearStdout()
-		port := mocks.NewMockSerialPort(env.Ctrl)
-		port.EXPECT().Close().AnyTimes()
-		port.EXPECT().Watch().Times(1)
 
 		dummyErr := errors.New("dummy errror")
 		instance := &rpc.Instance{Id: int32(1)}
@@ -109,16 +107,21 @@ func TestWatchCore(t *testing.T) {
 			Verbose:    true,
 		}
 
-		env.Cli.EXPECT().CreateInstance().Return(instance).AnyTimes()
-		env.Cli.EXPECT().Compile(gomock.Any(), compileReq, gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(nil, dummyErr)
-		env.Cli.EXPECT().Upload(gomock.Any(), uploadReq, gomock.Any(), gomock.Any()).AnyTimes()
-
 		targets := core.WatchCoreTargets{
 			Board:       board,
 			CompileOpts: &compileOpts,
 			Baud:        9600,
-			Port:        port,
 		}
+
+		env.SerialPort.EXPECT().SetTargets(board.Port, targets.Baud).AnyTimes()
+		env.SerialPort.EXPECT().SetTargets("", 0).AnyTimes()
+		env.SerialPort.EXPECT().Close().AnyTimes()
+		env.SerialPort.EXPECT().Watch().AnyTimes()
+
+		env.ArduinoCli.EXPECT().CreateInstance().Return(instance).AnyTimes()
+		env.ArduinoCli.EXPECT().Compile(gomock.Any(), compileReq, gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(nil, dummyErr)
+		env.ArduinoCli.EXPECT().Upload(gomock.Any(), uploadReq, gomock.Any(), gomock.Any()).AnyTimes()
+
 		env.ArdiCore.Watcher.SetTargets(targets)
 		go env.ArdiCore.Watcher.Watch()
 

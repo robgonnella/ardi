@@ -1,6 +1,8 @@
 package core
 
 import (
+	"context"
+
 	cli "github.com/robgonnella/ardi/v2/cli-wrapper"
 	"github.com/robgonnella/ardi/v2/paths"
 	"github.com/robgonnella/ardi/v2/types"
@@ -10,48 +12,95 @@ import (
 
 // ArdiCore represents the core package of ardi
 type ArdiCore struct {
-	Cli       *cli.Wrapper
-	Config    *ArdiConfig
-	CliConfig *ArdiYAML
-	Watcher   *WatchCore
-	Board     *BoardCore
-	Compiler  *CompileCore
-	Uploader  *UploadCore
-	Lib       *LibCore
-	Platform  *PlatformCore
-	logger    *log.Logger
+	Cli             *cli.Wrapper
+	Config          *ArdiConfig
+	CliConfig       *ArdiYAML
+	Watcher         *WatchCore
+	Board           *BoardCore
+	Compiler        *CompileCore
+	Uploader        *UploadCore
+	Lib             *LibCore
+	Platform        *PlatformCore
+	ctx             context.Context
+	cliSettingsPath string
+	logger          *log.Logger
 }
+
+// ArdiCoreOption represents options for ArdiCore
+type ArdiCoreOption = func(c *ArdiCore)
 
 // NewArdiCoreOpts options fore creating new ardi core
 type NewArdiCoreOpts struct {
 	ArdiConfig         types.ArdiConfig
 	ArduinoCliSettings types.ArduinoCliSettings
-	Cli                *cli.Wrapper
+	CliSettingsPath    string
 	Logger             *log.Logger
+	Ctx                context.Context
 }
 
 // NewArdiCore returns a new ardi core
-func NewArdiCore(opts NewArdiCoreOpts) *ArdiCore {
+func NewArdiCore(opts NewArdiCoreOpts, options ...ArdiCoreOption) *ArdiCore {
 	ardiConf := paths.ArdiProjectConfig
 	cliConf := paths.ArduinoCliProjectConfig
 
-	cli := opts.Cli
-	logger := opts.Logger
+	core := &ArdiCore{
+		ctx:             opts.Ctx,
+		cliSettingsPath: opts.CliSettingsPath,
+		Config:          NewArdiConfig(ardiConf, opts.ArdiConfig, opts.Logger),
+		CliConfig:       NewArdiYAML(cliConf, opts.ArduinoCliSettings),
+		logger:          opts.Logger,
+	}
 
-	compiler := NewCompileCore(cli, logger)
-	uploader := NewUploadCore(cli, logger)
+	for _, o := range options {
+		o(core)
+	}
 
-	return &ArdiCore{
-		Cli:       cli,
-		Config:    NewArdiConfig(ardiConf, opts.ArdiConfig, logger),
-		CliConfig: NewArdiYAML(cliConf, opts.ArduinoCliSettings),
-		Watcher:   NewWatchCore(compiler, uploader, logger),
-		Board:     NewBoardCore(cli, logger),
-		Compiler:  compiler,
-		Uploader:  uploader,
-		Lib:       NewLibCore(cli, logger),
-		Platform:  NewPlatformCore(cli, logger),
-		logger:    logger,
+	return core
+}
+
+// WithArduinoCli allows an injectable arduino cli interface
+func WithArduinoCli(arduinoCli cli.Cli) func(c *ArdiCore) {
+	return func(c *ArdiCore) {
+		withArduinoCli := cli.WithArduinoCli(arduinoCli)
+		c.Cli = cli.NewCli(c.ctx, c.cliSettingsPath, c.logger, withArduinoCli)
+
+		serialPortManager := NewArdiSerialPort(c.logger)
+
+		withCompileWrapper := WithCompileCoreCliWrapper(c.Cli)
+		withUploadWrapper := WithUploadCoreCliWrapper(c.Cli)
+		withUploadPortManager := WithUploaderSerialPortManager(serialPortManager)
+
+		c.Compiler = NewCompileCore(c.logger, withCompileWrapper)
+		c.Uploader = NewUploadCore(c.logger, withUploadWrapper, withUploadPortManager)
+
+		withWathCompiler := WithWatchCoreCompiler(c.Compiler)
+		withWatchUploader := WithWatchCoreUploader(c.Uploader)
+
+		c.Watcher = NewWatchCore(c.logger, withWatchUploader, withWathCompiler)
+
+		withBoardCliWrapper := WithBoardCliWrapper(c.Cli)
+		c.Board = NewBoardCore(c.logger, withBoardCliWrapper)
+
+		withLibCliWrapper := WithLibCliWrapper(c.Cli)
+		c.Lib = NewLibCore(c.logger, withLibCliWrapper)
+
+		withPlatformCliWrapper := WithPlatformCliWrapper(c.Cli)
+		c.Platform = NewPlatformCore(c.logger, withPlatformCliWrapper)
+	}
+}
+
+// WithCoreSerialPortManager allows an injectable serial port interface
+func WithCoreSerialPortManager(port SerialPort) ArdiCoreOption {
+	return func(c *ArdiCore) {
+		withCli := WithUploadCoreCliWrapper(c.Cli)
+		withPort := WithUploaderSerialPortManager(port)
+
+		c.Uploader = NewUploadCore(c.logger, withCli, withPort)
+
+		withWathCompiler := WithWatchCoreCompiler(c.Compiler)
+		withWatchUploader := WithWatchCoreUploader(c.Uploader)
+
+		c.Watcher = NewWatchCore(c.logger, withWatchUploader, withWathCompiler)
 	}
 }
 

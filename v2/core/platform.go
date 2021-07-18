@@ -18,12 +18,27 @@ type PlatformCore struct {
 	initialized bool
 }
 
+// PlatformCoreOption represents options for PlatformCore
+type PlatformCoreOption = func(c *PlatformCore)
+
 // NewPlatformCore platform module instance
-func NewPlatformCore(cli *cli.Wrapper, logger *log.Logger) *PlatformCore {
-	return &PlatformCore{
+func NewPlatformCore(logger *log.Logger, options ...PlatformCoreOption) *PlatformCore {
+	c := &PlatformCore{
 		logger:      logger,
-		cli:         cli,
 		initialized: false,
+	}
+
+	for _, o := range options {
+		o(c)
+	}
+
+	return c
+}
+
+// WithPlatformCliWrapper allows and injectable cli wrapper
+func WithPlatformCliWrapper(wrapper *cli.Wrapper) PlatformCoreOption {
+	return func(c *PlatformCore) {
+		c.cli = wrapper
 	}
 }
 
