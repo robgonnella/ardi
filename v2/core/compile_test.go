@@ -147,7 +147,7 @@ func TestCompileCore(t *testing.T) {
 		// wait a second for watcher to trigger
 		time.Sleep(time.Second)
 
-		assert.Contains(env.T, env.Stdout.String(), "Recompiling")
+		assert.Contains(env.T, env.Stdout.String(), "Compiling...")
 		assert.Contains(env.T, env.Stdout.String(), "Compilation failed")
 	})
 
@@ -208,7 +208,7 @@ func TestCompileCore(t *testing.T) {
 		// wait a second for watcher to trigger
 		time.Sleep(time.Second)
 
-		assert.Contains(env.T, env.Stdout.String(), "Recompiling")
+		assert.Contains(env.T, env.Stdout.String(), "Compiling...")
 		assert.Contains(env.T, env.Stdout.String(), "Compilation failed")
 
 		env.ArdiCore.Compiler.StopWatching()
@@ -221,7 +221,7 @@ func TestCompileCore(t *testing.T) {
 		// wait a second for watcher to trigger
 		time.Sleep(time.Second)
 
-		assert.NotContains(env.T, env.Stdout.String(), "Recompiling")
+		assert.NotContains(env.T, env.Stdout.String(), "Compiling...")
 		assert.NotContains(env.T, env.Stdout.String(), "Compilation failed")
 	})
 }
