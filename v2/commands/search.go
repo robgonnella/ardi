@@ -2,15 +2,15 @@ package commands
 
 import "github.com/spf13/cobra"
 
-func getSearchPlatformCmd() *cobra.Command {
+func getSearchPlatformCmd(env *CommandEnv) *cobra.Command {
 	searchCmd := &cobra.Command{
 		Use:     "platforms",
 		Long:    "\nSearch all available platforms",
 		Short:   "Search all available platforms",
 		Aliases: []string{"platform"},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			logger.Info("Available platforms")
-			if err := ardiCore.Platform.ListAll(); err != nil {
+			env.Logger.Info("Available platforms")
+			if err := env.ArdiCore.Platform.ListAll(); err != nil {
 				return err
 			}
 			return nil
@@ -19,7 +19,7 @@ func getSearchPlatformCmd() *cobra.Command {
 	return searchCmd
 }
 
-func getSearchLibCmd() *cobra.Command {
+func getSearchLibCmd(env *CommandEnv) *cobra.Command {
 	searchCmd := &cobra.Command{
 		Use:     "libraries",
 		Long:    "\nSearches for availables libraries with optional search filter",
@@ -30,7 +30,7 @@ func getSearchLibCmd() *cobra.Command {
 			if len(args) > 0 {
 				searchArg = args[0]
 			}
-			if err := ardiCore.Lib.Search(searchArg); err != nil {
+			if err := env.ArdiCore.Lib.Search(searchArg); err != nil {
 				return err
 			}
 			return nil
@@ -39,13 +39,13 @@ func getSearchLibCmd() *cobra.Command {
 	return searchCmd
 }
 
-func getSearchCmd() *cobra.Command {
+func getSearchCmd(env *CommandEnv) *cobra.Command {
 	searchCmd := &cobra.Command{
 		Use:   "search",
 		Short: "Search for arduino platforms, libraries, and boards",
 		Long:  "\nSearch for arduino platforms, libraries, and boards",
 	}
-	searchCmd.AddCommand(getSearchPlatformCmd())
-	searchCmd.AddCommand(getSearchLibCmd())
+	searchCmd.AddCommand(getSearchPlatformCmd(env))
+	searchCmd.AddCommand(getSearchLibCmd(env))
 	return searchCmd
 }

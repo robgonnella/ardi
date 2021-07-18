@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func getCleanCmd() *cobra.Command {
+func getCleanCmd(env *CommandEnv) *cobra.Command {
 	return &cobra.Command{
 		Use:   "clean",
 		Short: "Delete project data directory",
@@ -14,9 +14,9 @@ func getCleanCmd() *cobra.Command {
 			"data directory.",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			dir := paths.ArdiProjectDataDir
-			logger.Infof("Cleaning ardi data directory: %s", dir)
+			env.Logger.Infof("Cleaning ardi data directory: %s", dir)
 			util.CleanDataDirectory(dir)
-			logger.Infof("Successfully removed all data from %s", dir)
+			env.Logger.Infof("Successfully removed all data from %s", dir)
 			return nil
 		},
 	}

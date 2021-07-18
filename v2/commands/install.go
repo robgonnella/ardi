@@ -7,7 +7,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func getInstallCmd() *cobra.Command {
+func getInstallCmd(env *CommandEnv) *cobra.Command {
 	installCmd := &cobra.Command{
 		Use:   "install",
 		Short: "Install all project dependencies",
@@ -16,19 +16,19 @@ func getInstallCmd() *cobra.Command {
 			if err := util.InitProjectDirectory(); err != nil {
 				return err
 			}
-			for _, url := range ardiCore.Config.GetBoardURLS() {
-				if err := ardiCore.Config.AddBoardURL(url); err != nil {
+			for _, url := range env.ArdiCore.Config.GetBoardURLS() {
+				if err := env.ArdiCore.Config.AddBoardURL(url); err != nil {
 					return err
 				}
 			}
-			for plat, vers := range ardiCore.Config.GetPlatforms() {
-				_, _, err := ardiCore.Platform.Add(fmt.Sprintf("%s@%s", plat, vers))
+			for plat, vers := range env.ArdiCore.Config.GetPlatforms() {
+				_, _, err := env.ArdiCore.Platform.Add(fmt.Sprintf("%s@%s", plat, vers))
 				if err != nil {
 					return err
 				}
 			}
-			for lib, vers := range ardiCore.Config.GetLibraries() {
-				_, _, err := ardiCore.Lib.Add(fmt.Sprintf("%s@%s", lib, vers))
+			for lib, vers := range env.ArdiCore.Config.GetLibraries() {
+				_, _, err := env.ArdiCore.Lib.Add(fmt.Sprintf("%s@%s", lib, vers))
 				if err != nil {
 					return err
 				}

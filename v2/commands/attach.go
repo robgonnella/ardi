@@ -5,7 +5,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func getAttachCmd() *cobra.Command {
+func getAttachCmd(env *CommandEnv) *cobra.Command {
 	var port string
 	var baud int
 	var attachCmd = &cobra.Command{
@@ -14,13 +14,13 @@ func getAttachCmd() *cobra.Command {
 		Long:  "\nAttach and print board logs",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if port == "" {
-				board, err := ardiCore.Cli.GetTargetBoard("", "", true)
+				board, err := env.ArdiCore.Cli.GetTargetBoard("", "", true)
 				if err != nil {
 					return err
 				}
 				port = board.Port
 			}
-			serialPort := core.NewArdiSerialPort(port, baud, logger)
+			serialPort := core.NewArdiSerialPort(port, baud, env.Logger)
 			defer serialPort.Close()
 			return serialPort.Watch()
 		},

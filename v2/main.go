@@ -36,7 +36,10 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	logger := log.New()
-	rootCmd := commands.GetRootCmd(logger, nil)
+	env := &commands.CommandEnv{
+		Logger: logger,
+	}
+	rootCmd := commands.GetRootCmd(env)
 	if err := rootCmd.ExecuteContext(ctx); err != nil {
 		logger.WithError(err).Error("Command failed")
 		os.Exit(1)
