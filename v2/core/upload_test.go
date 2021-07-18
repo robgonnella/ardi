@@ -3,6 +3,7 @@ package core_test
 import (
 	"errors"
 	"testing"
+	"time"
 
 	rpc "github.com/arduino/arduino-cli/rpc/cc/arduino/cli/commands/v1"
 	"github.com/golang/mock/gomock"
@@ -61,5 +62,18 @@ func TestUploadCore(t *testing.T) {
 		port.EXPECT().Close().Times(1)
 		port.EXPECT().Watch().Times(1)
 		env.ArdiCore.Uploader.Attach(device, baud, port)
+	})
+
+	testutil.RunUnitTest("detaches from board port", t, func(env *testutil.UnitTestEnv) {
+		device := "/dev/null"
+		baud := 9600
+		port := mocks.NewMockSerialPort(env.Ctrl)
+
+		port.EXPECT().Close().Times(1).Times(2)
+		port.EXPECT().Watch().Times(1)
+		go env.ArdiCore.Uploader.Attach(device, baud, port)
+
+		time.Sleep(time.Second)
+		env.ArdiCore.Uploader.Detach()
 	})
 }

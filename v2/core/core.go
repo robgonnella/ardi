@@ -66,18 +66,12 @@ func (c *ArdiCore) GetCompileOptsFromArgs(fqbn string, buildProps []string, show
 		if len(ardiBuilds) == 1 {
 			for k := range ardiBuilds {
 				c.logger.Infof("Using build definition: %s", k)
-				compileOpts, err := c.Config.GetCompileOpts(k)
-				if err != nil {
-					return nil, err
-				}
+				compileOpts, _ := c.Config.GetCompileOpts(k)
 				opts = append(opts, compileOpts)
 			}
 		} else if defaultExists {
 			c.logger.Info("Using build definition: default")
-			compileOpts, err := c.Config.GetCompileOpts("default")
-			if err != nil {
-				return nil, err
-			}
+			compileOpts, _ := c.Config.GetCompileOpts("default")
 			opts = append(opts, compileOpts)
 		} else {
 			c.logger.Info("Using ino file in current directory")
@@ -102,10 +96,7 @@ func (c *ArdiCore) GetCompileOptsFromArgs(fqbn string, buildProps []string, show
 		sketch := args[0]
 		if _, ok := ardiBuilds[sketch]; ok {
 			c.logger.Infof("Using build definition: %s", sketch)
-			compileOpts, err := c.Config.GetCompileOpts(sketch)
-			if err != nil {
-				return nil, err
-			}
+			compileOpts, _ := c.Config.GetCompileOpts(sketch)
 			opts = append(opts, compileOpts)
 			return opts, nil
 		}
@@ -131,10 +122,7 @@ func (c *ArdiCore) GetCompileOptsFromArgs(fqbn string, buildProps []string, show
 
 	for _, buildName := range args {
 		c.logger.Infof("Using build definition: %s", buildName)
-		compileOpts, err := c.Config.GetCompileOpts(buildName)
-		if err != nil {
-			return nil, err
-		}
+		compileOpts, _ := c.Config.GetCompileOpts(buildName)
 		opts = append(opts, compileOpts)
 	}
 

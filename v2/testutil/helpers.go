@@ -35,6 +35,14 @@ func CleanCommandsDir() {
 	os.Remove(projectJSONFile)
 }
 
+// CleanPixieDir removes project data from test pixie project directory
+func CleanPixieDir() {
+	projectDataDir := path.Join(here, "../test_projects/pixie/.ardi")
+	projectJSONFile := path.Join(here, "../test_projects/pixie/ardi.json")
+	os.RemoveAll(projectDataDir)
+	os.Remove(projectJSONFile)
+}
+
 // CleanBuilds removes compiled test project builds
 func CleanBuilds() {
 	os.RemoveAll(path.Join(BlinkProjectDir(), "build"))

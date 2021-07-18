@@ -49,12 +49,12 @@ func (c *UploadCore) Upload(board *cli.BoardWithPort, buildDir string) error {
 }
 
 // Attach attaches to the associated board port and prints logs
-func (c *UploadCore) Attach(device string, baud int, port SerialPort) {
-	if port == nil {
+func (c *UploadCore) Attach(device string, baud int, mockPort SerialPort) {
+	if mockPort == nil {
 		c.port = NewArdiSerialPort(device, baud, c.logger)
 	} else {
-		c.port = port
-		port.Close()
+		c.port = mockPort
+		mockPort.Close()
 	}
 	c.port.Watch()
 }

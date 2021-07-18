@@ -134,9 +134,11 @@ func getRootCommand() *cobra.Command {
 }
 
 // GetRootCmd adds all ardi commands to root and returns root command
-func GetRootCmd(cmdLogger *log.Logger, instance cli.Cli) *cobra.Command {
+func GetRootCmd(cmdLogger *log.Logger, mockCli cli.Cli) *cobra.Command {
 	logger = cmdLogger
-	cliInstance = instance
+	if mockCli != nil {
+		cliInstance = mockCli
+	}
 	rootCmd := getRootCommand()
 	rootCmd.AddCommand(getAddCmd())
 	rootCmd.AddCommand(getCleanCmd())

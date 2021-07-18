@@ -113,12 +113,6 @@ func (c *Wrapper) UpgradePlatform(platform string) error {
 func (c *Wrapper) InstallPlatform(platform string) (string, string, error) {
 	inst := c.getRPCInstance()
 
-	if platform == "" {
-		err := errors.New("must specify a platform to install")
-		c.logger.WithError(err).Error()
-		return "", "", err
-	}
-
 	pkg, arch, version := parsePlatform(platform)
 	installedPlatform := fmt.Sprintf("%s:%s", pkg, arch)
 
@@ -158,12 +152,6 @@ func (c *Wrapper) InstallPlatform(platform string) (string, string, error) {
 // UninstallPlatform installs a given platform
 func (c *Wrapper) UninstallPlatform(platform string) (string, error) {
 	inst := c.getRPCInstance()
-
-	if platform == "" {
-		err := errors.New("must specify a platform to install")
-		c.logger.WithError(err).Error()
-		return "", err
-	}
 
 	pkg, arch, _ := parsePlatform(platform)
 
@@ -261,7 +249,7 @@ func (c *Wrapper) AllBoards() []*BoardWithPort {
 	platforms, err := c.cli.GetPlatforms(req)
 	if err != nil {
 		c.logger.WithError(err).Warn("failed to get list of installed platforms")
-		return nil
+		return boardList
 	}
 
 	for _, p := range platforms {
@@ -530,6 +518,10 @@ func (c *Wrapper) getRPCInstance() *rpc.Instance {
 
 // private helpers
 func parsePlatform(platform string) (string, string, string) {
+	if platform == "" {
+		return "", "", ""
+	}
+
 	version := ""
 	arch := ""
 	parts := strings.Split(platform, "@")

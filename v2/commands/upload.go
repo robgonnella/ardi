@@ -35,7 +35,7 @@ func getUploadCmd() *cobra.Command {
 					logger.Info("Using build definition: default")
 					project.Baud = defaultBuild.Baud
 					project.Directory = defaultBuild.Directory
-					project.Directory = defaultBuild.Sketch
+					project.Sketch = defaultBuild.Sketch
 					if fqbn == "" {
 						fqbn = defaultBuild.FQBN
 					}
@@ -44,7 +44,7 @@ func getUploadCmd() *cobra.Command {
 						logger.Infof("Using build definition: %s", name)
 						project.Baud = b.Baud
 						project.Directory = b.Directory
-						project.Directory = b.Sketch
+						project.Sketch = b.Sketch
 						if fqbn == "" {
 							fqbn = b.FQBN
 						}
