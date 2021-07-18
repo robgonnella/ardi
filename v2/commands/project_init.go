@@ -5,7 +5,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func getProjectInitCmd() *cobra.Command {
+func getProjectInitCmd(env *CommandEnv) *cobra.Command {
 	initCmd := &cobra.Command{
 		Use:   "project-init",
 		Short: "Initialize directory as an ardi project",

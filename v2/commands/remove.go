@@ -2,7 +2,7 @@ package commands
 
 import "github.com/spf13/cobra"
 
-func getRemovePlatformCmd() *cobra.Command {
+func getRemovePlatformCmd(env *CommandEnv) *cobra.Command {
 	removeCmd := &cobra.Command{
 		Use:     "platforms",
 		Long:    "\nRemove platform(s) from project",
@@ -11,16 +11,16 @@ func getRemovePlatformCmd() *cobra.Command {
 		Args:    cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			for _, p := range args {
-				logger.Infof("Removing platform: %s", p)
-				removed, err := ardiCore.Platform.Remove(p)
+				env.Logger.Infof("Removing platform: %s", p)
+				removed, err := env.ArdiCore.Platform.Remove(p)
 				if err != nil {
 					return err
 				}
-				logger.Infof("Removed %s", removed)
-				if err := ardiCore.Config.RemovePlatform(removed); err != nil {
+				env.Logger.Infof("Removed %s", removed)
+				if err := env.ArdiCore.Config.RemovePlatform(removed); err != nil {
 					return err
 				}
-				logger.Info("Udated config")
+				env.Logger.Info("Udated config")
 			}
 			return nil
 		},
@@ -28,7 +28,7 @@ func getRemovePlatformCmd() *cobra.Command {
 	return removeCmd
 }
 
-func getRemoveBuildCmd() *cobra.Command {
+func getRemoveBuildCmd(env *CommandEnv) *cobra.Command {
 	removeCmd := &cobra.Command{
 		Use:     "builds",
 		Long:    "\nRemove build config from project",
@@ -37,7 +37,7 @@ func getRemoveBuildCmd() *cobra.Command {
 		Args:    cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			for _, b := range args {
-				if err := ardiCore.Config.RemoveBuild(b); err != nil {
+				if err := env.ArdiCore.Config.RemoveBuild(b); err != nil {
 					return err
 				}
 			}
@@ -47,7 +47,7 @@ func getRemoveBuildCmd() *cobra.Command {
 	return removeCmd
 }
 
-func getRemoveLibCmd() *cobra.Command {
+func getRemoveLibCmd(env *CommandEnv) *cobra.Command {
 	removeCmd := &cobra.Command{
 		Use:     "libraries",
 		Long:    "\nRemove libraries from project",
@@ -56,15 +56,15 @@ func getRemoveLibCmd() *cobra.Command {
 		Args:    cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			for _, l := range args {
-				logger.Infof("Removing library: %s", l)
-				if err := ardiCore.Lib.Remove(l); err != nil {
+				env.Logger.Infof("Removing library: %s", l)
+				if err := env.ArdiCore.Lib.Remove(l); err != nil {
 					return err
 				}
-				logger.Infof("Removed %s", l)
-				if err := ardiCore.Config.RemoveLibrary(l); err != nil {
+				env.Logger.Infof("Removed %s", l)
+				if err := env.ArdiCore.Config.RemoveLibrary(l); err != nil {
 					return err
 				}
-				logger.Info("Updated config")
+				env.Logger.Info("Updated config")
 			}
 			return nil
 		},
@@ -72,7 +72,7 @@ func getRemoveLibCmd() *cobra.Command {
 	return removeCmd
 }
 
-func getRemoveBoardURLCmd() *cobra.Command {
+func getRemoveBoardURLCmd(env *CommandEnv) *cobra.Command {
 	removeCmd := &cobra.Command{
 		Use:     "board-urls",
 		Long:    "\nRemove board urls from project",
@@ -81,10 +81,10 @@ func getRemoveBoardURLCmd() *cobra.Command {
 		Args:    cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			for _, url := range args {
-				if err := ardiCore.Config.RemoveBoardURL(url); err != nil {
+				if err := env.ArdiCore.Config.RemoveBoardURL(url); err != nil {
 					return err
 				}
-				if err := ardiCore.CliConfig.RemoveBoardURL(url); err != nil {
+				if err := env.ArdiCore.CliConfig.RemoveBoardURL(url); err != nil {
 					return err
 				}
 			}
@@ -94,15 +94,15 @@ func getRemoveBoardURLCmd() *cobra.Command {
 	return removeCmd
 }
 
-func getRemoveCmd() *cobra.Command {
+func getRemoveCmd(env *CommandEnv) *cobra.Command {
 	removeCmd := &cobra.Command{
 		Use:   "remove",
 		Short: "Remove project dependencies",
 		Long:  "\nRemove project dependencies",
 	}
-	removeCmd.AddCommand(getRemovePlatformCmd())
-	removeCmd.AddCommand(getRemoveBuildCmd())
-	removeCmd.AddCommand(getRemoveLibCmd())
-	removeCmd.AddCommand(getRemoveBoardURLCmd())
+	removeCmd.AddCommand(getRemovePlatformCmd(env))
+	removeCmd.AddCommand(getRemoveBuildCmd(env))
+	removeCmd.AddCommand(getRemoveLibCmd(env))
+	removeCmd.AddCommand(getRemoveBoardURLCmd(env))
 	return removeCmd
 }

@@ -38,14 +38,10 @@ func (e *UnitTestEnv) ClearStdout() {
 // RunUnitTest runs an ardi unit test
 func RunUnitTest(name string, t *testing.T, f func(env *UnitTestEnv)) {
 	t.Run(name, func(st *testing.T) {
-		ctx := context.Background()
-
+		ctx, cancel := context.WithCancel(context.Background())
 		ctrl := gomock.NewController(st)
-
-		st.Cleanup(func() {
-			ctrl.Finish()
-			CleanAll()
-		})
+		defer cancel()
+		defer CleanAll()
 
 		cliInstance := mocks.NewMockCli(ctrl)
 		logger := log.New()
@@ -95,10 +91,9 @@ type IntegrationTestEnv struct {
 // RunIntegrationTest runs an ardi integration test
 func RunIntegrationTest(name string, t *testing.T, f func(env *IntegrationTestEnv)) {
 	t.Run(name, func(st *testing.T) {
-		ctx := context.Background()
-		st.Cleanup(func() {
-			CleanAll()
-		})
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		defer CleanAll()
 
 		CleanAll()
 
@@ -126,7 +121,8 @@ func (e *IntegrationTestEnv) RunProjectInit() error {
 
 // Execute executes the root command with given arguments
 func (e *IntegrationTestEnv) Execute(args []string) error {
-	rootCmd := commands.GetRootCmd(e.logger, nil)
+	cmdEnv := &commands.CommandEnv{Logger: e.logger}
+	rootCmd := commands.GetRootCmd(cmdEnv)
 	rootCmd.SetOut(e.logger.Out)
 	rootCmd.SetArgs(args)
 
@@ -152,16 +148,13 @@ type MockCliIntegrationTestEnv struct {
 // RunMockCliIntegrationTest runs an ardi integration test with mock cli
 func RunMockCliIntegrationTest(name string, t *testing.T, f func(env *MockCliIntegrationTestEnv)) {
 	t.Run(name, func(st *testing.T) {
-		ctx := context.Background()
+		ctx, cancel := context.WithCancel(context.Background())
 		ctrl := gomock.NewController(st)
+		defer cancel()
+		defer CleanAll()
+
 		cliInstance := mocks.NewMockCli(ctrl)
-
 		cliInstance.EXPECT().InitSettings(gomock.Any()).AnyTimes()
-
-		st.Cleanup(func() {
-			ctrl.Finish()
-			CleanAll()
-		})
 
 		CleanAll()
 
@@ -197,7 +190,8 @@ func (e *MockCliIntegrationTestEnv) ClearStdout() {
 
 // Execute executes the root command with given arguments for mock cli test
 func (e *MockCliIntegrationTestEnv) Execute(args []string) error {
-	rootCmd := commands.GetRootCmd(e.logger, e.Cli)
+	cmdEnv := &commands.CommandEnv{Logger: e.logger, MockCli: e.Cli}
+	rootCmd := commands.GetRootCmd(cmdEnv)
 	rootCmd.SetOut(e.logger.Out)
 	rootCmd.SetArgs(args)
 

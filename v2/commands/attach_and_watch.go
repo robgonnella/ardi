@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func getWatchCmd() *cobra.Command {
+func getWatchCmd(env *CommandEnv) *cobra.Command {
 	var fqbn string
 	var buildProps []string
 	var port string
@@ -23,7 +23,7 @@ func getWatchCmd() *cobra.Command {
 			"matches a user defined build in ardi.json, the build values will be " +
 			"used for compilation, upload, and watch path",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			optsList, err := ardiCore.GetCompileOptsFromArgs(fqbn, buildProps, false, args)
+			optsList, err := env.ArdiCore.GetCompileOptsFromArgs(fqbn, buildProps, false, args)
 			if err != nil {
 				return err
 			}
@@ -36,7 +36,7 @@ func getWatchCmd() *cobra.Command {
 
 			// Ignore errors here as user may have provided fqbn via build to mitigate
 			// custom boards that don't show up via auto detect for some reason
-			board, _ := ardiCore.Cli.GetTargetBoard(fqbn, port, true)
+			board, _ := env.ArdiCore.Cli.GetTargetBoard(fqbn, port, true)
 
 			if board == nil && opts.FQBN != "" && port != "" {
 				board = &cli.BoardWithPort{FQBN: opts.FQBN, Port: port}
@@ -48,11 +48,11 @@ func getWatchCmd() *cobra.Command {
 
 			opts.FQBN = board.FQBN
 
-			if err := ardiCore.Compiler.Compile(*opts); err != nil {
+			if err := env.ArdiCore.Compiler.Compile(*opts); err != nil {
 				return err
 			}
 
-			if err := ardiCore.Uploader.Upload(board, opts.SketchDir); err != nil {
+			if err := env.ArdiCore.Uploader.Upload(board, opts.SketchDir); err != nil {
 				return err
 			}
 
@@ -62,10 +62,10 @@ func getWatchCmd() *cobra.Command {
 				Baud:        baud,
 			}
 
-			ardiCore.Watcher.SetTargets(targets)
+			env.ArdiCore.Watcher.SetTargets(targets)
 
-			defer ardiCore.Watcher.Stop()
-			return ardiCore.Watcher.Watch()
+			defer env.ArdiCore.Watcher.Stop()
+			return env.ArdiCore.Watcher.Watch()
 		},
 	}
 

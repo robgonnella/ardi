@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func getUploadCmd() *cobra.Command {
+func getUploadCmd(env *CommandEnv) *cobra.Command {
 	var baud int
 	var attach bool
 	var fqbn string
@@ -22,17 +22,17 @@ func getUploadCmd() *cobra.Command {
 			"build values will be used to find the appropraite build to upload",
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			defer ardiCore.Uploader.Detach() // noop if not attached
+			defer env.ArdiCore.Uploader.Detach() // noop if not attached
 
 			project := &types.Project{}
 			var err error
 
-			builds := ardiCore.Config.GetBuilds()
+			builds := env.ArdiCore.Config.GetBuilds()
 			defaultBuild, defaultExits := builds["default"]
 
 			if len(args) == 0 {
 				if defaultExits {
-					logger.Info("Using build definition: default")
+					env.Logger.Info("Using build definition: default")
 					project.Baud = defaultBuild.Baud
 					project.Directory = defaultBuild.Directory
 					project.Sketch = defaultBuild.Sketch
@@ -41,7 +41,7 @@ func getUploadCmd() *cobra.Command {
 					}
 				} else if len(builds) == 1 {
 					for name, b := range builds {
-						logger.Infof("Using build definition: %s", name)
+						env.Logger.Infof("Using build definition: %s", name)
 						project.Baud = b.Baud
 						project.Directory = b.Directory
 						project.Sketch = b.Sketch
@@ -50,7 +50,7 @@ func getUploadCmd() *cobra.Command {
 						}
 					}
 				} else {
-					logger.Info("Using ino in current directory")
+					env.Logger.Info("Using ino in current directory")
 					project, err = util.ProcessSketch(".")
 					if err != nil {
 						return err
@@ -58,7 +58,7 @@ func getUploadCmd() *cobra.Command {
 				}
 			} else {
 				if b, ok := builds[args[0]]; ok {
-					logger.Infof("Using build definition: %s", args[0])
+					env.Logger.Infof("Using build definition: %s", args[0])
 					project.Baud = b.Baud
 					project.Directory = b.Directory
 					project.Sketch = b.Sketch
@@ -66,7 +66,7 @@ func getUploadCmd() *cobra.Command {
 						fqbn = b.FQBN
 					}
 				} else {
-					logger.Info("Using ino in current directory")
+					env.Logger.Info("Using ino in current directory")
 					project, err = util.ProcessSketch(args[0])
 					if err != nil {
 						return err
@@ -80,7 +80,7 @@ func getUploadCmd() *cobra.Command {
 
 			// Ignore errors here as user may have provided fqbn via build to mitigate
 			// custom boards that don't show up via auto detect for some reason
-			board, _ := ardiCore.Cli.GetTargetBoard(fqbn, port, true)
+			board, _ := env.ArdiCore.Cli.GetTargetBoard(fqbn, port, true)
 
 			if board == nil && fqbn != "" && port != "" {
 				board = &cli.BoardWithPort{FQBN: fqbn, Port: port}
@@ -90,12 +90,12 @@ func getUploadCmd() *cobra.Command {
 				return errors.New("no connected boards detected")
 			}
 
-			if err := ardiCore.Uploader.Upload(board, project.Directory); err != nil {
+			if err := env.ArdiCore.Uploader.Upload(board, project.Directory); err != nil {
 				return err
 			}
 
 			if attach {
-				ardiCore.Uploader.Attach(board.Port, project.Baud, nil)
+				env.ArdiCore.Uploader.Attach(board.Port, project.Baud, nil)
 			}
 
 			return nil

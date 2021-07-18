@@ -4,7 +4,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func getAddPlatformCmd() *cobra.Command {
+func getAddPlatformCmd(env *CommandEnv) *cobra.Command {
 	addCmd := &cobra.Command{
 		Use:     "platforms",
 		Long:    "\nAdd platform(s) to project",
@@ -13,16 +13,16 @@ func getAddPlatformCmd() *cobra.Command {
 		Args:    cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			for _, p := range args {
-				logger.Infof("Adding platform: %s", p)
-				installed, vers, err := ardiCore.Platform.Add(p)
+				env.Logger.Infof("Adding platform: %s", p)
+				installed, vers, err := env.ArdiCore.Platform.Add(p)
 				if err != nil {
-					logger.WithError(err).Errorf("Failed to add arduino platform %s", p)
+					env.Logger.WithError(err).Errorf("Failed to add arduino platform %s", p)
 					return err
 				}
-				if err := ardiCore.Config.AddPlatform(installed, vers); err != nil {
+				if err := env.ArdiCore.Config.AddPlatform(installed, vers); err != nil {
 					return err
 				}
-				logger.Info("Updated config")
+				env.Logger.Info("Updated config")
 			}
 			return nil
 		},
@@ -30,7 +30,7 @@ func getAddPlatformCmd() *cobra.Command {
 	return addCmd
 }
 
-func getAddBuildCmd() *cobra.Command {
+func getAddBuildCmd(env *CommandEnv) *cobra.Command {
 	var name string
 	var fqbn string
 	var sketch string
@@ -41,7 +41,7 @@ func getAddBuildCmd() *cobra.Command {
 		Long:  "\nAdd build config to project",
 		Short: "Add build config to project",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return ardiCore.Config.AddBuild(name, sketch, fqbn, baud, buildProps)
+			return env.ArdiCore.Config.AddBuild(name, sketch, fqbn, baud, buildProps)
 		},
 	}
 	addCmd.Flags().StringVarP(&name, "name", "n", "", "Custom name for the build")
@@ -56,7 +56,7 @@ func getAddBuildCmd() *cobra.Command {
 	return addCmd
 }
 
-func getAddLibCmd() *cobra.Command {
+func getAddLibCmd(env *CommandEnv) *cobra.Command {
 	addCmd := &cobra.Command{
 		Use:     "libraries",
 		Long:    "\nAdd libraries to project",
@@ -65,15 +65,15 @@ func getAddLibCmd() *cobra.Command {
 		Args:    cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			for _, l := range args {
-				logger.Infof("Adding library: %s", l)
-				name, vers, err := ardiCore.Lib.Add(l)
+				env.Logger.Infof("Adding library: %s", l)
+				name, vers, err := env.ArdiCore.Lib.Add(l)
 				if err != nil {
-					logger.WithError(err).Errorf("Failed to install library %s", l)
+					env.Logger.WithError(err).Errorf("Failed to install library %s", l)
 					return err
 				}
-				logger.Infof("Successfully installed %s@%s", name, vers)
-				if err := ardiCore.Config.AddLibrary(name, vers); err != nil {
-					logger.WithError(err).Error("Failed to save libary to ardi.json")
+				env.Logger.Infof("Successfully installed %s@%s", name, vers)
+				if err := env.ArdiCore.Config.AddLibrary(name, vers); err != nil {
+					env.Logger.WithError(err).Error("Failed to save libary to ardi.json")
 					return err
 				}
 			}
@@ -83,7 +83,7 @@ func getAddLibCmd() *cobra.Command {
 	return addCmd
 }
 
-func getAddBoardURLCmd() *cobra.Command {
+func getAddBoardURLCmd(env *CommandEnv) *cobra.Command {
 	addCmd := &cobra.Command{
 		Use:     "board-url",
 		Long:    "\nAdd board urls to project",
@@ -92,10 +92,10 @@ func getAddBoardURLCmd() *cobra.Command {
 		Args:    cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			for _, u := range args {
-				if err := ardiCore.Config.AddBoardURL(u); err != nil {
+				if err := env.ArdiCore.Config.AddBoardURL(u); err != nil {
 					return err
 				}
-				if err := ardiCore.CliConfig.AddBoardURL(u); err != nil {
+				if err := env.ArdiCore.CliConfig.AddBoardURL(u); err != nil {
 					return err
 				}
 			}
@@ -105,15 +105,15 @@ func getAddBoardURLCmd() *cobra.Command {
 	return addCmd
 }
 
-func getAddCmd() *cobra.Command {
+func getAddCmd(env *CommandEnv) *cobra.Command {
 	addCmd := &cobra.Command{
 		Use:   "add",
 		Long:  "\nAdd project dependencies",
 		Short: "Add project dependencies",
 	}
-	addCmd.AddCommand(getAddPlatformCmd())
-	addCmd.AddCommand(getAddBuildCmd())
-	addCmd.AddCommand(getAddLibCmd())
-	addCmd.AddCommand(getAddBoardURLCmd())
+	addCmd.AddCommand(getAddPlatformCmd(env))
+	addCmd.AddCommand(getAddBuildCmd(env))
+	addCmd.AddCommand(getAddLibCmd(env))
+	addCmd.AddCommand(getAddBoardURLCmd(env))
 	return addCmd
 }

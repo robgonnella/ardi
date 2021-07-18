@@ -2,18 +2,18 @@ package commands
 
 import "github.com/spf13/cobra"
 
-func getListPlatformCmd() *cobra.Command {
+func getListPlatformCmd(env *CommandEnv) *cobra.Command {
 	listCmd := &cobra.Command{
 		Use:     "platforms",
 		Long:    "\nList project platforms",
 		Short:   "List project platforms",
 		Aliases: []string{"platform"},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			logger.Info("Platforms specified in ardi.json")
-			ardiCore.Config.ListPlatforms()
+			env.Logger.Info("Platforms specified in ardi.json")
+			env.ArdiCore.Config.ListPlatforms()
 
-			logger.Info("Installed platforms")
-			if err := ardiCore.Platform.ListInstalled(); err != nil {
+			env.Logger.Info("Installed platforms")
+			if err := env.ArdiCore.Platform.ListInstalled(); err != nil {
 				return err
 			}
 
@@ -23,17 +23,17 @@ func getListPlatformCmd() *cobra.Command {
 	return listCmd
 }
 
-func getListLibrariesCmd() *cobra.Command {
+func getListLibrariesCmd(env *CommandEnv) *cobra.Command {
 	listCmd := &cobra.Command{
 		Use:     "libraries",
 		Long:    "\nList project libraries",
 		Short:   "List project libraries",
 		Aliases: []string{"libs"},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			logger.Info("Libraries specified in ardi.json")
-			ardiCore.Config.ListLibraries()
-			logger.Info("Installed libraries")
-			if err := ardiCore.Lib.ListInstalled(); err != nil {
+			env.Logger.Info("Libraries specified in ardi.json")
+			env.ArdiCore.Config.ListLibraries()
+			env.Logger.Info("Installed libraries")
+			if err := env.ArdiCore.Lib.ListInstalled(); err != nil {
 				return err
 			}
 			return nil
@@ -42,32 +42,32 @@ func getListLibrariesCmd() *cobra.Command {
 	return listCmd
 }
 
-func getListBuildsCmd() *cobra.Command {
+func getListBuildsCmd(env *CommandEnv) *cobra.Command {
 	listCmd := &cobra.Command{
 		Use:     "builds",
 		Long:    "\nList project builds",
 		Short:   "List project builds",
 		Aliases: []string{"build"},
 		Run: func(cmd *cobra.Command, args []string) {
-			ardiCore.Config.ListBuilds(args)
+			env.ArdiCore.Config.ListBuilds(args)
 		},
 	}
 	return listCmd
 }
 
-func getListBoardURLSCmd() *cobra.Command {
+func getListBoardURLSCmd(env *CommandEnv) *cobra.Command {
 	listCmd := &cobra.Command{
 		Use:   "board-urls",
 		Long:  "\nList project board urls",
 		Short: "List project board urls",
 		Run: func(cmd *cobra.Command, args []string) {
-			ardiCore.Config.ListBoardURLS()
+			env.ArdiCore.Config.ListBoardURLS()
 		},
 	}
 	return listCmd
 }
 
-func getListBoardFQBNSCmd() *cobra.Command {
+func getListBoardFQBNSCmd(env *CommandEnv) *cobra.Command {
 	listCmd := &cobra.Command{
 		Use:   "board-fqbns",
 		Long:  "\nList boards with associated fqbns",
@@ -77,13 +77,13 @@ func getListBoardFQBNSCmd() *cobra.Command {
 			if len(args) > 0 {
 				query = args[0]
 			}
-			return ardiCore.Board.FQBNS(query)
+			return env.ArdiCore.Board.FQBNS(query)
 		},
 	}
 	return listCmd
 }
 
-func getListBoardPlatformsCmd() *cobra.Command {
+func getListBoardPlatformsCmd(env *CommandEnv) *cobra.Command {
 	listCmd := &cobra.Command{
 		Use:   "board-platforms",
 		Long:  "\nList boards with their associated platform",
@@ -93,23 +93,23 @@ func getListBoardPlatformsCmd() *cobra.Command {
 			if len(args) > 0 {
 				query = args[0]
 			}
-			return ardiCore.Board.Platforms(query)
+			return env.ArdiCore.Board.Platforms(query)
 		},
 	}
 	return listCmd
 }
 
-func getListCmd() *cobra.Command {
+func getListCmd(env *CommandEnv) *cobra.Command {
 	listCmd := &cobra.Command{
 		Use:   "list",
 		Long:  "\nList platforms, libraries, board urls, and builds",
 		Short: "List platforms, libraries, board urls, and builds",
 	}
-	listCmd.AddCommand(getListPlatformCmd())
-	listCmd.AddCommand(getListLibrariesCmd())
-	listCmd.AddCommand(getListBuildsCmd())
-	listCmd.AddCommand(getListBoardURLSCmd())
-	listCmd.AddCommand(getListBoardFQBNSCmd())
-	listCmd.AddCommand(getListBoardPlatformsCmd())
+	listCmd.AddCommand(getListPlatformCmd(env))
+	listCmd.AddCommand(getListLibrariesCmd(env))
+	listCmd.AddCommand(getListBuildsCmd(env))
+	listCmd.AddCommand(getListBoardURLSCmd(env))
+	listCmd.AddCommand(getListBoardFQBNSCmd(env))
+	listCmd.AddCommand(getListBoardPlatformsCmd(env))
 	return listCmd
 }
