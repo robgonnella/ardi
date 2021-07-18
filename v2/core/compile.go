@@ -51,7 +51,7 @@ func (c *CompileCore) Compile(opts cli.CompileOpts) error {
 	fieldsLogger := c.logger.WithFields(fields)
 	fieldsLogger.Info("Compiling...")
 	if err := c.cli.Compile(opts); err != nil {
-		fieldsLogger.WithError(err).Error("failed to compile")
+		fieldsLogger.WithError(err).Error("Compilation failed")
 		c.compiling = false
 		return err
 	}
@@ -67,17 +67,26 @@ func (c *CompileCore) WatchForChanges(opts cli.CompileOpts) error {
 		return nil
 	}
 	c.watcher = watcher
+	processingUpdate := false
 
 	c.watcher.AddListener(func() {
-		c.logger.Infof("Recompiling %s", opts.SketchPath)
-		if err := c.Compile(opts); err != nil {
-			c.logger.WithError(err).Error("Compilation failed")
+		if processingUpdate {
+			c.logger.Debug("ignoring update - still processing previous update")
+			return
 		}
-		c.logger.Info("Compilation successful")
+
+		processingUpdate = true
+		c.watcher.Stop()
+
+		defer func() {
+			processingUpdate = false
+			c.watcher.Restart()
+		}()
+
+		c.Compile(opts)
 	})
 
 	c.watcher.Watch()
-
 	return nil
 }
 
