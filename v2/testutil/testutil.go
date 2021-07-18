@@ -19,9 +19,9 @@ import (
 type UnitTestEnv struct {
 	T            *testing.T
 	Ctx          context.Context
-	Ctrl         *gomock.Controller
 	Logger       *log.Logger
-	Cli          *mocks.MockCli
+	ArduinoCli   *mocks.MockCli
+	SerialPort   *mocks.MockSerialPort
 	ArdiCore     *core.ArdiCore
 	Stdout       *bytes.Buffer
 	PixieProjDir string
@@ -39,11 +39,16 @@ func (e *UnitTestEnv) ClearStdout() {
 func RunUnitTest(name string, t *testing.T, f func(env *UnitTestEnv)) {
 	t.Run(name, func(st *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
-		ctrl := gomock.NewController(st)
 		defer cancel()
 		defer CleanAll()
 
-		cliInstance := mocks.NewMockCli(ctrl)
+		cliCtrl := gomock.NewController(st)
+		defer cliCtrl.Finish()
+		cliInstance := mocks.NewMockCli(cliCtrl)
+
+		portCtrl := gomock.NewController(st)
+		defer portCtrl.Finish()
+		portInatance := mocks.NewMockSerialPort(portCtrl)
 		logger := log.New()
 
 		CleanAll()
@@ -56,24 +61,26 @@ func RunUnitTest(name string, t *testing.T, f func(env *UnitTestEnv)) {
 		settingsPath := util.GetCliSettingsPath()
 
 		cliInstance.EXPECT().InitSettings(settingsPath).AnyTimes()
-		cliWrapper := cli.NewCli(ctx, settingsPath, svrSettings, logger, cliInstance)
+		withArduinoCli := core.WithArduinoCli(cliInstance)
+		withSerialPort := core.WithCoreSerialPortManager(portInatance)
 
 		coreOpts := core.NewArdiCoreOpts{
+			Ctx:                ctx,
 			Logger:             logger,
-			Cli:                cliWrapper,
+			CliSettingsPath:    settingsPath,
 			ArdiConfig:         *ardiConfig,
 			ArduinoCliSettings: *svrSettings,
 		}
-		ardiCore := core.NewArdiCore(coreOpts)
+		ardiCore := core.NewArdiCore(coreOpts, withArduinoCli, withSerialPort)
 
 		env := UnitTestEnv{
-			T:        st,
-			Ctx:      ctx,
-			Ctrl:     ctrl,
-			Logger:   logger,
-			Cli:      cliInstance,
-			ArdiCore: ardiCore,
-			Stdout:   &b,
+			T:          st,
+			Ctx:        ctx,
+			Logger:     logger,
+			ArduinoCli: cliInstance,
+			SerialPort: portInatance,
+			ArdiCore:   ardiCore,
+			Stdout:     &b,
 		}
 
 		f(&env)
@@ -121,8 +128,27 @@ func (e *IntegrationTestEnv) RunProjectInit() error {
 
 // Execute executes the root command with given arguments
 func (e *IntegrationTestEnv) Execute(args []string) error {
-	cmdEnv := &commands.CommandEnv{Logger: e.logger}
-	rootCmd := commands.GetRootCmd(cmdEnv)
+	ardiConfig, svrSettings := util.GetAllSettings()
+	cliSettingsPath := util.GetCliSettingsPath()
+
+	coreOpts := core.NewArdiCoreOpts{
+		Ctx:                e.ctx,
+		Logger:             e.logger,
+		CliSettingsPath:    cliSettingsPath,
+		ArdiConfig:         *ardiConfig,
+		ArduinoCliSettings: *svrSettings,
+	}
+
+	arduinoCli := cli.NewArduinoCli()
+	withArduinoCli := core.WithArduinoCli(arduinoCli)
+	ardiCore := core.NewArdiCore(coreOpts, withArduinoCli)
+
+	env := &commands.CommandEnv{
+		ArdiCore: ardiCore,
+		Logger:   e.logger,
+	}
+
+	rootCmd := commands.GetRootCmd(env)
 	rootCmd.SetOut(e.logger.Out)
 	rootCmd.SetArgs(args)
 
@@ -136,25 +162,31 @@ func (e *IntegrationTestEnv) ClearStdout() {
 	e.Stdout = &b
 }
 
-// MockCliIntegrationTestEnv represents our integration test environment with a mocked arduino cli
-type MockCliIntegrationTestEnv struct {
-	T      *testing.T
-	Stdout *bytes.Buffer
-	Cli    *mocks.MockCli
-	ctx    context.Context
-	logger *log.Logger
+// MockIntegrationTestEnv represents our integration test environment with a mocked arduino cli
+type MockIntegrationTestEnv struct {
+	T          *testing.T
+	Stdout     *bytes.Buffer
+	ArduinoCli *mocks.MockCli
+	SerialPort *mocks.MockSerialPort
+	ctx        context.Context
+	logger     *log.Logger
 }
 
-// RunMockCliIntegrationTest runs an ardi integration test with mock cli
-func RunMockCliIntegrationTest(name string, t *testing.T, f func(env *MockCliIntegrationTestEnv)) {
+// RunMockIntegrationTest runs an ardi integration test with mock cli
+func RunMockIntegrationTest(name string, t *testing.T, f func(env *MockIntegrationTestEnv)) {
 	t.Run(name, func(st *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
-		ctrl := gomock.NewController(st)
 		defer cancel()
 		defer CleanAll()
 
-		cliInstance := mocks.NewMockCli(ctrl)
+		cliCtrl := gomock.NewController(st)
+		defer cliCtrl.Finish()
+		cliInstance := mocks.NewMockCli(cliCtrl)
 		cliInstance.EXPECT().InitSettings(gomock.Any()).AnyTimes()
+
+		portCtrl := gomock.NewController(st)
+		defer portCtrl.Finish()
+		portInstance := mocks.NewMockSerialPort(portCtrl)
 
 		CleanAll()
 
@@ -163,12 +195,13 @@ func RunMockCliIntegrationTest(name string, t *testing.T, f func(env *MockCliInt
 		logger.Out = &b
 		logger.SetLevel(log.InfoLevel)
 
-		env := MockCliIntegrationTestEnv{
-			T:      st,
-			Stdout: &b,
-			Cli:    cliInstance,
-			logger: logger,
-			ctx:    ctx,
+		env := MockIntegrationTestEnv{
+			T:          st,
+			Stdout:     &b,
+			ArduinoCli: cliInstance,
+			SerialPort: portInstance,
+			logger:     logger,
+			ctx:        ctx,
 		}
 
 		f(&env)
@@ -176,22 +209,41 @@ func RunMockCliIntegrationTest(name string, t *testing.T, f func(env *MockCliInt
 }
 
 // RunProjectInit initializes and ardi project directory in mock cli test
-func (e *MockCliIntegrationTestEnv) RunProjectInit() error {
+func (e *MockIntegrationTestEnv) RunProjectInit() error {
 	projectInitArgs := []string{"project-init"}
 	return e.Execute(projectInitArgs)
 }
 
 // ClearStdout clears integration test env stdout in mock cli test
-func (e *MockCliIntegrationTestEnv) ClearStdout() {
+func (e *MockIntegrationTestEnv) ClearStdout() {
 	var b bytes.Buffer
 	e.logger.SetOutput(&b)
 	e.Stdout = &b
 }
 
 // Execute executes the root command with given arguments for mock cli test
-func (e *MockCliIntegrationTestEnv) Execute(args []string) error {
-	cmdEnv := &commands.CommandEnv{Logger: e.logger, MockCli: e.Cli}
-	rootCmd := commands.GetRootCmd(cmdEnv)
+func (e *MockIntegrationTestEnv) Execute(args []string) error {
+	ardiConfig, svrSettings := util.GetAllSettings()
+	cliSettingsPath := util.GetCliSettingsPath()
+
+	coreOpts := core.NewArdiCoreOpts{
+		Ctx:                e.ctx,
+		Logger:             e.logger,
+		CliSettingsPath:    cliSettingsPath,
+		ArdiConfig:         *ardiConfig,
+		ArduinoCliSettings: *svrSettings,
+	}
+
+	withArduinoCli := core.WithArduinoCli(e.ArduinoCli)
+	withPortManager := core.WithCoreSerialPortManager(e.SerialPort)
+	ardiCore := core.NewArdiCore(coreOpts, withArduinoCli, withPortManager)
+
+	env := &commands.CommandEnv{
+		ArdiCore: ardiCore,
+		Logger:   e.logger,
+	}
+
+	rootCmd := commands.GetRootCmd(env)
 	rootCmd.SetOut(e.logger.Out)
 	rootCmd.SetArgs(args)
 

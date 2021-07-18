@@ -23,12 +23,6 @@ import (
 var appID = uuid.New().String()
 var appSecret = uuid.New().String()
 
-// WriteSettingsOpts options for writing all settings to file
-type WriteSettingsOpts struct {
-	ArdiConfig         *types.ArdiConfig
-	ArduinoCliSettings *types.ArduinoCliSettings
-}
-
 // ArrayContains checks if a string array contains a value
 func ArrayContains(arr []string, str string) bool {
 	for _, a := range arr {
@@ -163,7 +157,7 @@ func GetCliSettingsPath() string {
 }
 
 // WriteAllSettings writes all settings files
-func WriteAllSettings(opts WriteSettingsOpts) error {
+func WriteAllSettings(ardiConfig *types.ArdiConfig, arduinoSettings *types.ArduinoCliSettings) error {
 	dataDir := paths.ArdiProjectDataDir
 	ardiConf := paths.ArdiProjectConfig
 	cliConf := paths.ArduinoCliProjectConfig
@@ -172,12 +166,12 @@ func WriteAllSettings(opts WriteSettingsOpts) error {
 		return err
 	}
 
-	byteData, _ := json.MarshalIndent(opts.ArdiConfig, "", "\t")
+	byteData, _ := json.MarshalIndent(ardiConfig, "", "\t")
 	if err := ioutil.WriteFile(ardiConf, byteData, 0644); err != nil {
 		return err
 	}
 
-	byteData, _ = yaml.Marshal(opts.ArduinoCliSettings)
+	byteData, _ = yaml.Marshal(arduinoSettings)
 	if err := ioutil.WriteFile(cliConf, byteData, 0644); err != nil {
 		return err
 	}
@@ -192,12 +186,7 @@ func WriteAllSettings(opts WriteSettingsOpts) error {
 // InitProjectDirectory initializes a directory as an ardi project
 func InitProjectDirectory() error {
 	ardiConfig, cliSettings := GetAllSettings()
-
-	writeOpts := WriteSettingsOpts{
-		ArdiConfig:         ardiConfig,
-		ArduinoCliSettings: cliSettings,
-	}
-	return WriteAllSettings(writeOpts)
+	return WriteAllSettings(ardiConfig, cliSettings)
 }
 
 // IsProjectDirectory returns whether or not currect directory has been initialized as an ardi project

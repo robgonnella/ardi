@@ -12,7 +12,6 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/robgonnella/ardi/v2/cli-wrapper"
 	"github.com/robgonnella/ardi/v2/mocks"
-	"github.com/robgonnella/ardi/v2/util"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
@@ -42,12 +41,12 @@ func runCliTest(name string, t *testing.T, fn func(env cliTestEnv, t2 *testing.T
 		ctrl := gomock.NewController(st)
 		mockArduinoCli := mocks.NewMockCli(ctrl)
 		settingsPath := "."
-		svrSettings := util.GenArduinoCliSettings(".")
 		ctx := context.Background()
 
 		mockArduinoCli.EXPECT().InitSettings(settingsPath)
 
-		cliWrapper := cli.NewCli(ctx, settingsPath, svrSettings, logger, mockArduinoCli)
+		withMockCli := cli.WithArduinoCli(mockArduinoCli)
+		cliWrapper := cli.NewCli(ctx, settingsPath, logger, withMockCli)
 
 		env := cliTestEnv{
 			Ctx:        ctx,

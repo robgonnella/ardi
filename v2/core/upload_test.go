@@ -7,7 +7,6 @@ import (
 
 	rpc "github.com/arduino/arduino-cli/rpc/cc/arduino/cli/commands/v1"
 	"github.com/golang/mock/gomock"
-	"github.com/robgonnella/ardi/v2/mocks"
 	"github.com/robgonnella/ardi/v2/testutil"
 	"github.com/stretchr/testify/assert"
 )
@@ -26,8 +25,8 @@ func TestUploadCore(t *testing.T) {
 			Verbose:    true,
 		}
 
-		env.Cli.EXPECT().CreateInstance().Return(instance).AnyTimes()
-		env.Cli.EXPECT().Upload(gomock.Any(), req, gomock.Any(), gomock.Any())
+		env.ArduinoCli.EXPECT().CreateInstance().Return(instance).AnyTimes()
+		env.ArduinoCli.EXPECT().Upload(gomock.Any(), req, gomock.Any(), gomock.Any())
 
 		err := env.ArdiCore.Uploader.Upload(connectedBoard, projectDir)
 		assert.Nil(env.T, err)
@@ -47,8 +46,8 @@ func TestUploadCore(t *testing.T) {
 			Verbose:    true,
 		}
 
-		env.Cli.EXPECT().CreateInstance().Return(instance).AnyTimes()
-		env.Cli.EXPECT().Upload(gomock.Any(), req, gomock.Any(), gomock.Any()).Return(nil, dummyErr)
+		env.ArduinoCli.EXPECT().CreateInstance().Return(instance).AnyTimes()
+		env.ArduinoCli.EXPECT().Upload(gomock.Any(), req, gomock.Any(), gomock.Any()).Return(nil, dummyErr)
 
 		err := env.ArdiCore.Uploader.Upload(board, projectDir)
 		assert.EqualError(env.T, err, dummyErr.Error())
@@ -57,21 +56,26 @@ func TestUploadCore(t *testing.T) {
 	testutil.RunUnitTest("attaches to board port to print logs", t, func(env *testutil.UnitTestEnv) {
 		device := "/dev/null"
 		baud := 9600
-		port := mocks.NewMockSerialPort(env.Ctrl)
 
-		port.EXPECT().Close().Times(1)
-		port.EXPECT().Watch().Times(1)
-		env.ArdiCore.Uploader.Attach(device, baud, port)
+		env.SerialPort.EXPECT().SetTargets(device, baud).MaxTimes(1)
+		env.SerialPort.EXPECT().Close().MaxTimes(1)
+		env.SerialPort.EXPECT().Watch().MaxTimes(1)
+
+		env.ArdiCore.Uploader.SetPortTargets(device, baud)
+		env.ArdiCore.Uploader.Attach()
 	})
 
 	testutil.RunUnitTest("detaches from board port", t, func(env *testutil.UnitTestEnv) {
 		device := "/dev/null"
 		baud := 9600
-		port := mocks.NewMockSerialPort(env.Ctrl)
 
-		port.EXPECT().Close().Times(1).Times(2)
-		port.EXPECT().Watch().Times(1)
-		go env.ArdiCore.Uploader.Attach(device, baud, port)
+		env.SerialPort.EXPECT().SetTargets(device, baud).MaxTimes(1)
+		env.SerialPort.EXPECT().SetTargets("", 0).MaxTimes(1)
+		env.SerialPort.EXPECT().Close().MaxTimes(1)
+		env.SerialPort.EXPECT().Watch().MaxTimes(1)
+
+		env.ArdiCore.Uploader.SetPortTargets(device, baud)
+		go env.ArdiCore.Uploader.Attach()
 
 		time.Sleep(time.Second)
 		env.ArdiCore.Uploader.Detach()

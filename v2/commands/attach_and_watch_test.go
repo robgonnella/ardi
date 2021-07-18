@@ -57,7 +57,7 @@ func TestAttachAndWatchCommand(t *testing.T) {
 
 	detectedPorts := []*rpc.DetectedPort{port}
 
-	testutil.RunMockCliIntegrationTest("attaches and watches saved build", t, func(env *testutil.MockCliIntegrationTestEnv) {
+	testutil.RunMockIntegrationTest("attaches and watches saved build", t, func(env *testutil.MockIntegrationTestEnv) {
 		cpCmd := exec.Command("cp", sketchCopy, sketch)
 
 		err := env.RunProjectInit()
@@ -67,11 +67,16 @@ func TestAttachAndWatchCommand(t *testing.T) {
 		err = env.Execute(args)
 		assert.NoError(env.T, err)
 
-		env.Cli.EXPECT().CreateInstance().Return(instance).AnyTimes()
-		env.Cli.EXPECT().Compile(gomock.Any(), compileReq, gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
-		env.Cli.EXPECT().ConnectedBoards(instance.GetId()).Return(detectedPorts, nil)
-		env.Cli.EXPECT().GetPlatforms(platformReq)
-		env.Cli.EXPECT().Upload(gomock.Any(), uploadReq, gomock.Any(), gomock.Any()).AnyTimes()
+		env.SerialPort.EXPECT().SetTargets(board.Port, 9600).AnyTimes()
+		env.SerialPort.EXPECT().SetTargets("", 0).AnyTimes()
+		env.SerialPort.EXPECT().Watch().AnyTimes()
+		env.SerialPort.EXPECT().Close().AnyTimes()
+
+		env.ArduinoCli.EXPECT().CreateInstance().Return(instance).AnyTimes()
+		env.ArduinoCli.EXPECT().Compile(gomock.Any(), compileReq, gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+		env.ArduinoCli.EXPECT().ConnectedBoards(instance.GetId()).Return(detectedPorts, nil)
+		env.ArduinoCli.EXPECT().GetPlatforms(platformReq)
+		env.ArduinoCli.EXPECT().Upload(gomock.Any(), uploadReq, gomock.Any(), gomock.Any()).AnyTimes()
 
 		args = []string{"attach-and-watch", buildName}
 		go env.Execute(args)
@@ -89,7 +94,7 @@ func TestAttachAndWatchCommand(t *testing.T) {
 		assert.Contains(env.T, env.Stdout.String(), "Upload successful")
 	})
 
-	testutil.RunMockCliIntegrationTest("attaches and watches directory sketch", t, func(env *testutil.MockCliIntegrationTestEnv) {
+	testutil.RunMockIntegrationTest("attaches and watches directory sketch", t, func(env *testutil.MockIntegrationTestEnv) {
 		cpCmd := exec.Command("cp", sketchCopy, sketch)
 
 		cwd, _ := os.Getwd()
@@ -99,11 +104,16 @@ func TestAttachAndWatchCommand(t *testing.T) {
 		err := env.RunProjectInit()
 		assert.NoError(env.T, err)
 
-		env.Cli.EXPECT().CreateInstance().Return(instance).AnyTimes()
-		env.Cli.EXPECT().Compile(gomock.Any(), compileReq, gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
-		env.Cli.EXPECT().ConnectedBoards(instance.GetId()).Return(detectedPorts, nil)
-		env.Cli.EXPECT().GetPlatforms(platformReq)
-		env.Cli.EXPECT().Upload(gomock.Any(), uploadReq, gomock.Any(), gomock.Any()).AnyTimes()
+		env.SerialPort.EXPECT().SetTargets(board.Port, 9600).AnyTimes()
+		env.SerialPort.EXPECT().SetTargets("", 0).AnyTimes()
+		env.SerialPort.EXPECT().Watch().AnyTimes()
+		env.SerialPort.EXPECT().Close().AnyTimes()
+
+		env.ArduinoCli.EXPECT().CreateInstance().Return(instance).AnyTimes()
+		env.ArduinoCli.EXPECT().Compile(gomock.Any(), compileReq, gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+		env.ArduinoCli.EXPECT().ConnectedBoards(instance.GetId()).Return(detectedPorts, nil)
+		env.ArduinoCli.EXPECT().GetPlatforms(platformReq)
+		env.ArduinoCli.EXPECT().Upload(gomock.Any(), uploadReq, gomock.Any(), gomock.Any()).AnyTimes()
 
 		args := []string{"attach-and-watch", "--fqbn", fqbn, sketch}
 		go env.Execute(args)
@@ -121,7 +131,7 @@ func TestAttachAndWatchCommand(t *testing.T) {
 		assert.Contains(env.T, env.Stdout.String(), "Upload successful")
 	})
 
-	testutil.RunMockCliIntegrationTest("attaches and watches using auto detected values", t, func(env *testutil.MockCliIntegrationTestEnv) {
+	testutil.RunMockIntegrationTest("attaches and watches using auto detected values", t, func(env *testutil.MockIntegrationTestEnv) {
 		cpCmd := exec.Command("cp", sketchCopy, sketch)
 
 		cwd, _ := os.Getwd()
@@ -130,11 +140,16 @@ func TestAttachAndWatchCommand(t *testing.T) {
 		err := env.RunProjectInit()
 		assert.NoError(env.T, err)
 
-		env.Cli.EXPECT().CreateInstance().Return(instance).AnyTimes()
-		env.Cli.EXPECT().Compile(gomock.Any(), compileReq, gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
-		env.Cli.EXPECT().ConnectedBoards(instance.GetId()).Return(detectedPorts, nil)
-		env.Cli.EXPECT().GetPlatforms(platformReq)
-		env.Cli.EXPECT().Upload(gomock.Any(), uploadReq, gomock.Any(), gomock.Any()).AnyTimes()
+		env.SerialPort.EXPECT().SetTargets(board.Port, 9600).AnyTimes()
+		env.SerialPort.EXPECT().SetTargets("", 0).AnyTimes()
+		env.SerialPort.EXPECT().Watch().AnyTimes()
+		env.SerialPort.EXPECT().Close().AnyTimes()
+
+		env.ArduinoCli.EXPECT().CreateInstance().Return(instance).AnyTimes()
+		env.ArduinoCli.EXPECT().Compile(gomock.Any(), compileReq, gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+		env.ArduinoCli.EXPECT().ConnectedBoards(instance.GetId()).Return(detectedPorts, nil)
+		env.ArduinoCli.EXPECT().GetPlatforms(platformReq)
+		env.ArduinoCli.EXPECT().Upload(gomock.Any(), uploadReq, gomock.Any(), gomock.Any()).AnyTimes()
 
 		args := []string{"attach-and-watch"}
 		go env.Execute(args)
@@ -153,7 +168,7 @@ func TestAttachAndWatchCommand(t *testing.T) {
 		os.Chdir(cwd)
 	})
 
-	testutil.RunMockCliIntegrationTest("returns error if no sketch found in current directory", t, func(env *testutil.MockCliIntegrationTestEnv) {
+	testutil.RunMockIntegrationTest("returns error if no sketch found in current directory", t, func(env *testutil.MockIntegrationTestEnv) {
 		env.RunProjectInit()
 		args := []string{"attach-and-watch"}
 		err := env.Execute(args)

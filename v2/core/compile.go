@@ -16,12 +16,27 @@ type CompileCore struct {
 	compiling bool
 }
 
+// CompileCoreOption represents options for the CompileCore
+type CompileCoreOption = func(c *CompileCore)
+
 // NewCompileCore instance of core module for compile commands
-func NewCompileCore(cli *cli.Wrapper, logger *log.Logger) *CompileCore {
-	return &CompileCore{
+func NewCompileCore(logger *log.Logger, options ...CompileCoreOption) *CompileCore {
+	c := &CompileCore{
 		logger:    logger,
-		cli:       cli,
 		compiling: false,
+	}
+
+	for _, o := range options {
+		o(c)
+	}
+
+	return c
+}
+
+// WithCompileCoreCliWrapper allows an injectable cli wrapper
+func WithCompileCoreCliWrapper(cliWrapper *cli.Wrapper) CompileCoreOption {
+	return func(c *CompileCore) {
+		c.cli = cliWrapper
 	}
 }
 

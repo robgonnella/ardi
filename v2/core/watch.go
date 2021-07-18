@@ -12,8 +12,7 @@ type WatchCore struct {
 	logger           *log.Logger
 	uploader         *UploadCore
 	compiler         *CompileCore
-	port             SerialPort
-	watcher          *FileWatcher
+	fileWatcher      *FileWatcher
 	board            *cli.BoardWithPort
 	compileOpts      *cli.CompileOpts
 	baud             int
@@ -25,24 +24,44 @@ type WatchCoreTargets struct {
 	Board       *cli.BoardWithPort
 	CompileOpts *cli.CompileOpts
 	Baud        int
-	Port        SerialPort
 }
 
+// WatchCoreOption represents options for WatchCore
+type WatchCoreOption = func(c *WatchCore)
+
 // NewWatchCore returns new Project instance
-func NewWatchCore(compiler *CompileCore, uploader *UploadCore, logger *log.Logger) *WatchCore {
-	return &WatchCore{
-		uploader:         uploader,
-		compiler:         compiler,
+func NewWatchCore(logger *log.Logger, options ...WatchCoreOption) *WatchCore {
+	c := &WatchCore{
 		logger:           logger,
 		processingUpdate: false,
+	}
+
+	for _, o := range options {
+		o(c)
+	}
+
+	return c
+}
+
+// WithWatchCoreUploader allows an injectable UploadCore
+func WithWatchCoreUploader(uploader *UploadCore) WatchCoreOption {
+	return func(c *WatchCore) {
+		c.uploader = uploader
+	}
+}
+
+// WithWatchCoreCompiler allows an injectable CompileCore
+func WithWatchCoreCompiler(compiler *CompileCore) WatchCoreOption {
+	return func(c *WatchCore) {
+		c.compiler = compiler
 	}
 }
 
 // SetTargets sets the board and compile options for the watcher
 func (w *WatchCore) SetTargets(targets WatchCoreTargets) error {
-	if w.watcher != nil {
-		w.watcher.Stop()
-		w.watcher = nil
+	if w.fileWatcher != nil {
+		w.fileWatcher.Stop()
+		w.fileWatcher = nil
 	}
 
 	board := targets.Board
@@ -53,18 +72,14 @@ func (w *WatchCore) SetTargets(targets WatchCoreTargets) error {
 	if err != nil {
 		return err
 	}
-	w.watcher = watcher
+	w.fileWatcher = watcher
 
-	if targets.Port != nil {
-		w.port = targets.Port
-	} else {
-		w.port = NewArdiSerialPort(board.Port, baud, w.logger)
-	}
+	w.uploader.SetPortTargets(board.Port, baud)
 
 	w.board = board
 	w.compileOpts = compileOpts
 	w.baud = baud
-	w.watcher.AddListener(w.onFileChange)
+	w.fileWatcher.AddListener(w.onFileChange)
 	return nil
 }
 
@@ -75,20 +90,17 @@ func (w *WatchCore) Watch() error {
 		return errors.New("must call SetTargets before calling watch")
 	}
 
-	go w.port.Watch()
-	return w.watcher.Watch()
+	go w.uploader.Attach()
+	return w.fileWatcher.Watch()
 }
 
 // Stop deletes watcher and unattaches from port
 func (w *WatchCore) Stop() {
-	if w.port != nil {
-		w.port.Close()
-		w.port = nil
-	}
+	w.uploader.Detach()
 
-	if w.watcher != nil {
-		w.watcher.Close()
-		w.watcher = nil
+	if w.fileWatcher != nil {
+		w.fileWatcher.Close()
+		w.fileWatcher = nil
 	}
 
 	w.baud = 0
@@ -110,13 +122,13 @@ func (w *WatchCore) onFileChange() {
 	}
 
 	w.processingUpdate = true
-	w.watcher.Stop()
-	w.port.Close()
+	w.fileWatcher.Stop()
+	w.uploader.Detach()
 
 	defer func() {
 		w.processingUpdate = false
-		if w.watcher != nil {
-			w.watcher.Restart()
+		if w.fileWatcher != nil {
+			w.fileWatcher.Restart()
 		}
 	}()
 
@@ -124,16 +136,16 @@ func (w *WatchCore) onFileChange() {
 	if err != nil {
 		return
 	}
+
 	err = w.uploader.Upload(w.board, w.compileOpts.SketchDir)
 	if err != nil {
 		return
 	}
 
-	if w.port != nil {
-		go w.port.Watch()
-	}
+	w.uploader.SetPortTargets(w.board.Port, w.baud)
+	go w.uploader.Attach()
 }
 
 func (w *WatchCore) hasTargets() bool {
-	return w.port != nil && w.board != nil && w.compileOpts != nil && w.baud != 0 && w.watcher != nil
+	return w.board != nil && w.compileOpts != nil && w.baud != 0 && w.fileWatcher != nil
 }

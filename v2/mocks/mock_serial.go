@@ -45,6 +45,18 @@ func (mr *MockSerialPortMockRecorder) Close() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Close", reflect.TypeOf((*MockSerialPort)(nil).Close))
 }
 
+// SetTargets mocks base method.
+func (m *MockSerialPort) SetTargets(arg0 string, arg1 int) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "SetTargets", arg0, arg1)
+}
+
+// SetTargets indicates an expected call of SetTargets.
+func (mr *MockSerialPortMockRecorder) SetTargets(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetTargets", reflect.TypeOf((*MockSerialPort)(nil).SetTargets), arg0, arg1)
+}
+
 // Streaming mocks base method.
 func (m *MockSerialPort) Streaming() bool {
 	m.ctrl.T.Helper()

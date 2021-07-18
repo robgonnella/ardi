@@ -178,11 +178,7 @@ func TestUtilGetAllSettings(t *testing.T) {
 
 		os.RemoveAll(dataDir)
 
-		writeOpts := util.WriteSettingsOpts{
-			ArdiConfig:         expectedConfig,
-			ArduinoCliSettings: expectedSettings,
-		}
-		util.WriteAllSettings(writeOpts)
+		util.WriteAllSettings(expectedConfig, expectedSettings)
 
 		assert.DirExists(st, dataDir)
 		assert.FileExists(st, paths.ArdiProjectConfig)

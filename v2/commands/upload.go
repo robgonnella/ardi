@@ -95,7 +95,8 @@ func getUploadCmd(env *CommandEnv) *cobra.Command {
 			}
 
 			if attach {
-				env.ArdiCore.Uploader.Attach(board.Port, project.Baud, nil)
+				env.ArdiCore.Uploader.SetPortTargets(board.Port, project.Baud)
+				env.ArdiCore.Uploader.Attach()
 			}
 
 			return nil

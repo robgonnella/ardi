@@ -1,7 +1,6 @@
 package commands
 
 import (
-	"github.com/robgonnella/ardi/v2/core"
 	"github.com/spf13/cobra"
 )
 
@@ -20,9 +19,11 @@ func getAttachCmd(env *CommandEnv) *cobra.Command {
 				}
 				port = board.Port
 			}
-			serialPort := core.NewArdiSerialPort(port, baud, env.Logger)
-			defer serialPort.Close()
-			return serialPort.Watch()
+
+			env.ArdiCore.Uploader.SetPortTargets(port, baud)
+			defer env.ArdiCore.Uploader.Detach()
+			env.ArdiCore.Uploader.Attach()
+			return nil
 		},
 	}
 

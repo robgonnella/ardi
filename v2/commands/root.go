@@ -92,30 +92,6 @@ func getPreRun(env *CommandEnv) func(cmd *cobra.Command, args []string) error {
 			return errors.New("not an ardi project directory, run 'ardi project-init' first")
 		}
 
-		ardiConfig, svrSettings := util.GetAllSettings()
-		cliSettingsPath := util.GetCliSettingsPath()
-
-		writeOpts := util.WriteSettingsOpts{
-			ArdiConfig:         ardiConfig,
-			ArduinoCliSettings: svrSettings,
-		}
-		if util.IsProjectDirectory() {
-			if err := util.WriteAllSettings(writeOpts); err != nil {
-				return err
-			}
-		}
-
-		ctx := cmd.Context()
-		cliWrapper := cli.NewCli(ctx, cliSettingsPath, svrSettings, env.Logger, env.MockCli)
-
-		coreOpts := core.NewArdiCoreOpts{
-			Logger:             env.Logger,
-			Cli:                cliWrapper,
-			ArdiConfig:         *ardiConfig,
-			ArduinoCliSettings: *svrSettings,
-		}
-		env.ArdiCore = core.NewArdiCore(coreOpts)
-
 		return nil
 	}
 }

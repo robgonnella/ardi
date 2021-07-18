@@ -34,10 +34,10 @@ func TestLibCore(t *testing.T) {
 				},
 			},
 		}
-		env.Cli.EXPECT().CreateInstance().Return(instance).AnyTimes()
-		env.Cli.EXPECT().UpdateLibrariesIndex(gomock.Any(), gomock.Any(), gomock.Any())
-		env.Cli.EXPECT().LibraryInstall(gomock.Any(), req, gomock.Any(), gomock.Any())
-		env.Cli.EXPECT().LibraryList(gomock.Any(), listReq).Return(listResp, nil)
+		env.ArduinoCli.EXPECT().CreateInstance().Return(instance).AnyTimes()
+		env.ArduinoCli.EXPECT().UpdateLibrariesIndex(gomock.Any(), gomock.Any(), gomock.Any())
+		env.ArduinoCli.EXPECT().LibraryInstall(gomock.Any(), req, gomock.Any(), gomock.Any())
+		env.ArduinoCli.EXPECT().LibraryList(gomock.Any(), listReq).Return(listResp, nil)
 
 		returnedLib, returnedVers, err := env.ArdiCore.Lib.Add(library)
 		assert.NoError(env.T, err)
@@ -59,9 +59,9 @@ func TestLibCore(t *testing.T) {
 			Name:     lib,
 			Version:  version,
 		}
-		env.Cli.EXPECT().CreateInstance().Return(instance).AnyTimes()
-		env.Cli.EXPECT().UpdateLibrariesIndex(gomock.Any(), gomock.Any(), gomock.Any())
-		env.Cli.EXPECT().LibraryInstall(gomock.Any(), req, gomock.Any(), gomock.Any()).Return(dummyErr)
+		env.ArduinoCli.EXPECT().CreateInstance().Return(instance).AnyTimes()
+		env.ArduinoCli.EXPECT().UpdateLibrariesIndex(gomock.Any(), gomock.Any(), gomock.Any())
+		env.ArduinoCli.EXPECT().LibraryInstall(gomock.Any(), req, gomock.Any(), gomock.Any()).Return(dummyErr)
 
 		_, _, err := env.ArdiCore.Lib.Add(library)
 		assert.Error(env.T, err)
@@ -75,8 +75,8 @@ func TestLibCore(t *testing.T) {
 			Instance: instance,
 			Name:     libName,
 		}
-		env.Cli.EXPECT().CreateInstance().Return(instance).AnyTimes()
-		env.Cli.EXPECT().LibraryUninstall(gomock.Any(), req, gomock.Any()).Return(nil)
+		env.ArduinoCli.EXPECT().CreateInstance().Return(instance).AnyTimes()
+		env.ArduinoCli.EXPECT().LibraryUninstall(gomock.Any(), req, gomock.Any()).Return(nil)
 		err := env.ArdiCore.Lib.Remove(libName)
 		assert.NoError(env.T, err)
 	})
@@ -90,8 +90,8 @@ func TestLibCore(t *testing.T) {
 			Instance: instance,
 			Name:     libName,
 		}
-		env.Cli.EXPECT().CreateInstance().Return(instance).AnyTimes()
-		env.Cli.EXPECT().LibraryUninstall(gomock.Any(), req, gomock.Any()).Return(dummyErr)
+		env.ArduinoCli.EXPECT().CreateInstance().Return(instance).AnyTimes()
+		env.ArduinoCli.EXPECT().LibraryUninstall(gomock.Any(), req, gomock.Any()).Return(dummyErr)
 		err := env.ArdiCore.Lib.Remove(libName)
 		assert.Error(env.T, err)
 		assert.EqualError(env.T, err, errString)
@@ -121,9 +121,9 @@ func TestLibCore(t *testing.T) {
 		resp := &rpc.LibrarySearchResponse{
 			Libraries: searchedLibs,
 		}
-		env.Cli.EXPECT().CreateInstance().Return(instance).AnyTimes()
-		env.Cli.EXPECT().UpdateLibrariesIndex(gomock.Any(), gomock.Any(), gomock.Any())
-		env.Cli.EXPECT().LibrarySearch(gomock.Any(), req).Return(resp, nil)
+		env.ArduinoCli.EXPECT().CreateInstance().Return(instance).AnyTimes()
+		env.ArduinoCli.EXPECT().UpdateLibrariesIndex(gomock.Any(), gomock.Any(), gomock.Any())
+		env.ArduinoCli.EXPECT().LibrarySearch(gomock.Any(), req).Return(resp, nil)
 
 		err := env.ArdiCore.Lib.Search(searchQuery)
 		assert.NoError(env.T, err)
@@ -155,8 +155,8 @@ func TestLibCore(t *testing.T) {
 				},
 			},
 		}
-		env.Cli.EXPECT().CreateInstance().Return(instance).AnyTimes()
-		env.Cli.EXPECT().LibraryList(gomock.Any(), req).Return(resp, nil)
+		env.ArduinoCli.EXPECT().CreateInstance().Return(instance).AnyTimes()
+		env.ArduinoCli.EXPECT().LibraryList(gomock.Any(), req).Return(resp, nil)
 
 		env.ArdiCore.Lib.ListInstalled()
 		stdout := env.Stdout.String()

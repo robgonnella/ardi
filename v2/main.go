@@ -25,23 +25,48 @@ package main
 
 import (
 	"context"
-	"os"
 
 	log "github.com/sirupsen/logrus"
 
+	"github.com/robgonnella/ardi/v2/cli-wrapper"
 	"github.com/robgonnella/ardi/v2/commands"
+	"github.com/robgonnella/ardi/v2/core"
+	"github.com/robgonnella/ardi/v2/util"
 )
 
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	logger := log.New()
-	env := &commands.CommandEnv{
-		Logger: logger,
+
+	ardiConfig, svrSettings := util.GetAllSettings()
+	cliSettingsPath := util.GetCliSettingsPath()
+
+	if util.IsProjectDirectory() {
+		if err := util.WriteAllSettings(ardiConfig, svrSettings); err != nil {
+			logger.WithError(err).Fatal("Failed to write settings files")
+		}
 	}
+
+	coreOpts := core.NewArdiCoreOpts{
+		Ctx:                ctx,
+		Logger:             logger,
+		CliSettingsPath:    cliSettingsPath,
+		ArdiConfig:         *ardiConfig,
+		ArduinoCliSettings: *svrSettings,
+	}
+
+	arduinoCli := cli.NewArduinoCli()
+	withArduinoCli := core.WithArduinoCli(arduinoCli)
+	ardiCore := core.NewArdiCore(coreOpts, withArduinoCli)
+
+	env := &commands.CommandEnv{
+		ArdiCore: ardiCore,
+		Logger:   logger,
+	}
+
 	rootCmd := commands.GetRootCmd(env)
 	if err := rootCmd.ExecuteContext(ctx); err != nil {
-		logger.WithError(err).Error("Command failed")
-		os.Exit(1)
+		logger.WithError(err).Fatal("Command failed")
 	}
 }

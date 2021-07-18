@@ -14,16 +14,15 @@ import (
 	"github.com/arduino/arduino-cli/cli/output"
 	"github.com/arduino/arduino-cli/commands"
 	rpc "github.com/arduino/arduino-cli/rpc/cc/arduino/cli/commands/v1"
-	"github.com/robgonnella/ardi/v2/types"
 	log "github.com/sirupsen/logrus"
 )
 
 // Wrapper our wrapper around the arduino-cli interface
 type Wrapper struct {
 	ctx          context.Context
-	settingsPath string
 	cli          Cli
 	inst         *rpc.Instance
+	settingsPath string
 	logger       *log.Logger
 }
 
@@ -34,84 +33,95 @@ type BoardWithPort struct {
 	Port string
 }
 
-// NewCli return new arduino-cli wrapper
-func NewCli(ctx context.Context, settingsPath string, svrSettings *types.ArduinoCliSettings, logger *log.Logger, cli Cli) *Wrapper {
-	if cli == nil {
-		cli = newArduinoCli()
-	}
-	cli.InitSettings(settingsPath)
+// WrapperOption represents and option for the wrapper
+type WrapperOption = func(w *Wrapper)
 
-	return &Wrapper{
+// NewCli return new arduino-cli wrapper
+func NewCli(ctx context.Context, settingsPath string, logger *log.Logger, options ...WrapperOption) *Wrapper {
+	w := &Wrapper{
 		ctx:          ctx,
-		settingsPath: settingsPath,
 		logger:       logger,
-		cli:          cli,
+		settingsPath: settingsPath,
+	}
+
+	for _, o := range options {
+		o(w)
+	}
+
+	return w
+}
+
+// WithArduinoCli allows an injectable arduino cli interface
+func WithArduinoCli(arduinoCli Cli) WrapperOption {
+	return func(w *Wrapper) {
+		w.cli = arduinoCli
+		w.cli.InitSettings(w.settingsPath)
 	}
 }
 
 // UpdateIndexFiles updates platform and library index files
-func (c *Wrapper) UpdateIndexFiles() error {
-	if err := c.UpdatePlatformIndex(); err != nil {
+func (w *Wrapper) UpdateIndexFiles() error {
+	if err := w.UpdatePlatformIndex(); err != nil {
 		return err
 	}
-	if err := c.UpdateLibraryIndex(); err != nil {
+	if err := w.UpdateLibraryIndex(); err != nil {
 		return err
 	}
 	return nil
 }
 
 // UpdateLibraryIndex updates library index file
-func (c *Wrapper) UpdateLibraryIndex() error {
-	c.logger.Debug("Updating library index...")
-	inst := c.getRPCInstance()
+func (w *Wrapper) UpdateLibraryIndex() error {
+	w.logger.Debug("Updating library index...")
+	inst := w.getRPCInstance()
 
-	return c.cli.UpdateLibrariesIndex(
-		c.ctx,
+	return w.cli.UpdateLibrariesIndex(
+		w.ctx,
 		&rpc.UpdateLibrariesIndexRequest{
 			Instance: inst,
 		},
-		c.getDownloadProgressFn(),
+		w.getDownloadProgressFn(),
 	)
 }
 
 // UpdatePlatformIndex updates platform index file
-func (c *Wrapper) UpdatePlatformIndex() error {
-	c.logger.Debug("Updating platform index...")
-	inst := c.getRPCInstance()
+func (w *Wrapper) UpdatePlatformIndex() error {
+	w.logger.Debug("Updating platform index...")
+	inst := w.getRPCInstance()
 
-	_, err := c.cli.UpdateIndex(
-		c.ctx,
+	_, err := w.cli.UpdateIndex(
+		w.ctx,
 		&rpc.UpdateIndexRequest{
 			Instance: inst,
 		},
-		c.getDownloadProgressFn(),
+		w.getDownloadProgressFn(),
 	)
 	return err
 }
 
 // UpgradePlatform upgrades a given platform
-func (c *Wrapper) UpgradePlatform(platform string) error {
-	inst := c.getRPCInstance()
+func (w *Wrapper) UpgradePlatform(platform string) error {
+	inst := w.getRPCInstance()
 
 	pkg, arch, _ := parsePlatform(platform)
-	c.logger.Debugf("Upgrading platform: %s:%s\n", pkg, arch)
+	w.logger.Debugf("Upgrading platform: %s:%s\n", pkg, arch)
 	req := &rpc.PlatformUpgradeRequest{
 		Instance:        inst,
 		PlatformPackage: pkg,
 		Architecture:    arch,
 	}
-	_, err := c.cli.PlatformUpgrade(
-		c.ctx,
+	_, err := w.cli.PlatformUpgrade(
+		w.ctx,
 		req,
-		c.getDownloadProgressFn(),
-		c.getTaskProgressFn(),
+		w.getDownloadProgressFn(),
+		w.getTaskProgressFn(),
 	)
 	return err
 }
 
 // InstallPlatform installs a given platform
-func (c *Wrapper) InstallPlatform(platform string) (string, string, error) {
-	inst := c.getRPCInstance()
+func (w *Wrapper) InstallPlatform(platform string) (string, string, error) {
+	inst := w.getRPCInstance()
 
 	pkg, arch, version := parsePlatform(platform)
 	installedPlatform := fmt.Sprintf("%s:%s", pkg, arch)
@@ -123,17 +133,17 @@ func (c *Wrapper) InstallPlatform(platform string) (string, string, error) {
 		Version:         version,
 	}
 
-	_, err := c.cli.PlatformInstall(
-		c.ctx,
+	_, err := w.cli.PlatformInstall(
+		w.ctx,
 		req,
-		c.getDownloadProgressFn(),
-		c.getTaskProgressFn(),
+		w.getDownloadProgressFn(),
+		w.getTaskProgressFn(),
 	)
 	if err != nil {
 		return "", "", err
 	}
 
-	platforms, err := c.GetInstalledPlatforms()
+	platforms, err := w.GetInstalledPlatforms()
 	if err != nil {
 		return "", "", err
 	}
@@ -150,8 +160,8 @@ func (c *Wrapper) InstallPlatform(platform string) (string, string, error) {
 }
 
 // UninstallPlatform installs a given platform
-func (c *Wrapper) UninstallPlatform(platform string) (string, error) {
-	inst := c.getRPCInstance()
+func (w *Wrapper) UninstallPlatform(platform string) (string, error) {
+	inst := w.getRPCInstance()
 
 	pkg, arch, _ := parsePlatform(platform)
 
@@ -163,8 +173,8 @@ func (c *Wrapper) UninstallPlatform(platform string) (string, error) {
 		Architecture:    arch,
 	}
 
-	_, err := c.cli.PlatformUninstall(
-		c.ctx,
+	_, err := w.cli.PlatformUninstall(
+		w.ctx,
 		req,
 		output.NewTaskProgressCB(),
 	)
@@ -177,8 +187,8 @@ func (c *Wrapper) UninstallPlatform(platform string) (string, error) {
 }
 
 // GetInstalledPlatforms lists all installed platforms
-func (c *Wrapper) GetInstalledPlatforms() ([]*rpc.Platform, error) {
-	inst := c.getRPCInstance()
+func (w *Wrapper) GetInstalledPlatforms() ([]*rpc.Platform, error) {
+	inst := w.getRPCInstance()
 
 	req := &rpc.PlatformListRequest{
 		Instance:      inst,
@@ -186,34 +196,34 @@ func (c *Wrapper) GetInstalledPlatforms() ([]*rpc.Platform, error) {
 		All:           false,
 	}
 
-	return c.cli.GetPlatforms(req)
+	return w.cli.GetPlatforms(req)
 }
 
 // SearchPlatforms returns specified platform or all platforms if unspecified
-func (c *Wrapper) SearchPlatforms() ([]*rpc.Platform, error) {
-	if err := c.UpdateIndexFiles(); err != nil {
+func (w *Wrapper) SearchPlatforms() ([]*rpc.Platform, error) {
+	if err := w.UpdateIndexFiles(); err != nil {
 		return nil, err
 	}
 
-	inst := c.getRPCInstance()
+	inst := w.getRPCInstance()
 
 	req := &rpc.PlatformSearchRequest{
 		Instance:    inst,
 		AllVersions: true,
 	}
 
-	resp, err := c.cli.PlatformSearch(req)
+	resp, err := w.cli.PlatformSearch(req)
 
 	return resp.GetSearchOutput(), err
 }
 
 // ConnectedBoards returns a list of connected arduino boards
-func (c *Wrapper) ConnectedBoards() []*BoardWithPort {
-	inst := c.getRPCInstance()
+func (w *Wrapper) ConnectedBoards() []*BoardWithPort {
+	inst := w.getRPCInstance()
 
 	boardList := []*BoardWithPort{}
 
-	ports, err := c.cli.ConnectedBoards(inst.GetId())
+	ports, err := w.cli.ConnectedBoards(inst.GetId())
 	if err != nil {
 		return nil
 	}
@@ -233,10 +243,10 @@ func (c *Wrapper) ConnectedBoards() []*BoardWithPort {
 }
 
 // AllBoards returns a list of all supported boards
-func (c *Wrapper) AllBoards() []*BoardWithPort {
-	inst := c.getRPCInstance()
+func (w *Wrapper) AllBoards() []*BoardWithPort {
+	inst := w.getRPCInstance()
 
-	c.logger.Debug("Getting list of supported boards...")
+	w.logger.Debug("Getting list of supported boards...")
 
 	boardList := []*BoardWithPort{}
 
@@ -246,9 +256,9 @@ func (c *Wrapper) AllBoards() []*BoardWithPort {
 		All:           true,
 	}
 
-	platforms, err := c.cli.GetPlatforms(req)
+	platforms, err := w.cli.GetPlatforms(req)
 	if err != nil {
-		c.logger.WithError(err).Warn("failed to get list of installed platforms")
+		w.logger.WithError(err).Warn("failed to get list of installed platforms")
 		return boardList
 	}
 
@@ -265,8 +275,8 @@ func (c *Wrapper) AllBoards() []*BoardWithPort {
 }
 
 // Upload a sketch to target board
-func (c *Wrapper) Upload(fqbn, sketchDir, device string) error {
-	inst := c.getRPCInstance()
+func (w *Wrapper) Upload(fqbn, sketchDir, device string) error {
+	inst := w.getRPCInstance()
 
 	resolvedSketch, err := filepath.Abs(sketchDir)
 	if err != nil {
@@ -278,11 +288,11 @@ func (c *Wrapper) Upload(fqbn, sketchDir, device string) error {
 		Fqbn:       fqbn,
 		SketchPath: resolvedSketch,
 		Port:       device,
-		Verbose:    c.isVerbose(),
+		Verbose:    w.isVerbose(),
 	}
 
-	_, err = c.cli.Upload(
-		c.ctx,
+	_, err = w.cli.Upload(
+		w.ctx,
 		req,
 		os.Stdout,
 		os.Stderr,
@@ -301,8 +311,8 @@ type CompileOpts struct {
 }
 
 // Compile the specified sketch
-func (c *Wrapper) Compile(opts CompileOpts) error {
-	inst := c.getRPCInstance()
+func (w *Wrapper) Compile(opts CompileOpts) error {
+	inst := w.getRPCInstance()
 
 	resolvedSketchPath, err := filepath.Abs(opts.SketchPath)
 	if err != nil {
@@ -323,37 +333,37 @@ func (c *Wrapper) Compile(opts CompileOpts) error {
 		ExportDir:       exportDir,
 		BuildProperties: opts.BuildProps,
 		ShowProperties:  opts.ShowProps,
-		Verbose:         c.isVerbose(),
+		Verbose:         w.isVerbose(),
 	}
 
-	_, err = c.cli.Compile(
-		c.ctx,
+	_, err = w.cli.Compile(
+		w.ctx,
 		req,
 		os.Stdout,
 		os.Stderr,
-		c.isVerbose(),
+		w.isVerbose(),
 	)
 
 	return err
 }
 
 // SearchLibraries searches available libraries for download
-func (c *Wrapper) SearchLibraries(query string) ([]*rpc.SearchedLibrary, error) {
-	inst := c.getRPCInstance()
+func (w *Wrapper) SearchLibraries(query string) ([]*rpc.SearchedLibrary, error) {
+	inst := w.getRPCInstance()
 
 	req := &rpc.LibrarySearchRequest{
 		Instance: inst,
 		Query:    query,
 	}
 
-	searchResp, err := c.cli.LibrarySearch(c.ctx, req)
+	searchResp, err := w.cli.LibrarySearch(w.ctx, req)
 
 	return searchResp.GetLibraries(), err
 }
 
 // InstallLibrary installs specified version of a library
-func (c *Wrapper) InstallLibrary(name, version string) (string, error) {
-	inst := c.getRPCInstance()
+func (w *Wrapper) InstallLibrary(name, version string) (string, error) {
+	inst := w.getRPCInstance()
 
 	req := &rpc.LibraryInstallRequest{
 		Instance: inst,
@@ -361,18 +371,18 @@ func (c *Wrapper) InstallLibrary(name, version string) (string, error) {
 		Version:  version,
 	}
 
-	err := c.cli.LibraryInstall(
-		c.ctx,
+	err := w.cli.LibraryInstall(
+		w.ctx,
 		req,
-		c.getDownloadProgressFn(),
-		c.getTaskProgressFn(),
+		w.getDownloadProgressFn(),
+		w.getTaskProgressFn(),
 	)
 
 	if err != nil {
 		return "", err
 	}
 
-	libs, err := c.GetInstalledLibs()
+	libs, err := w.GetInstalledLibs()
 	if err != nil {
 		return "", err
 	}
@@ -389,8 +399,8 @@ func (c *Wrapper) InstallLibrary(name, version string) (string, error) {
 }
 
 // UninstallLibrary removes specified library
-func (c *Wrapper) UninstallLibrary(name string) error {
-	inst := c.getRPCInstance()
+func (w *Wrapper) UninstallLibrary(name string) error {
+	inst := w.getRPCInstance()
 
 	req := &rpc.LibraryUninstallRequest{
 		Instance: inst,
@@ -403,28 +413,28 @@ func (c *Wrapper) UninstallLibrary(name string) error {
 		Name: strings.ReplaceAll(name, " ", "_"),
 	}
 
-	err := c.cli.LibraryUninstall(
-		c.ctx,
+	err := w.cli.LibraryUninstall(
+		w.ctx,
 		req,
-		c.getTaskProgressFn())
+		w.getTaskProgressFn())
 
 	return err
 }
 
 // GetInstalledLibs returns a list of installed libraries
-func (c *Wrapper) GetInstalledLibs() ([]*rpc.InstalledLibrary, error) {
-	inst := c.getRPCInstance()
+func (w *Wrapper) GetInstalledLibs() ([]*rpc.InstalledLibrary, error) {
+	inst := w.getRPCInstance()
 
 	req := &rpc.LibraryListRequest{
 		Instance: inst,
 	}
 
-	res, err := c.cli.LibraryList(c.ctx, req)
+	res, err := w.cli.LibraryList(w.ctx, req)
 	return res.GetInstalledLibraries(), err
 }
 
 // GetTargetBoard returns target info for a connected & disconnected boards
-func (c *Wrapper) GetTargetBoard(fqbn, port string, onlyConnected bool) (*BoardWithPort, error) {
+func (w *Wrapper) GetTargetBoard(fqbn, port string, onlyConnected bool) (*BoardWithPort, error) {
 	if fqbn != "" && port != "" {
 		return &BoardWithPort{
 			FQBN: fqbn,
@@ -434,8 +444,8 @@ func (c *Wrapper) GetTargetBoard(fqbn, port string, onlyConnected bool) (*BoardW
 
 	fqbnErr := errors.New("you must specify a board fqbn to compile - you can find a list of board fqbns for installed platforms above")
 	connectedBoardsErr := errors.New("no connected boards detected")
-	connectedBoards := c.ConnectedBoards()
-	allBoards := c.AllBoards()
+	connectedBoards := w.ConnectedBoards()
+	allBoards := w.AllBoards()
 
 	if fqbn != "" {
 		if onlyConnected {
@@ -453,7 +463,7 @@ func (c *Wrapper) GetTargetBoard(fqbn, port string, onlyConnected bool) (*BoardW
 		if onlyConnected {
 			return nil, connectedBoardsErr
 		}
-		c.printFQBNs(allBoards, c.logger)
+		w.printFQBNs(allBoards, w.logger)
 		return nil, fqbnErr
 	}
 
@@ -462,58 +472,58 @@ func (c *Wrapper) GetTargetBoard(fqbn, port string, onlyConnected bool) (*BoardW
 	}
 
 	// more than one board is connected
-	c.printFQBNs(connectedBoards, c.logger)
+	w.printFQBNs(connectedBoards, w.logger)
 	return nil, fqbnErr
 }
 
 // ClientVersion returns version of arduino-cli
-func (c *Wrapper) ClientVersion() string {
-	return c.cli.Version()
+func (w *Wrapper) ClientVersion() string {
+	return w.cli.Version()
 }
 
 // private methods
-func (c *Wrapper) isVerbose() bool {
-	return c.logger.GetLevel() == log.DebugLevel
+func (w *Wrapper) isVerbose() bool {
+	return w.logger.GetLevel() == log.DebugLevel
 }
 
-func (c *Wrapper) getDownloadProgressFn() commands.DownloadProgressCB {
-	if c.isVerbose() {
+func (w *Wrapper) getDownloadProgressFn() commands.DownloadProgressCB {
+	if w.isVerbose() {
 		return output.ProgressBar()
 	}
 	return noDownloadOutput
 }
 
-func (c *Wrapper) getTaskProgressFn() commands.TaskProgressCB {
-	if c.isVerbose() {
+func (w *Wrapper) getTaskProgressFn() commands.TaskProgressCB {
+	if w.isVerbose() {
 		return output.TaskProgress()
 	}
 	return noTaskOutput
 }
 
 // private methods
-func (c *Wrapper) printFQBNs(boardList []*BoardWithPort, logger *log.Logger) {
+func (w *Wrapper) printFQBNs(boardList []*BoardWithPort, logger *log.Logger) {
 	sort.Slice(boardList, func(i, j int) bool {
 		return boardList[i].Name < boardList[j].Name
 	})
 
-	c.printBoardsWithIndices(boardList, logger)
+	w.printBoardsWithIndices(boardList, logger)
 }
 
-func (c *Wrapper) printBoardsWithIndices(boards []*BoardWithPort, logger *log.Logger) {
-	w := tabwriter.NewWriter(logger.Out, 0, 0, 8, ' ', 0)
-	defer w.Flush()
-	w.Write([]byte("No.\tName\tFQBN\n"))
+func (w *Wrapper) printBoardsWithIndices(boards []*BoardWithPort, logger *log.Logger) {
+	tw := tabwriter.NewWriter(logger.Out, 0, 0, 8, ' ', 0)
+	defer tw.Flush()
+	tw.Write([]byte("No.\tName\tFQBN\n"))
 	for i, b := range boards {
-		w.Write([]byte(fmt.Sprintf("%d\t%s\t%s\n", i, b.Name, b.FQBN)))
+		tw.Write([]byte(fmt.Sprintf("%d\t%s\t%s\n", i, b.Name, b.FQBN)))
 	}
 }
 
-func (c *Wrapper) getRPCInstance() *rpc.Instance {
-	if c.inst == nil {
-		c.inst = c.cli.CreateInstance()
+func (w *Wrapper) getRPCInstance() *rpc.Instance {
+	if w.inst == nil {
+		w.inst = w.cli.CreateInstance()
 	}
 
-	return c.inst
+	return w.inst
 }
 
 // private helpers

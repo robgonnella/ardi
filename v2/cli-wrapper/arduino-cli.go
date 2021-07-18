@@ -41,7 +41,8 @@ type Cli interface {
 // ArduinoCli represents our wrapper around arduino-cli
 type ArduinoCli struct{}
 
-func newArduinoCli() *ArduinoCli {
+// NewArduinoCli returns a new instance of ArduinoCli
+func NewArduinoCli() *ArduinoCli {
 	return &ArduinoCli{}
 }
 
