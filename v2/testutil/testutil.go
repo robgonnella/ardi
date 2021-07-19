@@ -166,6 +166,7 @@ func (e *IntegrationTestEnv) ClearStdout() {
 type MockIntegrationTestEnv struct {
 	T          *testing.T
 	Stdout     *bytes.Buffer
+	ArdiCore   *core.ArdiCore
 	ArduinoCli *mocks.MockCli
 	SerialPort *mocks.MockSerialPort
 	ctx        context.Context
@@ -237,6 +238,8 @@ func (e *MockIntegrationTestEnv) Execute(args []string) error {
 	withArduinoCli := core.WithArduinoCli(e.ArduinoCli)
 	withPortManager := core.WithCoreSerialPortManager(e.SerialPort)
 	ardiCore := core.NewArdiCore(coreOpts, withArduinoCli, withPortManager)
+
+	e.ArdiCore = ardiCore
 
 	env := &commands.CommandEnv{
 		ArdiCore: ardiCore,
