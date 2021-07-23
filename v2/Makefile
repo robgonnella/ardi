@@ -32,17 +32,6 @@ $(foreach o,$(objects), $(eval zips += $(o).zip))
 #### Test Objects ####
 test_output_dir = test_artifacts
 coverage_out = $(test_output_dir)/coverage.txt
-integration_out = $(test_output_dir)/int.txt
-unit_out = $(test_output_dir)/unit.txt
-
-#### Test Packages ####
-unit_test_pkgs = github.com/robgonnella/ardi/v2/core \
-github.com/robgonnella/ardi/v2/util \
-github.com/robgonnella/ardi/v2/cli-wrapper \
-github.com/robgonnella/ardi/v2/paths \
-github.com/robgonnella/ardi/v2/types
-
-integration_test_pkgs = github.com/robgonnella/ardi/v2/commands
 
 #### Helper Functions ####
 
@@ -83,27 +72,16 @@ mock:
 lint:
 	golint -set_exit_status ./...
 
-.PHONY: test-unit
-test-unit:
+.PHONY: test-unit-and-integration
+go-test:
 	mkdir -p $(test_output_dir)
-	rm -rf $(unit_out)
+	rm -rf $(coverage_out)
 	go test \
 		-v \
 		-p 1 \
-		-coverprofile $(unit_out) \
+		-coverprofile $(coverage_out) \
 		-covermode=atomic \
-		$(unit_test_pkgs)
-
-.PHONY: test-int
-test-integration:
-	mkdir -p $(test_output_dir)
-	rm -rf $(integration_out)
-	go test \
-		-v \
-		-p 1 \
-		-coverprofile $(integration_out) \
-		-covermode=atomic \
-		$(integration_test_pkgs)
+		./...
 
 .PHONY: test-e2e
 test-e2e:
@@ -111,15 +89,7 @@ test-e2e:
 
 .PHONY: test-all
 test-all: lint
-	rm -rf $(test_output_dir)
-	mkdir -p $(test_output_dir)
-	go test \
-		-v \
-		-p 1 \
-		-coverprofile $(coverage_out) \
-		-covermode=atomic \
-		$(unit_test_pkgs) \
-		$(integration_test_pkgs)
+	$(MAKE) go-test
 	$(MAKE) test-e2e
 	$(MAKE) coverage
 

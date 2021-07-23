@@ -97,24 +97,6 @@ func TestCliWrapperTest(t *testing.T) {
 		assert.NoError(st, err)
 	})
 
-	runCliTest("upgrades platforms", t, func(env cliTestEnv, st *testing.T) {
-		inst := &rpc.Instance{Id: int32(1)}
-		pkg := "something"
-		arch := "validish"
-		platform := fmt.Sprintf("%s:%s", pkg, arch)
-		req := &rpc.PlatformUpgradeRequest{
-			Instance:        inst,
-			PlatformPackage: pkg,
-			Architecture:    arch,
-		}
-
-		env.ArduinoCli.EXPECT().CreateInstance().Return(inst).AnyTimes()
-		env.ArduinoCli.EXPECT().PlatformUpgrade(gomock.Any(), req, gomock.Any(), gomock.Any())
-
-		err := env.CliWrapper.UpgradePlatform(platform)
-		assert.NoError(st, err)
-	})
-
 	runCliTest("installs platforms", t, func(env cliTestEnv, st *testing.T) {
 		inst := &rpc.Instance{Id: int32(1)}
 		pkg := "something"

@@ -211,21 +211,6 @@ func (mr *MockCliMockRecorder) PlatformUninstall(arg0, arg1, arg2 interface{}) *
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PlatformUninstall", reflect.TypeOf((*MockCli)(nil).PlatformUninstall), arg0, arg1, arg2)
 }
 
-// PlatformUpgrade mocks base method.
-func (m *MockCli) PlatformUpgrade(arg0 context.Context, arg1 *commands0.PlatformUpgradeRequest, arg2 commands.DownloadProgressCB, arg3 commands.TaskProgressCB) (*commands0.PlatformUpgradeResponse, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "PlatformUpgrade", arg0, arg1, arg2, arg3)
-	ret0, _ := ret[0].(*commands0.PlatformUpgradeResponse)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// PlatformUpgrade indicates an expected call of PlatformUpgrade.
-func (mr *MockCliMockRecorder) PlatformUpgrade(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PlatformUpgrade", reflect.TypeOf((*MockCli)(nil).PlatformUpgrade), arg0, arg1, arg2, arg3)
-}
-
 // UpdateIndex mocks base method.
 func (m *MockCli) UpdateIndex(arg0 context.Context, arg1 *commands0.UpdateIndexRequest, arg2 commands.DownloadProgressCB) (*commands0.UpdateIndexResponse, error) {
 	m.ctrl.T.Helper()

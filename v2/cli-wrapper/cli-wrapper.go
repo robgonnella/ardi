@@ -99,26 +99,6 @@ func (w *Wrapper) UpdatePlatformIndex() error {
 	return err
 }
 
-// UpgradePlatform upgrades a given platform
-func (w *Wrapper) UpgradePlatform(platform string) error {
-	inst := w.getRPCInstance()
-
-	pkg, arch, _ := parsePlatform(platform)
-	w.logger.Debugf("Upgrading platform: %s:%s\n", pkg, arch)
-	req := &rpc.PlatformUpgradeRequest{
-		Instance:        inst,
-		PlatformPackage: pkg,
-		Architecture:    arch,
-	}
-	_, err := w.cli.PlatformUpgrade(
-		w.ctx,
-		req,
-		w.getDownloadProgressFn(),
-		w.getTaskProgressFn(),
-	)
-	return err
-}
-
 // InstallPlatform installs a given platform
 func (w *Wrapper) InstallPlatform(platform string) (string, string, error) {
 	inst := w.getRPCInstance()
@@ -176,7 +156,7 @@ func (w *Wrapper) UninstallPlatform(platform string) (string, error) {
 	_, err := w.cli.PlatformUninstall(
 		w.ctx,
 		req,
-		output.NewTaskProgressCB(),
+		w.getTaskProgressFn(),
 	)
 
 	if err != nil {
