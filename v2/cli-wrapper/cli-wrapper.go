@@ -201,7 +201,7 @@ func (w *Wrapper) GetInstalledPlatforms() ([]*rpc.Platform, error) {
 
 // SearchPlatforms returns specified platform or all platforms if unspecified
 func (w *Wrapper) SearchPlatforms() ([]*rpc.Platform, error) {
-	if err := w.UpdateIndexFiles(); err != nil {
+	if err := w.UpdatePlatformIndex(); err != nil {
 		return nil, err
 	}
 
