@@ -199,8 +199,6 @@ func TestCliWrapperTest(t *testing.T) {
 
 		platIndexReq := &rpc.UpdateIndexRequest{Instance: inst}
 
-		libIndexReq := &rpc.UpdateLibrariesIndexRequest{Instance: inst}
-
 		searchReq := &rpc.PlatformSearchRequest{
 			Instance:    inst,
 			AllVersions: true,
@@ -220,7 +218,6 @@ func TestCliWrapperTest(t *testing.T) {
 
 		env.ArduinoCli.EXPECT().CreateInstance().Return(inst).AnyTimes()
 		env.ArduinoCli.EXPECT().UpdateIndex(gomock.Any(), platIndexReq, gomock.Any())
-		env.ArduinoCli.EXPECT().UpdateLibrariesIndex(gomock.Any(), libIndexReq, gomock.Any())
 		env.ArduinoCli.EXPECT().PlatformSearch(searchReq).Return(expectedResp, nil)
 
 		resp, err := env.CliWrapper.SearchPlatforms()

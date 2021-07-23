@@ -251,7 +251,6 @@ func TestBoardCore(t *testing.T) {
 
 		env.ArduinoCli.EXPECT().CreateInstance().Return(instance).AnyTimes()
 		env.ArduinoCli.EXPECT().UpdateIndex(gomock.Any(), gomock.Any(), gomock.Any())
-		env.ArduinoCli.EXPECT().UpdateLibrariesIndex(gomock.Any(), gomock.Any(), gomock.Any())
 		env.ArduinoCli.EXPECT().PlatformSearch(req).Return(resp, nil)
 
 		env.ArdiCore.Board.FQBNS("")
@@ -274,7 +273,6 @@ func TestBoardCore(t *testing.T) {
 
 		env.ArduinoCli.EXPECT().CreateInstance().Return(instance).AnyTimes()
 		env.ArduinoCli.EXPECT().UpdateIndex(gomock.Any(), gomock.Any(), gomock.Any())
-		env.ArduinoCli.EXPECT().UpdateLibrariesIndex(gomock.Any(), gomock.Any(), gomock.Any())
 		env.ArduinoCli.EXPECT().PlatformSearch(req).Return(resp, dummyErr)
 
 		err := env.ArdiCore.Board.FQBNS("")
@@ -296,7 +294,6 @@ func TestBoardCore(t *testing.T) {
 
 		env.ArduinoCli.EXPECT().CreateInstance().Return(instance).AnyTimes()
 		env.ArduinoCli.EXPECT().UpdateIndex(gomock.Any(), gomock.Any(), gomock.Any())
-		env.ArduinoCli.EXPECT().UpdateLibrariesIndex(gomock.Any(), gomock.Any(), gomock.Any())
 		env.ArduinoCli.EXPECT().PlatformSearch(req).Return(resp, nil)
 
 		env.ArdiCore.Board.Platforms("")
@@ -319,7 +316,6 @@ func TestBoardCore(t *testing.T) {
 
 		env.ArduinoCli.EXPECT().CreateInstance().Return(instance).AnyTimes()
 		env.ArduinoCli.EXPECT().UpdateIndex(gomock.Any(), gomock.Any(), gomock.Any())
-		env.ArduinoCli.EXPECT().UpdateLibrariesIndex(gomock.Any(), gomock.Any(), gomock.Any())
 		env.ArduinoCli.EXPECT().PlatformSearch(req).Return(resp, dummyErr)
 
 		err := env.ArdiCore.Board.Platforms("")

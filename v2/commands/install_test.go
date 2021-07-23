@@ -1,111 +1,130 @@
 package commands_test
 
 import (
-	"encoding/json"
-	"io/ioutil"
-	"os"
+	"errors"
 	"testing"
 
-	"github.com/robgonnella/ardi/v2/paths"
+	rpc "github.com/arduino/arduino-cli/rpc/cc/arduino/cli/commands/v1"
+	"github.com/golang/mock/gomock"
 	"github.com/robgonnella/ardi/v2/testutil"
-	"github.com/robgonnella/ardi/v2/types"
-	"github.com/robgonnella/ardi/v2/util"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestInstallCommand(t *testing.T) {
+	instance := &rpc.Instance{Id: 1}
+
+	lib := "Some_Library"
+	libVers := "3.4.1"
+
+	platform := "some:platform"
+	platformVers := "3.1.0"
+
+	installPlatReq := &rpc.PlatformInstallRequest{
+		Instance:        instance,
+		PlatformPackage: "some",
+		Architecture:    "platform",
+		Version:         platformVers,
+	}
+
+	installLibReq := &rpc.LibraryInstallRequest{
+		Instance: instance,
+		Name:     lib,
+		Version:  libVers,
+	}
+
+	platformListReq := &rpc.PlatformListRequest{
+		Instance:      instance,
+		UpdatableOnly: false,
+		All:           false,
+	}
+
+	libraryListReq := &rpc.LibraryListRequest{
+		Instance: instance,
+	}
+
+	indexReq := &rpc.UpdateIndexRequest{
+		Instance: instance,
+	}
+
+	libIndexReq := &rpc.UpdateLibrariesIndexRequest{
+		Instance: instance,
+	}
+
+	expectUsual := func(env *testutil.MockIntegrationTestEnv) {
+		env.ArduinoCli.EXPECT().CreateInstance().Return(instance)
+		env.ArduinoCli.EXPECT().UpdateIndex(gomock.Any(), indexReq, gomock.Any())
+	}
+
 	testutil.RunIntegrationTest("errors if project not initialized", t, func(env *testutil.IntegrationTestEnv) {
 		args := []string{"install"}
 		err := env.Execute(args)
 		assert.Error(env.T, err)
 	})
 
-	testutil.RunIntegrationTest("removes lib and platform then reinstalls dependencies", t, func(env *testutil.IntegrationTestEnv) {
+	testutil.RunMockIntegrationTest("installs all dependencies listed in ardi.json", t, func(env *testutil.MockIntegrationTestEnv) {
 		err := env.RunProjectInit()
 		assert.NoError(env.T, err)
 
-		platform := "arduino:avr"
-		platArgs := []string{"add", "platform", platform}
-		err = env.Execute(platArgs)
+		err = env.ArdiCore.Config.AddLibrary(lib, libVers)
 		assert.NoError(env.T, err)
 
-		lib := "Adafruit Pixie"
-		installedLib := "Adafruit Pixie"
-		libArgs := []string{"add", "lib", lib}
-		err = env.Execute(libArgs)
+		err = env.ArdiCore.Config.AddPlatform(platform, platformVers)
 		assert.NoError(env.T, err)
 
-		env.ClearStdout()
-		args := []string{"list", "libs"}
+		expectUsual(env)
+		env.ArduinoCli.EXPECT().PlatformInstall(gomock.Any(), installPlatReq, gomock.Any(), gomock.Any())
+		env.ArduinoCli.EXPECT().GetPlatforms(platformListReq)
+		env.ArduinoCli.EXPECT().UpdateLibrariesIndex(gomock.Any(), libIndexReq, gomock.Any())
+		env.ArduinoCli.EXPECT().LibraryInstall(gomock.Any(), installLibReq, gomock.Any(), gomock.Any())
+		env.ArduinoCli.EXPECT().LibraryList(gomock.Any(), libraryListReq)
+
+		args := []string{"install"}
 		err = env.Execute(args)
 		assert.NoError(env.T, err)
-		assert.Contains(env.T, env.Stdout.String(), installedLib)
-
-		env.ClearStdout()
-		args = []string{"list", "platforms"}
-		err = env.Execute(args)
-		assert.NoError(env.T, err)
-		assert.Contains(env.T, env.Stdout.String(), platform)
-
-		// remove data directory
-		os.RemoveAll(paths.ArdiProjectDataDir)
-
-		args = []string{"install"}
-		err = env.Execute(args)
-		assert.NoError(env.T, err)
-
-		env.ClearStdout()
-		args = []string{"list", "libraries"}
-		err = env.Execute(args)
-		assert.NoError(env.T, err)
-		assert.Contains(env.T, env.Stdout.String(), installedLib)
-
-		env.ClearStdout()
-		args = []string{"list", "platforms"}
-		err = env.Execute(args)
-		assert.NoError(env.T, err)
-		assert.Contains(env.T, env.Stdout.String(), platform)
 	})
 
-	testutil.RunIntegrationTest("returns platform install error", t, func(env *testutil.IntegrationTestEnv) {
+	testutil.RunMockIntegrationTest("returns platform install error", t, func(env *testutil.MockIntegrationTestEnv) {
 		err := env.RunProjectInit()
 		assert.NoError(env.T, err)
 
-		platform := "noop"
+		dummyErr := errors.New("dummy error")
 
-		var ardiConfig types.ArdiConfig
-		byteData, _ := ioutil.ReadFile(paths.ArdiProjectConfig)
-		json.Unmarshal(byteData, &ardiConfig)
-		ardiConfig.Platforms[platform] = "0.1.0"
+		expectUsual(env)
+		env.ArduinoCli.EXPECT().PlatformInstall(gomock.Any(), installPlatReq, gomock.Any(), gomock.Any()).Return(nil, dummyErr)
 
-		util.WriteAllSettings(&ardiConfig, util.GenArduinoCliSettings(paths.ArdiProjectDataDir))
+		err = env.ArdiCore.Config.AddLibrary(lib, libVers)
+		assert.NoError(env.T, err)
 
-		// remove data directory
-		os.RemoveAll(paths.ArdiProjectDataDir)
+		err = env.ArdiCore.Config.AddPlatform(platform, platformVers)
+		assert.NoError(env.T, err)
 
 		args := []string{"install"}
 		err = env.Execute(args)
 		assert.Error(env.T, err)
+		assert.ErrorIs(env.T, err, dummyErr)
 	})
 
-	testutil.RunIntegrationTest("returns library install error", t, func(env *testutil.IntegrationTestEnv) {
+	testutil.RunMockIntegrationTest("returns library install error", t, func(env *testutil.MockIntegrationTestEnv) {
 		err := env.RunProjectInit()
 		assert.NoError(env.T, err)
 
-		library := "noop"
+		dummyErr := errors.New("dummy error")
 
-		var ardiConfig types.ArdiConfig
-		byteData, _ := ioutil.ReadFile(paths.ArdiProjectConfig)
-		json.Unmarshal(byteData, &ardiConfig)
-		ardiConfig.Libraries[library] = "1.3.5"
+		expectUsual(env)
+		env.ArduinoCli.EXPECT().PlatformInstall(gomock.Any(), installPlatReq, gomock.Any(), gomock.Any())
+		env.ArduinoCli.EXPECT().GetPlatforms(platformListReq)
+		env.ArduinoCli.EXPECT().UpdateLibrariesIndex(gomock.Any(), libIndexReq, gomock.Any())
+		env.ArduinoCli.EXPECT().LibraryInstall(gomock.Any(), installLibReq, gomock.Any(), gomock.Any()).Return(dummyErr)
 
-		util.WriteAllSettings(&ardiConfig, util.GenArduinoCliSettings(paths.ArdiProjectDataDir))
+		err = env.ArdiCore.Config.AddLibrary(lib, libVers)
+		assert.NoError(env.T, err)
 
-		// remove data directory
-		os.RemoveAll(paths.ArdiProjectDataDir)
+		err = env.ArdiCore.Config.AddPlatform(platform, platformVers)
+		assert.NoError(env.T, err)
 
 		args := []string{"install"}
 		err = env.Execute(args)
 		assert.Error(env.T, err)
+		assert.ErrorIs(env.T, err, dummyErr)
 	})
 }
