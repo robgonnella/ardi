@@ -60,7 +60,6 @@ func TestPlatformCore(t *testing.T) {
 		}
 		env.ArduinoCli.EXPECT().CreateInstance().Return(instance).AnyTimes()
 		env.ArduinoCli.EXPECT().UpdateIndex(gomock.Any(), gomock.Any(), gomock.Any()).Times(2)
-		env.ArduinoCli.EXPECT().UpdateLibrariesIndex(gomock.Any(), gomock.Any(), gomock.Any())
 		env.ArduinoCli.EXPECT().PlatformSearch(req).Return(resp, nil)
 
 		err := env.ArdiCore.Platform.ListAll()

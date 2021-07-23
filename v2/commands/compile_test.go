@@ -32,20 +32,6 @@ func TestCompileCommandProject(t *testing.T) {
 		All:      true,
 	}
 
-	board := testutil.GenerateRPCBoard("Arduino Mega", "arduino:avr:mega")
-
-	boardItem := &rpc.BoardListItem{
-		Name: board.Name,
-		Fqbn: board.FQBN,
-	}
-
-	port := &rpc.DetectedPort{
-		Address: board.Port,
-		Boards:  []*rpc.BoardListItem{boardItem},
-	}
-
-	detectedPorts := []*rpc.DetectedPort{port}
-
 	expectUsual := func(env *testutil.MockIntegrationTestEnv) {
 		env.ArduinoCli.EXPECT().CreateInstance().Return(instance)
 		env.ArduinoCli.EXPECT().ConnectedBoards(instance.GetId())
@@ -100,8 +86,8 @@ func TestCompileCommandProject(t *testing.T) {
 		}
 
 		expectUsual(env)
-		env.ArduinoCli.EXPECT().Compile(gomock.Any(), req1, gomock.Any(), gomock.Any(), gomock.Any())
-		env.ArduinoCli.EXPECT().Compile(gomock.Any(), req2, gomock.Any(), gomock.Any(), gomock.Any())
+		env.ArduinoCli.EXPECT().Compile(gomock.Any(), req1, gomock.Any(), gomock.Any(), gomock.Any()).MaxTimes(1)
+		env.ArduinoCli.EXPECT().Compile(gomock.Any(), req2, gomock.Any(), gomock.Any(), gomock.Any()).MaxTimes(1)
 
 		args := []string{"add", "build", "-n", buildName1, "-f", fqbn1, "-s", sketchDir1}
 		err := env.Execute(args)
@@ -249,6 +235,18 @@ func TestCompileCommandProject(t *testing.T) {
 			BuildProperties: []string{},
 			ExportDir:       buildDir1,
 		}
+
+		boardItem := &rpc.BoardListItem{
+			Name: "Some fancy board",
+			Fqbn: fqbn1,
+		}
+
+		port := &rpc.DetectedPort{
+			Address: "/dev/null",
+			Boards:  []*rpc.BoardListItem{boardItem},
+		}
+
+		detectedPorts := []*rpc.DetectedPort{port}
 
 		env.ArduinoCli.EXPECT().CreateInstance().Return(instance)
 		env.ArduinoCli.EXPECT().ConnectedBoards(instance.GetId()).Return(detectedPorts, nil)

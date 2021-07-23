@@ -99,7 +99,6 @@ func TestListBoardInfoCommands(t *testing.T) {
 
 		env.ArduinoCli.EXPECT().CreateInstance().Return(instance)
 		env.ArduinoCli.EXPECT().UpdateIndex(gomock.Any(), gomock.Any(), gomock.Any())
-		env.ArduinoCli.EXPECT().UpdateLibrariesIndex(gomock.Any(), gomock.Any(), gomock.Any())
 		env.ArduinoCli.EXPECT().PlatformSearch(platformReq).Return(platformResp, nil)
 
 		args := []string{"list", "board-fqbns"}
@@ -117,7 +116,6 @@ func TestListBoardInfoCommands(t *testing.T) {
 
 		env.ArduinoCli.EXPECT().CreateInstance().Return(instance)
 		env.ArduinoCli.EXPECT().UpdateIndex(gomock.Any(), gomock.Any(), gomock.Any())
-		env.ArduinoCli.EXPECT().UpdateLibrariesIndex(gomock.Any(), gomock.Any(), gomock.Any())
 		env.ArduinoCli.EXPECT().PlatformSearch(platformReq).Return(nil, dummyErr)
 
 		args := []string{"list", "board-fqbns"}
@@ -138,7 +136,6 @@ func TestListBoardInfoCommands(t *testing.T) {
 
 		env.ArduinoCli.EXPECT().CreateInstance().Return(instance)
 		env.ArduinoCli.EXPECT().UpdateIndex(gomock.Any(), gomock.Any(), gomock.Any())
-		env.ArduinoCli.EXPECT().UpdateLibrariesIndex(gomock.Any(), gomock.Any(), gomock.Any())
 		env.ArduinoCli.EXPECT().PlatformSearch(platformReq).Return(platformResp, nil)
 
 		args := []string{"list", "board-platforms"}
@@ -156,7 +153,6 @@ func TestListBoardInfoCommands(t *testing.T) {
 
 		env.ArduinoCli.EXPECT().CreateInstance().Return(instance)
 		env.ArduinoCli.EXPECT().UpdateIndex(gomock.Any(), gomock.Any(), gomock.Any())
-		env.ArduinoCli.EXPECT().UpdateLibrariesIndex(gomock.Any(), gomock.Any(), gomock.Any())
 		env.ArduinoCli.EXPECT().PlatformSearch(platformReq).Return(nil, dummyErr)
 
 		args := []string{"list", "board-platforms"}

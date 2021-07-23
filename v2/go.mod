@@ -6,14 +6,11 @@ require (
 	github.com/Microsoft/go-winio v0.5.0 // indirect
 	github.com/arduino/arduino-cli v0.0.0-20210715101518-1c65ebf8d21c
 	github.com/arduino/board-discovery v0.0.0-20210309080826-bd3e3ec43e53 // indirect
-	github.com/arduino/go-properties-orderedmap v1.5.0 // indirect
-	github.com/coreos/etcd v3.3.13+incompatible // indirect
 	github.com/daaku/go.zipexe v1.0.1 // indirect
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/gofrs/uuid v4.0.0+incompatible // indirect
 	github.com/golang/mock v1.6.0
 	github.com/google/uuid v1.3.0
-	github.com/gorilla/websocket v1.4.2 // indirect
 	github.com/h2non/filetype v1.1.1 // indirect
 	github.com/jroimartin/gocui v0.4.0
 	github.com/juju/errors v0.0.0-20200330140219-3fe23663418f // indirect
@@ -22,7 +19,6 @@ require (
 	github.com/mattn/go-runewidth v0.0.13 // indirect
 	github.com/miekg/dns v1.1.43 // indirect
 	github.com/mitchellh/go-wordwrap v1.0.1
-	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/nsf/termbox-go v1.1.1 // indirect
 	github.com/oleksandr/bonjour v0.0.0-20210301155756-30f43c61b915 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
@@ -31,7 +27,6 @@ require (
 	github.com/sergi/go-diff v1.2.0 // indirect
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/cobra v1.2.1
-	github.com/spf13/viper v1.8.1 // indirect
 	github.com/stretchr/testify v1.7.0
 	github.com/xanzy/ssh-agent v0.3.0 // indirect
 	go.bug.st/serial v1.3.0
