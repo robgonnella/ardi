@@ -23,7 +23,6 @@ type Cli interface {
 	CreateInstance() *rpc.Instance
 	UpdateIndex(context.Context, *rpc.UpdateIndexRequest, commands.DownloadProgressCB) (*rpc.UpdateIndexResponse, error)
 	UpdateLibrariesIndex(context.Context, *rpc.UpdateLibrariesIndexRequest, commands.DownloadProgressCB) error
-	PlatformUpgrade(context.Context, *rpc.PlatformUpgradeRequest, commands.DownloadProgressCB, commands.TaskProgressCB) (*rpc.PlatformUpgradeResponse, error)
 	PlatformInstall(context.Context, *rpc.PlatformInstallRequest, commands.DownloadProgressCB, commands.TaskProgressCB) (*rpc.PlatformInstallResponse, error)
 	PlatformUninstall(context.Context, *rpc.PlatformUninstallRequest, func(curr *rpc.TaskProgress)) (*rpc.PlatformUninstallResponse, error)
 	GetPlatforms(*rpc.PlatformListRequest) ([]*rpc.Platform, error)
@@ -64,11 +63,6 @@ func (c *ArduinoCli) UpdateIndex(ctx context.Context, req *rpc.UpdateIndexReques
 // UpdateLibrariesIndex wrapper around arduino-cli UpdateLibrariesIndex
 func (c *ArduinoCli) UpdateLibrariesIndex(ctx context.Context, req *rpc.UpdateLibrariesIndexRequest, fn commands.DownloadProgressCB) error {
 	return commands.UpdateLibrariesIndex(ctx, req, fn)
-}
-
-// PlatformUpgrade wrapper around arduino-cli PlatformUpgrade
-func (c *ArduinoCli) PlatformUpgrade(ctx context.Context, req *rpc.PlatformUpgradeRequest, dlfn commands.DownloadProgressCB, tfn commands.TaskProgressCB) (*rpc.PlatformUpgradeResponse, error) {
-	return core.PlatformUpgrade(ctx, req, dlfn, tfn)
 }
 
 // PlatformInstall wrapper around arduino-cli PlatformInstall

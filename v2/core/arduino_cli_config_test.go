@@ -13,20 +13,54 @@ func TestArduinoCliConfig(t *testing.T) {
 	testutil.RunUnitTest("adds and removes board urls", t, func(env *testutil.UnitTestEnv) {
 		util.InitProjectDirectory()
 
-		boardURL := "https://somefakeboardurl.com"
-		err := env.ArdiCore.CliConfig.AddBoardURL(boardURL)
+		boardURL1 := "https://somefakeboardurl.com"
+		boardURL2 := "https://anotherfakeboardurl.com"
+
+		err := env.ArdiCore.CliConfig.AddBoardURL(boardURL1)
+		assert.NoError(env.T, err)
+
+		err = env.ArdiCore.CliConfig.AddBoardURL(boardURL2)
 		assert.NoError(env.T, err)
 
 		settings, err := util.ReadArduinoCliSettings(paths.ArduinoCliProjectConfig)
 		assert.NoError(env.T, err)
 
-		assert.Contains(env.T, settings.BoardManager.AdditionalUrls, boardURL)
+		assert.Contains(env.T, settings.BoardManager.AdditionalUrls, boardURL1)
+		assert.Contains(env.T, settings.BoardManager.AdditionalUrls, boardURL2)
 
-		err = env.ArdiCore.CliConfig.RemoveBoardURL(boardURL)
+		err = env.ArdiCore.CliConfig.RemoveBoardURL(boardURL1)
 		assert.NoError(env.T, err)
 
 		settings, err = util.ReadArduinoCliSettings(paths.ArduinoCliProjectConfig)
 		assert.NoError(env.T, err)
-		assert.NotContains(env.T, settings.BoardManager.AdditionalUrls, boardURL)
+		assert.NotContains(env.T, settings.BoardManager.AdditionalUrls, boardURL1)
+		assert.Contains(env.T, settings.BoardManager.AdditionalUrls, boardURL2)
+	})
+
+	testutil.RunUnitTest("doesnt error adding same url twice", t, func(env *testutil.UnitTestEnv) {
+		util.InitProjectDirectory()
+
+		boardURL1 := "https://somefakeboardurl.com"
+
+		err := env.ArdiCore.CliConfig.AddBoardURL(boardURL1)
+		assert.NoError(env.T, err)
+
+		err = env.ArdiCore.CliConfig.AddBoardURL(boardURL1)
+		assert.NoError(env.T, err)
+
+		settings, err := util.ReadArduinoCliSettings(paths.ArduinoCliProjectConfig)
+		assert.NoError(env.T, err)
+
+		assert.Contains(env.T, settings.BoardManager.AdditionalUrls, boardURL1)
+		assert.Equal(env.T, len(settings.BoardManager.AdditionalUrls), 1)
+	})
+
+	testutil.RunUnitTest("doesnt error removing non-exiting url", t, func(env *testutil.UnitTestEnv) {
+		util.InitProjectDirectory()
+
+		boardURL1 := "https://somefakeboardurl.com"
+
+		err := env.ArdiCore.CliConfig.RemoveBoardURL(boardURL1)
+		assert.NoError(env.T, err)
 	})
 }

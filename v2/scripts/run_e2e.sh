@@ -14,17 +14,33 @@ trap "clean_up" EXIT
 
 clean_up
 
+ESP8266=https://arduino.esp8266.com/stable/package_esp8266com_index.json
+
 go install ${top}
 
-ardi project-init -v
+ardi project-init
 
-ardi add platforms arduino:avr -v
-
-ardi add lib "Adafruit Pixie" -v
-
+ardi add platforms arduino:avr
+ardi add lib "Adafruit Pixie"
+ardi add board-url ${ESP8266}
 ardi add build \
   --name pixie \
   --fqbn arduino:avr:mega \
   --sketch $top/test_projects/pixie
 
-ardi compile pixie -v
+ardi list platforms
+ardi search platforms
+
+ardi list libs
+ardi search libs "Adafruit Pixie"
+
+ardi list board-fqbns
+ardi list board-platforms
+ardi list board-urls
+
+ardi compile pixie
+
+ardi remove platform arduino:avr
+ardi remove lib Adafruit_Pixie
+ardi remove board-url ${ESP8266}
+ardi remove build pixie

@@ -7,5 +7,4 @@ ignore:
   - "**/main.go"
   - "**/Makefile"
   - "**/*.md"
-  - "v2/cli-wrapper/arduino-cli.go"
   - "v2/command/help.go"
