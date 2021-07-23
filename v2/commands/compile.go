@@ -59,6 +59,9 @@ func getCompileCmd(env *CommandEnv) *cobra.Command {
 			}
 
 			for _, compileOpts := range opts {
+				if compileOpts.FQBN == "" {
+					return errors.New("must provide fqbn when no boards are connected")
+				}
 				if err := env.ArdiCore.Compiler.Compile(*compileOpts); err != nil {
 					return err
 				}

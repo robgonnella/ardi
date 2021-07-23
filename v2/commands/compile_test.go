@@ -1,217 +1,267 @@
 package commands_test
 
 import (
+	"errors"
 	"os"
 	"path"
 	"testing"
 
+	rpc "github.com/arduino/arduino-cli/rpc/cc/arduino/cli/commands/v1"
+	"github.com/golang/mock/gomock"
 	"github.com/robgonnella/ardi/v2/testutil"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestCompileCommandProject(t *testing.T) {
-	testutil.RunIntegrationTest("using installed project platform", t, func(groupEnv *testutil.IntegrationTestEnv) {
-		err := groupEnv.RunProjectInit()
-		assert.NoError(groupEnv.T, err)
+	instance := &rpc.Instance{Id: 1}
 
-		boardURL := testutil.Esp8266BoardURL()
-		platform := testutil.Esp8266Platform()
-		fqbn := testutil.Esp8266WifiduinoFQBN()
+	fqbn1 := testutil.Esp8266WifiduinoFQBN()
+	buildName1 := "blink"
+	sketchDir1 := testutil.BlinkProjectDir()
+	sketchPath1 := path.Join(sketchDir1, "blink.ino")
+	buildDir1 := path.Join(sketchDir1, "build")
 
-		args := []string{"add", "board-url", boardURL}
-		err = groupEnv.Execute(args)
-		assert.NoError(groupEnv.T, err)
+	fqbn2 := testutil.ArduinoMegaFQBN()
+	buildName2 := "pixie"
+	sketchDir2 := testutil.PixieProjectDir()
+	sketchPath2 := path.Join(sketchDir2, "pixie.ino")
+	buildDir2 := path.Join(sketchDir2, "build")
 
-		args = []string{"add", "platform", platform}
-		err = groupEnv.Execute(args)
-		assert.NoError(groupEnv.T, err)
+	platformReq := &rpc.PlatformListRequest{
+		Instance: instance,
+		All:      true,
+	}
 
-		groupEnv.T.Run("compiles project directory", func(st *testing.T) {
-			testutil.CleanBuilds()
-			blinkDir := testutil.BlinkProjectDir()
-			args := []string{"compile", blinkDir, "--fqbn", fqbn}
-			err = groupEnv.Execute(args)
-			assert.NoError(st, err)
-		})
+	board := testutil.GenerateRPCBoard("Arduino Mega", "arduino:avr:mega")
 
-		groupEnv.T.Run("compiles ardi.json build", func(st *testing.T) {
-			testutil.CleanBuilds()
-			buildName := "blink"
-			sketchDir := testutil.BlinkProjectDir()
-			buildDir := path.Join(sketchDir, "build")
+	boardItem := &rpc.BoardListItem{
+		Name: board.Name,
+		Fqbn: board.FQBN,
+	}
 
-			args := []string{"add", "build", "-n", buildName, "-f", fqbn, "-s", sketchDir}
-			err := groupEnv.Execute(args)
-			assert.NoError(st, err)
+	port := &rpc.DetectedPort{
+		Address: board.Port,
+		Boards:  []*rpc.BoardListItem{boardItem},
+	}
 
-			args = []string{"compile", buildName}
-			err = groupEnv.Execute(args)
-			assert.NoError(st, err)
-			assert.DirExists(st, buildDir)
-		})
+	detectedPorts := []*rpc.DetectedPort{port}
 
-		groupEnv.T.Run("compiles multiple ardi.json builds", func(st *testing.T) {
-			testutil.CleanBuilds()
-			buildName1 := "blink"
-			sketchDir1 := testutil.BlinkProjectDir()
-			buildDir1 := path.Join(sketchDir1, "build")
+	expectUsual := func(env *testutil.MockIntegrationTestEnv) {
+		env.ArduinoCli.EXPECT().CreateInstance().Return(instance)
+		env.ArduinoCli.EXPECT().ConnectedBoards(instance.GetId())
+		env.ArduinoCli.EXPECT().GetPlatforms(platformReq)
+	}
 
-			args := []string{"add", "build", "-n", buildName1, "-f", fqbn, "-s", sketchDir1}
-			err := groupEnv.Execute(args)
-			assert.NoError(st, err)
+	testutil.RunMockIntegrationTest("compiles ardi.json build", t, func(env *testutil.MockIntegrationTestEnv) {
+		env.RunProjectInit()
 
-			buildName2 := "blink2"
-			sketchDir2 := testutil.BlinkCopyProjectDir()
-			buildDir2 := path.Join(sketchDir2, "build")
+		req := &rpc.CompileRequest{
+			Instance:        instance,
+			Fqbn:            fqbn1,
+			SketchPath:      sketchPath1,
+			ShowProperties:  false,
+			BuildProperties: []string{},
+			ExportDir:       buildDir1,
+		}
 
-			args = []string{"add", "build", "-n", buildName2, "-f", fqbn, "-s", sketchDir2}
-			err = groupEnv.Execute(args)
-			assert.NoError(st, err)
+		expectUsual(env)
+		env.ArduinoCli.EXPECT().Compile(gomock.Any(), req, gomock.Any(), gomock.Any(), gomock.Any())
 
-			args = []string{"compile", buildName1, buildName2}
-			err = groupEnv.Execute(args)
-			assert.NoError(st, err)
-			assert.DirExists(st, buildDir1)
-			assert.DirExists(st, buildDir2)
-		})
+		args := []string{"add", "build", "-n", buildName1, "-f", fqbn1, "-s", sketchDir1}
+		err := env.Execute(args)
+		assert.NoError(env.T, err)
 
-		groupEnv.T.Run("returns error is one build fails", func(st *testing.T) {
-			testutil.CleanBuilds()
-			buildName1 := "blink"
-			sketchDir1 := testutil.BlinkProjectDir()
-
-			args := []string{"add", "build", "-n", buildName1, "-f", fqbn, "-s", sketchDir1}
-			err := groupEnv.Execute(args)
-			assert.NoError(st, err)
-
-			// Requires library that we aren't installing so this will error out
-			buildName2 := "pixie"
-			sketchDir2 := testutil.PixieProjectDir()
-
-			args = []string{"add", "build", "-n", buildName2, "-f", fqbn, "-s", sketchDir2}
-			err = groupEnv.Execute(args)
-			assert.NoError(st, err)
-
-			args = []string{"compile", buildName1, buildName2}
-			err = groupEnv.Execute(args)
-			assert.Error(st, err)
-
-			// Cleanup
-			args = []string{"remove", "build", buildName2}
-			err = groupEnv.Execute(args)
-			assert.NoError(st, err)
-		})
-
-		groupEnv.T.Run("errors if attempt to watch multiple builds", func(st *testing.T) {
-			testutil.CleanBuilds()
-			buildName1 := "blink"
-			sketchDir1 := testutil.BlinkProjectDir()
-
-			args := []string{"add", "build", "-n", buildName1, "-f", fqbn, "-s", sketchDir1}
-			err := groupEnv.Execute(args)
-			assert.NoError(st, err)
-
-			buildName2 := "blink2"
-			sketchDir2 := testutil.BlinkCopyProjectDir()
-
-			args = []string{"add", "build", "-n", buildName2, "-f", fqbn, "-s", sketchDir2}
-			err = groupEnv.Execute(args)
-			assert.NoError(st, err)
-
-			args = []string{"compile", buildName1, buildName2, "--watch"}
-			err = groupEnv.Execute(args)
-			assert.Error(st, err)
-		})
-
-		groupEnv.T.Run("compiles all ardi.json builds", func(st *testing.T) {
-			testutil.CleanBuilds()
-			buildName := "blink"
-			sketchDir := testutil.BlinkProjectDir()
-			buildDir := path.Join(sketchDir, "build")
-
-			args := []string{"add", "build", "-n", buildName, "-f", fqbn, "-s", sketchDir}
-			err := groupEnv.Execute(args)
-			assert.NoError(st, err)
-
-			args = []string{"compile", "--all"}
-			err = groupEnv.Execute(args)
-			assert.NoError(st, err)
-			assert.DirExists(st, buildDir)
-		})
-
-		groupEnv.T.Run("errors if attempting to watch all builds", func(st *testing.T) {
-			testutil.CleanBuilds()
-			buildName := "blink"
-			sketchDir := testutil.BlinkProjectDir()
-
-			args := []string{"add", "build", "-n", buildName, "-f", fqbn, "-s", sketchDir}
-			err := groupEnv.Execute(args)
-			assert.NoError(st, err)
-
-			args = []string{"compile", "--all", "--watch"}
-			err = groupEnv.Execute(args)
-			assert.Error(st, err)
-		})
-
-		groupEnv.T.Run("errors if .ino file not found in current directory", func(st *testing.T) {
-			testutil.CleanBuilds()
-			args = []string{"compile"}
-			err = groupEnv.Execute(args)
-			assert.Error(st, err)
-		})
-
-		groupEnv.T.Run("errors if fqbn is missing", func(st *testing.T) {
-			testutil.CleanBuilds()
-			blinkDir := testutil.BlinkProjectDir()
-			args := []string{"compile", blinkDir}
-			err = groupEnv.Execute(args)
-			assert.Error(st, err)
-		})
-
-		groupEnv.T.Run("errors if project library required", func(st *testing.T) {
-			testutil.CleanBuilds()
-			pixieDir := testutil.PixieProjectDir()
-			args := []string{"compile", pixieDir, "--fqbn", fqbn}
-			err = groupEnv.Execute(args)
-			assert.Error(st, err)
-		})
-
-		groupEnv.T.Run("compiles project that requires project library", func(st *testing.T) {
-			testutil.CleanBuilds()
-			args := []string{"add", "lib", "Adafruit Pixie"}
-			err := groupEnv.Execute(args)
-			assert.NoError(st, err)
-
-			pixieDir := testutil.PixieProjectDir()
-			args = []string{"compile", pixieDir, "--fqbn", fqbn}
-			err = groupEnv.Execute(args)
-			assert.NoError(st, err)
-		})
+		args = []string{"compile", buildName1}
+		err = env.Execute(args)
+		assert.NoError(env.T, err)
 	})
 
-	testutil.RunIntegrationTest("errors if platform not installed for project", t, func(env *testutil.IntegrationTestEnv) {
-		err := env.RunProjectInit()
+	testutil.RunMockIntegrationTest("compiles multiple ardi.json builds", t, func(env *testutil.MockIntegrationTestEnv) {
+		env.RunProjectInit()
+
+		buildName1 := "blink"
+
+		req1 := &rpc.CompileRequest{
+			Instance:        instance,
+			Fqbn:            fqbn1,
+			SketchPath:      sketchPath1,
+			ShowProperties:  false,
+			BuildProperties: []string{},
+			ExportDir:       buildDir1,
+		}
+
+		req2 := &rpc.CompileRequest{
+			Instance:        instance,
+			Fqbn:            fqbn2,
+			SketchPath:      sketchPath2,
+			ShowProperties:  false,
+			BuildProperties: []string{},
+			ExportDir:       buildDir2,
+		}
+
+		expectUsual(env)
+		env.ArduinoCli.EXPECT().Compile(gomock.Any(), req1, gomock.Any(), gomock.Any(), gomock.Any())
+		env.ArduinoCli.EXPECT().Compile(gomock.Any(), req2, gomock.Any(), gomock.Any(), gomock.Any())
+
+		args := []string{"add", "build", "-n", buildName1, "-f", fqbn1, "-s", sketchDir1}
+		err := env.Execute(args)
 		assert.NoError(env.T, err)
-		blinkDir := testutil.BlinkProjectDir()
-		args := []string{"compile", blinkDir, "--fqbn", testutil.ArduinoMegaFQBN()}
+
+		args = []string{"add", "build", "-n", buildName2, "-f", fqbn2, "-s", sketchDir2}
+		err = env.Execute(args)
+		assert.NoError(env.T, err)
+
+		args = []string{"compile", buildName1, buildName2}
+		err = env.Execute(args)
+		assert.NoError(env.T, err)
+	})
+
+	testutil.RunMockIntegrationTest("returns error if one build fails", t, func(env *testutil.MockIntegrationTestEnv) {
+		env.RunProjectInit()
+
+		dummyErr := errors.New("dummy error")
+
+		req1 := &rpc.CompileRequest{
+			Instance:        instance,
+			Fqbn:            fqbn1,
+			SketchPath:      sketchPath1,
+			ShowProperties:  false,
+			BuildProperties: []string{},
+			ExportDir:       buildDir1,
+		}
+
+		expectUsual(env)
+		env.ArduinoCli.EXPECT().Compile(gomock.Any(), req1, gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, dummyErr)
+
+		args := []string{"add", "build", "-n", buildName1, "-f", fqbn1, "-s", sketchDir1}
+		err := env.Execute(args)
+		assert.NoError(env.T, err)
+
+		args = []string{"add", "build", "-n", buildName2, "-f", fqbn2, "-s", sketchDir2}
+		err = env.Execute(args)
+		assert.NoError(env.T, err)
+
+		args = []string{"compile", buildName1, buildName2}
+		err = env.Execute(args)
+		assert.Error(env.T, err)
+		assert.ErrorIs(env.T, err, dummyErr)
+	})
+
+	testutil.RunMockIntegrationTest("errors if attempt to watch multiple builds", t, func(env *testutil.MockIntegrationTestEnv) {
+		env.RunProjectInit()
+
+		args := []string{"add", "build", "-n", buildName1, "-f", fqbn1, "-s", sketchDir1}
+		err := env.Execute(args)
+		assert.NoError(env.T, err)
+
+		args = []string{"add", "build", "-n", buildName2, "-f", fqbn2, "-s", sketchDir2}
+		err = env.Execute(args)
+		assert.NoError(env.T, err)
+
+		expectUsual(env)
+
+		args = []string{"compile", buildName1, buildName2, "--watch"}
 		err = env.Execute(args)
 		assert.Error(env.T, err)
 	})
 
-	testutil.RunIntegrationTest("compiles directory if sketch arg missing", t, func(env *testutil.IntegrationTestEnv) {
+	testutil.RunMockIntegrationTest("compiles all ardi.json builds", t, func(env *testutil.MockIntegrationTestEnv) {
+		env.RunProjectInit()
+
+		req1 := &rpc.CompileRequest{
+			Instance:        instance,
+			Fqbn:            fqbn1,
+			SketchPath:      sketchPath1,
+			ShowProperties:  false,
+			BuildProperties: []string{},
+			ExportDir:       buildDir1,
+		}
+
+		req2 := &rpc.CompileRequest{
+			Instance:        instance,
+			Fqbn:            fqbn2,
+			SketchPath:      sketchPath2,
+			ShowProperties:  false,
+			BuildProperties: []string{},
+			ExportDir:       buildDir2,
+		}
+
+		expectUsual(env)
+		env.ArduinoCli.EXPECT().Compile(gomock.Any(), req1, gomock.Any(), gomock.Any(), gomock.Any()).MaxTimes(1)
+		env.ArduinoCli.EXPECT().Compile(gomock.Any(), req2, gomock.Any(), gomock.Any(), gomock.Any()).MaxTimes(1)
+
+		args := []string{"add", "build", "-n", buildName1, "-f", fqbn1, "-s", sketchDir1}
+		err := env.Execute(args)
+		assert.NoError(env.T, err)
+
+		args = []string{"add", "build", "-n", buildName2, "-f", fqbn2, "-s", sketchDir2}
+		err = env.Execute(args)
+		assert.NoError(env.T, err)
+
+		args = []string{"compile", "--all"}
+		err = env.Execute(args)
+		assert.NoError(env.T, err)
+	})
+
+	testutil.RunMockIntegrationTest("errors if attempting to watch all builds", t, func(env *testutil.MockIntegrationTestEnv) {
+		env.RunProjectInit()
+
+		args := []string{"add", "build", "-n", buildName1, "-f", fqbn1, "-s", sketchDir1}
+		err := env.Execute(args)
+		assert.NoError(env.T, err)
+
+		expectUsual(env)
+
+		args = []string{"compile", "--all", "--watch"}
+		err = env.Execute(args)
+		assert.Error(env.T, err)
+	})
+
+	testutil.RunMockIntegrationTest("errors if .ino file not found in current directory", t, func(env *testutil.MockIntegrationTestEnv) {
+		env.RunProjectInit()
+		expectUsual(env)
+		args := []string{"compile"}
+		err := env.Execute(args)
+		assert.Error(env.T, err)
+	})
+
+	testutil.RunMockIntegrationTest("errors if fqbn is missing", t, func(env *testutil.MockIntegrationTestEnv) {
+		env.RunProjectInit()
+		expectUsual(env)
+		args := []string{"compile", sketchDir1}
+		err := env.Execute(args)
+		assert.Error(env.T, err)
+	})
+
+	testutil.RunMockIntegrationTest("compiles directory if sketch arg missing", t, func(env *testutil.MockIntegrationTestEnv) {
 		currentDir, _ := os.Getwd()
 		blinkDir := testutil.BlinkProjectDir()
 		os.Chdir(blinkDir)
 		defer os.Chdir(currentDir)
-		err := env.RunProjectInit()
+
+		env.RunProjectInit()
+
+		req := &rpc.CompileRequest{
+			Instance:        instance,
+			Fqbn:            fqbn1,
+			SketchPath:      sketchPath1,
+			ShowProperties:  false,
+			BuildProperties: []string{},
+			ExportDir:       buildDir1,
+		}
+
+		env.ArduinoCli.EXPECT().CreateInstance().Return(instance)
+		env.ArduinoCli.EXPECT().ConnectedBoards(instance.GetId()).Return(detectedPorts, nil)
+		env.ArduinoCli.EXPECT().GetPlatforms(platformReq)
+		env.ArduinoCli.EXPECT().Compile(gomock.Any(), req, gomock.Any(), gomock.Any(), gomock.Any())
+
+		args := []string{"compile", "--fqbn", fqbn1}
+		err := env.Execute(args)
 		assert.NoError(env.T, err)
-		args := []string{"compile", "--fqbn", testutil.ArduinoMegaFQBN()}
-		err = env.Execute(args)
-		assert.Error(env.T, err)
 	})
 
-	testutil.RunIntegrationTest("errors if not a valid project directory", t, func(env *testutil.IntegrationTestEnv) {
-		args := []string{"compile", ".", "--fqbn", testutil.ArduinoMegaFQBN()}
+	testutil.RunMockIntegrationTest("errors if not a valid project directory", t, func(env *testutil.MockIntegrationTestEnv) {
+		args := []string{"compile", ".", "--fqbn", fqbn1}
 		err := env.Execute(args)
 		assert.Error(env.T, err)
 	})
