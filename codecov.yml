@@ -8,3 +8,6 @@ ignore:
   - "**/Makefile"
   - "**/*.md"
   - "v2/command/help.go"
+
+coverage:
+  range: "50...90"
