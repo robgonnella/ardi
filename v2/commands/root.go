@@ -110,7 +110,7 @@ func getRootCommand(env *CommandEnv) *cobra.Command {
 
 	rootCmd.PersistentFlags().BoolVarP(&env.Verbose, "verbose", "v", false, "Print all logs")
 	rootCmd.PersistentFlags().BoolVarP(&env.Quiet, "quiet", "q", false, "Silence all logs")
-	rootCmd.SetHelpFunc(help)
+	rootCmd.SetHelpFunc(Help)
 	return rootCmd
 }
 

@@ -5,7 +5,6 @@ import (
 
 	cli "github.com/robgonnella/ardi/v2/cli-wrapper"
 	"github.com/robgonnella/ardi/v2/core"
-	"github.com/robgonnella/ardi/v2/util"
 	"github.com/spf13/cobra"
 )
 
@@ -30,9 +29,7 @@ func getWatchCmd(env *CommandEnv) *cobra.Command {
 
 			opts := optsList[0]
 
-			if baud == 0 {
-				baud = util.ParseSketchBaud(opts.SketchPath)
-			}
+			baudRate := env.ArdiCore.GetBaudFromArgs(baud, args)
 
 			// Ignore errors here as user may have provided fqbn via build to mitigate
 			// custom boards that don't show up via auto detect for some reason
@@ -59,7 +56,7 @@ func getWatchCmd(env *CommandEnv) *cobra.Command {
 			targets := core.WatchCoreTargets{
 				Board:       board,
 				CompileOpts: opts,
-				Baud:        baud,
+				Baud:        baudRate,
 			}
 
 			env.ArdiCore.Watcher.SetTargets(targets)
