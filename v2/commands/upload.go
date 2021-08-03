@@ -4,8 +4,6 @@ import (
 	"errors"
 
 	cli "github.com/robgonnella/ardi/v2/cli-wrapper"
-	"github.com/robgonnella/ardi/v2/types"
-	"github.com/robgonnella/ardi/v2/util"
 	"github.com/spf13/cobra"
 )
 
@@ -24,58 +22,11 @@ func getUploadCmd(env *CommandEnv) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			defer env.ArdiCore.Uploader.Detach() // noop if not attached
 
-			project := &types.Project{}
-			var err error
+			baud = env.ArdiCore.GetBaudFromArgs(baud, args)
 
-			builds := env.ArdiCore.Config.GetBuilds()
-			defaultBuild, defaultExits := builds["default"]
-
-			if len(args) == 0 {
-				if defaultExits {
-					env.Logger.Info("Using build definition: default")
-					project.Baud = defaultBuild.Baud
-					project.Directory = defaultBuild.Directory
-					project.Sketch = defaultBuild.Sketch
-					if fqbn == "" {
-						fqbn = defaultBuild.FQBN
-					}
-				} else if len(builds) == 1 {
-					for name, b := range builds {
-						env.Logger.Infof("Using build definition: %s", name)
-						project.Baud = b.Baud
-						project.Directory = b.Directory
-						project.Sketch = b.Sketch
-						if fqbn == "" {
-							fqbn = b.FQBN
-						}
-					}
-				} else {
-					env.Logger.Info("Using ino in current directory")
-					project, err = util.ProcessSketch(".")
-					if err != nil {
-						return err
-					}
-				}
-			} else {
-				if b, ok := builds[args[0]]; ok {
-					env.Logger.Infof("Using build definition: %s", args[0])
-					project.Baud = b.Baud
-					project.Directory = b.Directory
-					project.Sketch = b.Sketch
-					if fqbn == "" {
-						fqbn = b.FQBN
-					}
-				} else {
-					env.Logger.Info("Using ino in current directory")
-					project, err = util.ProcessSketch(args[0])
-					if err != nil {
-						return err
-					}
-				}
-			}
-
-			if baud != 0 {
-				project.Baud = baud
+			sketchDir, _, err := env.ArdiCore.GetSketchPathsFromArgs(args)
+			if err != nil {
+				return err
 			}
 
 			// Ignore errors here as user may have provided fqbn via build to mitigate
@@ -90,12 +41,12 @@ func getUploadCmd(env *CommandEnv) *cobra.Command {
 				return errors.New("no connected boards detected")
 			}
 
-			if err := env.ArdiCore.Uploader.Upload(board, project.Directory); err != nil {
+			if err := env.ArdiCore.Uploader.Upload(board, sketchDir); err != nil {
 				return err
 			}
 
 			if attach {
-				env.ArdiCore.Uploader.SetPortTargets(board.Port, project.Baud)
+				env.ArdiCore.Uploader.SetPortTargets(board.Port, baud)
 				env.ArdiCore.Uploader.Attach()
 			}
 

@@ -8,7 +8,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func help(cmd *cobra.Command, args []string) {
+// Help is custom wrapper around help output to make sure lines wrap to 80 char
+func Help(cmd *cobra.Command, args []string) {
 	wrapLen := uint(80)
 
 	g, err := gocui.NewGui(gocui.OutputNormal)

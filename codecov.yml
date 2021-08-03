@@ -1,13 +1,12 @@
 ignore:
-  - ".github/**/*"
-  - "ardi/**/*"
-  - "arguments/**/*"
-  - "commands/**/*"
-  - "**/docs/**/*"
-  - "**/main.go"
-  - "**/Makefile"
-  - "**/*.md"
-  - "v2/command/help.go"
+  - '.github/**/*'
+  - 'ardi/**/*'
+  - 'arguments/**/*'
+  - 'commands/**/*'
+  - '**/docs/**/*'
+  - '**/main.go'
+  - '**/Makefile'
+  - '**/*.md'
 
 coverage:
-  range: "50...90"
+  range: '50...90'
