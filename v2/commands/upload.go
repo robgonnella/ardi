@@ -1,9 +1,6 @@
 package commands
 
 import (
-	"errors"
-
-	cli "github.com/robgonnella/ardi/v2/cli-wrapper"
 	"github.com/spf13/cobra"
 )
 
@@ -29,16 +26,9 @@ func getUploadCmd(env *CommandEnv) *cobra.Command {
 				return err
 			}
 
-			// Ignore errors here as user may have provided fqbn via build to mitigate
-			// custom boards that don't show up via auto detect for some reason
-			board, _ := env.ArdiCore.Cli.GetTargetBoard(fqbn, port, true)
-
-			if board == nil && fqbn != "" && port != "" {
-				board = &cli.BoardWithPort{FQBN: fqbn, Port: port}
-			}
-
-			if board == nil {
-				return errors.New("no connected boards detected")
+			board, err := env.ArdiCore.Cli.GetTargetBoard(fqbn, port, true)
+			if err != nil {
+				return err
 			}
 
 			if err := env.ArdiCore.Uploader.Upload(board, sketchDir); err != nil {

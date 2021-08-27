@@ -11,6 +11,13 @@ Remove board urls from project
 ardi remove board-urls [flags]
 ```
 
+### Aliases
+
+
+```
+board-url
+```
+
 ### Options
 
 ```

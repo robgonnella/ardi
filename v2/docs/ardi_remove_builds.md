@@ -11,6 +11,13 @@ Remove build config from project
 ardi remove builds [flags]
 ```
 
+### Aliases
+
+
+```
+build
+```
+
 ### Options
 
 ```

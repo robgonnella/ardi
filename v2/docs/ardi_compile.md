@@ -5,10 +5,17 @@ Compile specified sketch or build(s)
 ### Synopsis
 
 
-Compile sketches and builds for specified boards. When compileing for a sketch, you must provide the board FQBN. If left unspecified, a list of available choices will be be printed. If the sketch argument matches a user defined build in ardi.json, the values defined in build will be used to compile
+Compile sketches and builds for specified boards. When compiling for a sketch, you must provide the board FQBN. If left unspecified, a list of available choices will be be printed. If the sketch argument matches a user defined build in ardi.json, the values defined in build will be used to compile
 
 ```
 ardi compile [sketch|build(s)] [flags]
+```
+
+### Aliases
+
+
+```
+build
 ```
 
 ### Options

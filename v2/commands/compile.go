@@ -15,7 +15,7 @@ func getCompileCmd(env *CommandEnv) *cobra.Command {
 	var compileCmd = &cobra.Command{
 		Use: "compile [sketch|build(s)]",
 		Long: "\nCompile sketches and builds for specified boards. When " +
-			"compileing for a sketch, you must provide the board FQBN. If left " +
+			"compiling for a sketch, you must provide the board FQBN. If left " +
 			"unspecified, a list of available choices will be be printed. If the " +
 			"sketch argument matches a user defined build in ardi.json, the values " +
 			"defined in build will be used to compile",

@@ -200,13 +200,14 @@ func TestCompileCore(t *testing.T) {
 		env.ArduinoCli.EXPECT().Compile(gomock.Any(), req, gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, dummyErr)
 
 		go env.ArdiCore.Compiler.WatchForChanges(compileOpts)
+		defer env.ArdiCore.Compiler.StopWatching()
 
 		time.Sleep(time.Second)
 		_, err = file.WriteString("changes to file\n")
 		assert.NoError(env.T, err)
 
 		// wait a second for watcher to trigger
-		time.Sleep(time.Second)
+		time.Sleep(time.Second * 3)
 
 		assert.Contains(env.T, env.Stdout.String(), "Compiling...")
 		assert.Contains(env.T, env.Stdout.String(), "Compilation failed")
@@ -219,7 +220,7 @@ func TestCompileCore(t *testing.T) {
 		assert.NoError(env.T, err)
 
 		// wait a second for watcher to trigger
-		time.Sleep(time.Second)
+		time.Sleep(time.Second * 3)
 
 		assert.NotContains(env.T, env.Stdout.String(), "Compiling...")
 		assert.NotContains(env.T, env.Stdout.String(), "Compilation failed")

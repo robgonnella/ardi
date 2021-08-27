@@ -14,8 +14,9 @@ func getWatchCmd(env *CommandEnv) *cobra.Command {
 	var port string
 	var baud int
 	var watchCmd = &cobra.Command{
-		Use:   "attach-and-watch [sketch|build]",
-		Short: "Compile, upload, watch board logs, and watch for sketch changes",
+		Use:     "attach-and-watch [sketch|build]",
+		Aliases: []string{"develop", "dev"},
+		Short:   "Compile, upload, watch board logs, and watch for sketch changes",
 		Long: "\nCompile, upload, watch board logs, and watch for sketch " +
 			"changes. Updates to the sketch file will trigger automatic recompile, " +
 			"reupload, and restarts the board log watcher. If the sketch argument " +

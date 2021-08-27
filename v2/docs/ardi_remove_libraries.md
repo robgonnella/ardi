@@ -11,6 +11,15 @@ Remove libraries from project
 ardi remove libraries [flags]
 ```
 
+### Aliases
+
+
+```
+libs
+lib
+library
+```
+
 ### Options
 
 ```

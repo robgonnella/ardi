@@ -11,6 +11,13 @@ Initialize directory as an ardi project
 ardi project-init [flags]
 ```
 
+### Aliases
+
+
+```
+init
+```
+
 ### Options
 
 ```

@@ -120,6 +120,7 @@ func GetRootCmd(env *CommandEnv) *cobra.Command {
 	rootCmd.AddCommand(getAddCmd(env))
 	rootCmd.AddCommand(getCleanCmd(env))
 	rootCmd.AddCommand(getCompileCmd(env))
+	rootCmd.AddCommand(getCompileAndUploadCmd(env))
 	rootCmd.AddCommand(getInstallCmd(env))
 	rootCmd.AddCommand(getListCmd(env))
 	rootCmd.AddCommand(getProjectInitCmd(env))

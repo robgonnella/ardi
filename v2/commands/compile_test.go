@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestCompileCommandProject(t *testing.T) {
+func TestCompileCommand(t *testing.T) {
 	instance := &rpc.Instance{Id: 1}
 
 	fqbn1 := testutil.Esp8266WifiduinoFQBN()

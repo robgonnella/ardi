@@ -11,6 +11,15 @@ Add libraries to project
 ardi add libraries [flags]
 ```
 
+### Aliases
+
+
+```
+libs
+lib
+library
+```
+
 ### Options
 
 ```
