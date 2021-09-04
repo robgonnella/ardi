@@ -11,6 +11,13 @@ List project platforms
 ardi list platforms [flags]
 ```
 
+### Aliases
+
+
+```
+platform
+```
+
 ### Options
 
 ```

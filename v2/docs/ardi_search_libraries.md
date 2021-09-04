@@ -11,6 +11,15 @@ Searches for availables libraries with optional search filter
 ardi search libraries [flags]
 ```
 
+### Aliases
+
+
+```
+lib
+libs
+library
+```
+
 ### Options
 
 ```

@@ -11,6 +11,13 @@ List project libraries
 ardi list libraries [flags]
 ```
 
+### Aliases
+
+
+```
+libs
+```
+
 ### Options
 
 ```

@@ -11,6 +11,13 @@ Remove platform(s) from project
 ardi remove platforms [flags]
 ```
 
+### Aliases
+
+
+```
+platform
+```
+
 ### Options
 
 ```

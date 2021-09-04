@@ -11,6 +11,13 @@ Add platform(s) to project
 ardi add platforms [flags]
 ```
 
+### Aliases
+
+
+```
+platform
+```
+
 ### Options
 
 ```

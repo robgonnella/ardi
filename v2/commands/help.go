@@ -27,6 +27,16 @@ func Help(cmd *cobra.Command, args []string) {
 	if cmd.Runnable() {
 		fmt.Printf("%s\n\n", wordwrap.WrapString(cmd.CommandPath(), wrapLen))
 	}
+	if len(cmd.Aliases) > 0 {
+		fmt.Println("Aliases:")
+		for i, a := range cmd.Aliases {
+			if i == len(cmd.Aliases)-1 {
+				fmt.Printf("%s\n\n", a)
+			} else {
+				fmt.Printf("%s\n", a)
+			}
+		}
+	}
 	if cmd.HasSubCommands() {
 		use := cmd.CommandPath() + " [command]"
 		fmt.Printf("%s\n\n", wordwrap.WrapString(use, wrapLen))

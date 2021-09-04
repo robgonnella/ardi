@@ -11,6 +11,13 @@ Add board urls to project
 ardi add board-url [flags]
 ```
 
+### Aliases
+
+
+```
+board-urls
+```
+
 ### Options
 
 ```

@@ -11,6 +11,13 @@ List project builds
 ardi list builds [flags]
 ```
 
+### Aliases
+
+
+```
+build
+```
+
 ### Options
 
 ```

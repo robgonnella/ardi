@@ -11,6 +11,14 @@ Compile, upload, watch board logs, and watch for sketch changes. Updates to the 
 ardi attach-and-watch [sketch|build] [flags]
 ```
 
+### Aliases
+
+
+```
+develop
+dev
+```
+
 ### Options
 
 ```

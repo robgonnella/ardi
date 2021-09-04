@@ -11,6 +11,13 @@ Search all available platforms
 ardi search platforms [flags]
 ```
 
+### Aliases
+
+
+```
+platform
+```
+
 ### Options
 
 ```
