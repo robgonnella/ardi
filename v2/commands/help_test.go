@@ -25,10 +25,11 @@ func TestHelpCommand(t *testing.T) {
 
 		os.Stdout = w
 		cmd := &cobra.Command{
-			Use:   "somecmd [args]",
-			Short: "Longer than 80char Longer than 80char Longer than 80char Longer than 80char Longer than 80char Longer than 80char Longer than 80char Longer than 80char",
-			Long:  "\nLonger than 80char Longer than 80char Longer than 80char Longer than 80char Longer than 80char Longer than 80char Longer than 80char Longer than 80char Longer than 80char",
-			Run:   func(cmd *cobra.Command, args []string) {},
+			Use:     "somecmd [args]",
+			Short:   "Longer than 80char Longer than 80char Longer than 80char Longer than 80char Longer than 80char Longer than 80char Longer than 80char Longer than 80char",
+			Long:    "\nLonger than 80char Longer than 80char Longer than 80char Longer than 80char Longer than 80char Longer than 80char Longer than 80char Longer than 80char Longer than 80char",
+			Aliases: []string{"many", "aliases", "so", "what", "about", "even", "more", "how", "can", "we", "get", "words", "to", "continue", "forever", "end", "ever", "without", "repeating"},
+			Run:     func(cmd *cobra.Command, args []string) {},
 		}
 
 		commands.Help(cmd, []string{})

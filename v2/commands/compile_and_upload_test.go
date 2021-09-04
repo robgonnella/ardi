@@ -180,6 +180,13 @@ func TestCompileAndUploadCommand(t *testing.T) {
 		assert.Error(env.T, err)
 	})
 
+	testutil.RunMockIntegrationTest("returns error if build doesn't exist", t, func(env *testutil.MockIntegrationTestEnv) {
+		env.RunProjectInit()
+		args := []string{"compile-and-upload", "noop"}
+		err := env.Execute(args)
+		assert.Error(env.T, err)
+	})
+
 	testutil.RunMockIntegrationTest("errors if no board is connected and fqbn is missing", t, func(env *testutil.MockIntegrationTestEnv) {
 		env.RunProjectInit()
 		expectUsual(env)
@@ -219,8 +226,20 @@ func TestCompileAndUploadCommand(t *testing.T) {
 		assert.NoError(env.T, err)
 	})
 
+	testutil.RunMockIntegrationTest("compiles and uploads using provided fqbn and port", t, func(env *testutil.MockIntegrationTestEnv) {
+		env.RunProjectInit()
+
+		env.ArduinoCli.EXPECT().CreateInstance().Return(instance)
+		env.ArduinoCli.EXPECT().Compile(gomock.Any(), compileReq1, gomock.Any(), gomock.Any(), gomock.Any())
+		env.ArduinoCli.EXPECT().Upload(gomock.Any(), uploadReq1, gomock.Any(), gomock.Any())
+
+		args := []string{"compile-and-upload", sketchPath1, "--fqbn", fqbn1, "--port", board1.Port}
+		err := env.Execute(args)
+		assert.NoError(env.T, err)
+	})
+
 	testutil.RunMockIntegrationTest("errors if not a valid project directory", t, func(env *testutil.MockIntegrationTestEnv) {
-		args := []string{"compile", ".", "--fqbn", fqbn1}
+		args := []string{"compile-and-upload"}
 		err := env.Execute(args)
 		assert.Error(env.T, err)
 	})
