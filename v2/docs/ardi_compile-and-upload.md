@@ -27,7 +27,6 @@ deploy
   -f, --fqbn string              Specify fully qualified board name
   -h, --help                     help for compile-and-upload
       --port string              The port your arduino board is connected to
-  -s, --show-props               Show all build properties (does not compile)
 ```
 
 ### Options inherited from parent commands
