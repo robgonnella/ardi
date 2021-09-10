@@ -11,7 +11,6 @@ import (
 func getCompileAndUploadCmd(env *CommandEnv) *cobra.Command {
 	var fqbn string
 	var buildProps []string
-	var showProps bool
 	var baud int
 	var port string
 	compileAndUploadCmd := &cobra.Command{
@@ -24,7 +23,7 @@ func getCompileAndUploadCmd(env *CommandEnv) *cobra.Command {
 			"build in ardi.json, the values defined in build will be used to " +
 			"compile and upload.",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			optsList, err := env.ArdiCore.GetCompileOptsFromArgs(fqbn, buildProps, showProps, args)
+			optsList, err := env.ArdiCore.GetCompileOptsFromArgs(fqbn, buildProps, false, args)
 			if err != nil {
 				return err
 			}
@@ -64,7 +63,6 @@ func getCompileAndUploadCmd(env *CommandEnv) *cobra.Command {
 
 	compileAndUploadCmd.Flags().StringVarP(&fqbn, "fqbn", "f", "", "Specify fully qualified board name")
 	compileAndUploadCmd.Flags().StringArrayVarP(&buildProps, "build-prop", "p", []string{}, "Specify build property to compiler")
-	compileAndUploadCmd.Flags().BoolVarP(&showProps, "show-props", "s", false, "Show all build properties (does not compile)")
 	compileAndUploadCmd.Flags().IntVarP(&baud, "baud", "b", 0, "Specify baud rate when using \"attach\" flag")
 	compileAndUploadCmd.Flags().StringVar(&port, "port", "", "The port your arduino board is connected to")
 

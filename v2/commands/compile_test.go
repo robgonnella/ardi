@@ -102,6 +102,31 @@ func TestCompileCommand(t *testing.T) {
 		assert.NoError(env.T, err)
 	})
 
+	testutil.RunMockIntegrationTest("shows build props", t, func(env *testutil.MockIntegrationTestEnv) {
+		env.RunProjectInit()
+
+		buildProps := []string{"some.buildProp=true", "test.anotherProps=1"}
+		req := &rpc.CompileRequest{
+			Instance:        instance,
+			Fqbn:            fqbn1,
+			SketchPath:      sketchPath1,
+			ShowProperties:  true,
+			BuildProperties: buildProps,
+			ExportDir:       buildDir1,
+		}
+
+		expectUsual(env)
+		env.ArduinoCli.EXPECT().Compile(gomock.Any(), req, gomock.Any(), gomock.Any(), gomock.Any())
+
+		args := []string{"add", "build", "-n", buildName1, "-f", fqbn1, "-s", sketchDir1, "--build-prop", buildProps[0], "--build-prop", buildProps[1]}
+		err := env.Execute(args)
+		assert.NoError(env.T, err)
+
+		args = []string{"compile", buildName1, "--show-props"}
+		err = env.Execute(args)
+		assert.NoError(env.T, err)
+	})
+
 	testutil.RunMockIntegrationTest("returns error if one build fails", t, func(env *testutil.MockIntegrationTestEnv) {
 		env.RunProjectInit()
 
