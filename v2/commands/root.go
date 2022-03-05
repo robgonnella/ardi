@@ -58,42 +58,11 @@ func setLogger(env *CommandEnv) {
 	log.SetOutput(ioutil.Discard)
 }
 
-func cmdIsProjectInit(cmd string) bool {
-	return cmd == "ardi project-init"
-}
-
-func cmdIsHelp(cmd string) bool {
-	return strings.Contains(cmd, "help")
-}
-
-func cmdIsVersion(cmd string) bool {
-	return cmd == "ardi version"
-}
-
-func cmdIsArdiAttach(cmd string) bool {
-	return cmd == "ardi attach"
-}
-
-func shouldShowProjectError(cmd string) bool {
-	return !util.IsProjectDirectory() &&
-		!cmdIsProjectInit(cmd) &&
-		!cmdIsArdiAttach(cmd) &&
-		!cmdIsHelp(cmd) &&
-		!cmdIsVersion(cmd)
-}
-
-func getPreRun(env *CommandEnv) func(cmd *cobra.Command, args []string) error {
-	return func(cmd *cobra.Command, args []string) error {
-		setLogger(env)
-
-		cmdPath := cmd.CommandPath()
-
-		if shouldShowProjectError(cmdPath) {
-			return errors.New("not an ardi project directory, run 'ardi project-init' first")
-		}
-
-		return nil
+func requireProjectInit() error {
+	if !util.IsProjectDirectory() {
+		return errors.New("not an ardi project directory, run 'ardi project-init' first")
 	}
+	return nil
 }
 
 func getRootCommand(env *CommandEnv) *cobra.Command {
@@ -104,7 +73,6 @@ func getRootCommand(env *CommandEnv) *cobra.Command {
 			"- Manage and store build configurations for projects with versioned dependencies\n- Run builds in CI Pipeline\n" +
 			"- Compile & upload sketches to connected boards\n- Watch log output from connected boards in terminal\n" +
 			"- Auto recompile / reupload on save",
-		PersistentPreRunE: getPreRun(env),
 		DisableAutoGenTag: true,
 	}
 
@@ -116,19 +84,22 @@ func getRootCommand(env *CommandEnv) *cobra.Command {
 
 // GetRootCmd adds all ardi commands to root and returns root command
 func GetRootCmd(env *CommandEnv) *cobra.Command {
+	setLogger(env)
 	rootCmd := getRootCommand(env)
-	rootCmd.AddCommand(getAddCmd(env))
-	rootCmd.AddCommand(getCleanCmd(env))
-	rootCmd.AddCommand(getCompileCmd(env))
-	rootCmd.AddCommand(getCompileAndUploadCmd(env))
-	rootCmd.AddCommand(getInstallCmd(env))
-	rootCmd.AddCommand(getListCmd(env))
-	rootCmd.AddCommand(getProjectInitCmd(env))
-	rootCmd.AddCommand(getRemoveCmd(env))
-	rootCmd.AddCommand(getSearchCmd(env))
-	rootCmd.AddCommand(getUploadCmd(env))
-	rootCmd.AddCommand(getVersionCmd(env))
-	rootCmd.AddCommand(getWatchCmd(env))
-	rootCmd.AddCommand(getAttachCmd(env))
+	rootCmd.AddCommand(
+		getAddCmd(env),
+		getCleanCmd(env),
+		getCompileCmd(env),
+		getCompileAndUploadCmd(env),
+		getInstallCmd(env),
+		getListCmd(env),
+		getProjectInitCmd(env),
+		getRemoveCmd(env),
+		getSearchCmd(env),
+		getUploadCmd(env),
+		getVersionCmd(env),
+		getWatchCmd(env),
+		getAttachCmd(env),
+	)
 	return rootCmd
 }

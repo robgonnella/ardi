@@ -22,6 +22,9 @@ func getCompileCmd(env *CommandEnv) *cobra.Command {
 		Short:   "Compile specified sketch or build(s)",
 		Aliases: []string{"build"},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := requireProjectInit(); err != nil {
+				return err
+			}
 			defer env.ArdiCore.Compiler.StopWatching() // noop if not watching
 
 			board, _ := env.ArdiCore.Cli.GetTargetBoard(fqbn, "", true)

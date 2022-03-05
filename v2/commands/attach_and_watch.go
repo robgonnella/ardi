@@ -16,13 +16,16 @@ func getWatchCmd(env *CommandEnv) *cobra.Command {
 	var watchCmd = &cobra.Command{
 		Use:     "attach-and-watch [sketch|build]",
 		Aliases: []string{"develop", "dev"},
-		Short:   "Compile, upload, watch board logs, and watch for sketch changes",
+		Short:   "Compile, upload, attach, and watch for changes",
 		Long: "\nCompile, upload, watch board logs, and watch for sketch " +
 			"changes. Updates to the sketch file will trigger automatic recompile, " +
 			"reupload, and restarts the board log watcher. If the sketch argument " +
 			"matches a user defined build in ardi.json, the build values will be " +
 			"used for compilation, upload, and watch path",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := requireProjectInit(); err != nil {
+				return err
+			}
 			optsList, err := env.ArdiCore.GetCompileOptsFromArgs(fqbn, buildProps, false, args)
 			if err != nil {
 				return err

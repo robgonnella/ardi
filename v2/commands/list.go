@@ -9,6 +9,9 @@ func getListPlatformCmd(env *CommandEnv) *cobra.Command {
 		Short:   "List project platforms",
 		Aliases: []string{"platform"},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := requireProjectInit(); err != nil {
+				return err
+			}
 			env.Logger.Info("Platforms specified in ardi.json")
 			env.ArdiCore.Config.ListPlatforms()
 
@@ -30,6 +33,9 @@ func getListLibrariesCmd(env *CommandEnv) *cobra.Command {
 		Short:   "List project libraries",
 		Aliases: []string{"libs"},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := requireProjectInit(); err != nil {
+				return err
+			}
 			env.Logger.Info("Libraries specified in ardi.json")
 			env.ArdiCore.Config.ListLibraries()
 			env.Logger.Info("Installed libraries")
@@ -48,8 +54,12 @@ func getListBuildsCmd(env *CommandEnv) *cobra.Command {
 		Long:    "\nList project builds",
 		Short:   "List project builds",
 		Aliases: []string{"build"},
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := requireProjectInit(); err != nil {
+				return err
+			}
 			env.ArdiCore.Config.ListBuilds(args)
+			return nil
 		},
 	}
 	return listCmd
@@ -60,8 +70,12 @@ func getListBoardURLSCmd(env *CommandEnv) *cobra.Command {
 		Use:   "board-urls",
 		Long:  "\nList project board urls",
 		Short: "List project board urls",
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := requireProjectInit(); err != nil {
+				return err
+			}
 			env.ArdiCore.Config.ListBoardURLS()
+			return nil
 		},
 	}
 	return listCmd
@@ -73,6 +87,9 @@ func getListBoardFQBNSCmd(env *CommandEnv) *cobra.Command {
 		Long:  "\nList boards with associated fqbns",
 		Short: "List boards with associated fqbns",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := requireProjectInit(); err != nil {
+				return err
+			}
 			query := ""
 			if len(args) > 0 {
 				query = args[0]
@@ -89,6 +106,9 @@ func getListBoardPlatformsCmd(env *CommandEnv) *cobra.Command {
 		Long:  "\nList boards with their associated platform",
 		Short: "List boards with their associated platform",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := requireProjectInit(); err != nil {
+				return err
+			}
 			query := ""
 			if len(args) > 0 {
 				query = args[0]

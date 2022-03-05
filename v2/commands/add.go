@@ -12,6 +12,9 @@ func getAddPlatformCmd(env *CommandEnv) *cobra.Command {
 		Aliases: []string{"platform"},
 		Args:    cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := requireProjectInit(); err != nil {
+				return err
+			}
 			for _, p := range args {
 				env.Logger.Infof("Adding platform: %s", p)
 				installed, vers, err := env.ArdiCore.Platform.Add(p)
@@ -41,6 +44,9 @@ func getAddBuildCmd(env *CommandEnv) *cobra.Command {
 		Long:  "\nAdd build config to project",
 		Short: "Add build config to project",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := requireProjectInit(); err != nil {
+				return err
+			}
 			return env.ArdiCore.Config.AddBuild(name, sketch, fqbn, baud, buildProps)
 		},
 	}
@@ -64,6 +70,9 @@ func getAddLibCmd(env *CommandEnv) *cobra.Command {
 		Aliases: []string{"libs", "lib", "library"},
 		Args:    cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := requireProjectInit(); err != nil {
+				return err
+			}
 			for _, l := range args {
 				env.Logger.Infof("Adding library: %s", l)
 				name, vers, err := env.ArdiCore.Lib.Add(l)
@@ -91,6 +100,9 @@ func getAddBoardURLCmd(env *CommandEnv) *cobra.Command {
 		Aliases: []string{"board-urls"},
 		Args:    cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := requireProjectInit(); err != nil {
+				return err
+			}
 			for _, u := range args {
 				if err := env.ArdiCore.Config.AddBoardURL(u); err != nil {
 					return err
