@@ -71,6 +71,9 @@ func TestInstallCommand(t *testing.T) {
 		err = env.ArdiCore.Config.AddPlatform(platform, platformVers)
 		assert.NoError(env.T, err)
 
+		err = env.ArdiCore.Config.AddBoardURL(testutil.Esp8266BoardURL())
+		assert.NoError(env.T, err)
+
 		expectUsual(env)
 		env.ArduinoCli.EXPECT().PlatformInstall(gomock.Any(), installPlatReq, gomock.Any(), gomock.Any())
 		env.ArduinoCli.EXPECT().GetPlatforms(platformListReq)
@@ -81,6 +84,9 @@ func TestInstallCommand(t *testing.T) {
 		args := []string{"install"}
 		err = env.Execute(args)
 		assert.NoError(env.T, err)
+
+		boardURLs := env.ArdiCore.CliConfig.Config.BoardManager.AdditionalUrls
+		assert.Contains(env.T, boardURLs, testutil.Esp8266BoardURL())
 	})
 
 	testutil.RunMockIntegrationTest("returns platform install error", t, func(env *testutil.MockIntegrationTestEnv) {
