@@ -3,6 +3,7 @@ package commands
 import (
 	"fmt"
 
+	"github.com/robgonnella/ardi/v2/util"
 	"github.com/spf13/cobra"
 )
 
@@ -15,9 +16,13 @@ func getInstallCmd(env *CommandEnv) *cobra.Command {
 			if err := requireProjectInit(); err != nil {
 				return err
 			}
+			boardURLs := env.ArdiCore.CliConfig.Config.BoardManager.AdditionalUrls
 			for _, url := range env.ArdiCore.Config.GetBoardURLS() {
-				if err := env.ArdiCore.Config.AddBoardURL(url); err != nil {
-					return err
+				if !util.ArrayContains(boardURLs, url) {
+					env.Logger.WithField("board-url", url).Info("Adding board url")
+					if err := env.ArdiCore.CliConfig.AddBoardURL(url); err != nil {
+						return err
+					}
 				}
 			}
 			for plat, vers := range env.ArdiCore.Config.GetPlatforms() {
