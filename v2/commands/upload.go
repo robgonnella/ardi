@@ -17,6 +17,9 @@ func getUploadCmd(env *CommandEnv) *cobra.Command {
 			"build values will be used to find the appropraite build to upload",
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := requireProjectInit(); err != nil {
+				return err
+			}
 			defer env.ArdiCore.Uploader.Detach() // noop if not attached
 
 			baud = env.ArdiCore.GetBaudFromArgs(baud, args)

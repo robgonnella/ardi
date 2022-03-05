@@ -10,6 +10,9 @@ func getRemovePlatformCmd(env *CommandEnv) *cobra.Command {
 		Aliases: []string{"platform"},
 		Args:    cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := requireProjectInit(); err != nil {
+				return err
+			}
 			for _, p := range args {
 				env.Logger.Infof("Removing platform: %s", p)
 				removed, err := env.ArdiCore.Platform.Remove(p)
@@ -36,6 +39,9 @@ func getRemoveBuildCmd(env *CommandEnv) *cobra.Command {
 		Aliases: []string{"build"},
 		Args:    cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := requireProjectInit(); err != nil {
+				return err
+			}
 			for _, b := range args {
 				if err := env.ArdiCore.Config.RemoveBuild(b); err != nil {
 					return err
@@ -55,6 +61,9 @@ func getRemoveLibCmd(env *CommandEnv) *cobra.Command {
 		Aliases: []string{"libs", "lib", "library"},
 		Args:    cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := requireProjectInit(); err != nil {
+				return err
+			}
 			for _, l := range args {
 				env.Logger.Infof("Removing library: %s", l)
 				if err := env.ArdiCore.Lib.Remove(l); err != nil {
@@ -80,6 +89,9 @@ func getRemoveBoardURLCmd(env *CommandEnv) *cobra.Command {
 		Aliases: []string{"board-url"},
 		Args:    cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := requireProjectInit(); err != nil {
+				return err
+			}
 			for _, url := range args {
 				if err := env.ArdiCore.Config.RemoveBoardURL(url); err != nil {
 					return err

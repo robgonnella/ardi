@@ -9,6 +9,9 @@ func getSearchPlatformCmd(env *CommandEnv) *cobra.Command {
 		Short:   "Search all available platforms",
 		Aliases: []string{"platform"},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := requireProjectInit(); err != nil {
+				return err
+			}
 			env.Logger.Info("Available platforms")
 			if err := env.ArdiCore.Platform.ListAll(); err != nil {
 				return err
@@ -26,6 +29,9 @@ func getSearchLibCmd(env *CommandEnv) *cobra.Command {
 		Short:   "Searches for availables libraries with optional search filter",
 		Aliases: []string{"lib", "libs", "library"},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := requireProjectInit(); err != nil {
+				return err
+			}
 			searchArg := ""
 			if len(args) > 0 {
 				searchArg = args[0]

@@ -23,6 +23,9 @@ func getCompileAndUploadCmd(env *CommandEnv) *cobra.Command {
 			"build in ardi.json, the values defined in build will be used to " +
 			"compile and upload.",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := requireProjectInit(); err != nil {
+				return err
+			}
 			optsList, err := env.ArdiCore.GetCompileOptsFromArgs(fqbn, buildProps, false, args)
 			if err != nil {
 				return err
