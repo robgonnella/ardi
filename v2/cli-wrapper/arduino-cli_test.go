@@ -188,10 +188,13 @@ func TestArduinoCli(t *testing.T) {
 	t.Run("returns connected boards", func(st *testing.T) {
 		arduinoCli := setUp(st)
 		rpcInst := arduinoCli.CreateInstance()
-		ports, err := arduinoCli.ConnectedBoards(rpcInst.GetId())
+		req := &rpc.BoardListRequest{
+			Instance: rpcInst,
+		}
+		ports, err := arduinoCli.ConnectedBoards(req)
 		boards := []*rpc.BoardListItem{}
 		for _, p := range ports {
-			boards = append(boards, p.Boards...)
+			boards = append(boards, p.GetMatchingBoards()...)
 		}
 		assert.NoError(st, err)
 		assert.Equal(st, len(boards), 0)
@@ -200,11 +203,14 @@ func TestArduinoCli(t *testing.T) {
 	t.Run("returns upload error", func(st *testing.T) {
 		arduinoCli := setUp(st)
 		rpcInst := arduinoCli.CreateInstance()
+		port := &rpc.Port{
+			Address: "/dev/ttyUSB0",
+		}
 		req := &rpc.UploadRequest{
 			Instance:   rpcInst,
 			Fqbn:       "arduino:avr:mega",
 			SketchPath: "sketch.ino",
-			Port:       "/dev/ttyUSB0",
+			Port:       port,
 		}
 		_, err := arduinoCli.Upload(ctx, req, os.Stdout, os.Stderr)
 		assert.Error(st, err)
@@ -231,7 +237,7 @@ func TestArduinoCli(t *testing.T) {
 			SketchPath: path.Join(testutil.BlinkProjectDir(), "blink.ino"),
 			ExportDir:  ".ardi/blink_build",
 		}
-		_, err = arduinoCli.Compile(ctx, req, os.Stdout, os.Stderr, false)
+		_, err = arduinoCli.Compile(ctx, req, os.Stdout, os.Stderr, taskCb, false)
 		assert.NoError(st, err)
 		assert.DirExists(st, ".ardi/blink_build")
 	})
@@ -257,7 +263,7 @@ func TestArduinoCli(t *testing.T) {
 			SketchPath: "noop.ino",
 			ExportDir:  ".ardi/blink_build",
 		}
-		_, err = arduinoCli.Compile(ctx, req, os.Stdout, os.Stderr, false)
+		_, err = arduinoCli.Compile(ctx, req, os.Stdout, os.Stderr, taskCb, false)
 		assert.Error(st, err)
 	})
 

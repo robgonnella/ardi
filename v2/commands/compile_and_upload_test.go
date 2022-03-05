@@ -18,6 +18,9 @@ func TestCompileAndUploadCommand(t *testing.T) {
 
 	fqbn1 := testutil.Esp8266WifiduinoFQBN()
 	board1 := testutil.GenerateRPCBoard("Esp8266 Wifiduino", fqbn1)
+	rpcPort1 := &rpc.Port{
+		Address: board1.Port,
+	}
 	buildName1 := "blink"
 	sketchDir1 := testutil.BlinkProjectDir()
 	sketchPath1 := path.Join(sketchDir1, "blink.ino")
@@ -25,6 +28,9 @@ func TestCompileAndUploadCommand(t *testing.T) {
 
 	fqbn2 := testutil.ArduinoMegaFQBN()
 	board2 := testutil.GenerateRPCBoard("Arduino Mega", fqbn2)
+	rpcPort2 := &rpc.Port{
+		Address: board2.Port,
+	}
 	buildName2 := "pixie"
 	sketchDir2 := testutil.PixieProjectDir()
 	sketchPath2 := path.Join(sketchDir2, "pixie.ino")
@@ -45,7 +51,7 @@ func TestCompileAndUploadCommand(t *testing.T) {
 		Instance:   instance,
 		SketchPath: sketchDir1,
 		Fqbn:       fqbn1,
-		Port:       board1.Port,
+		Port:       rpcPort1,
 	}
 
 	compileReq2 := &rpc.CompileRequest{
@@ -61,12 +67,16 @@ func TestCompileAndUploadCommand(t *testing.T) {
 		Instance:   instance,
 		SketchPath: sketchDir2,
 		Fqbn:       fqbn2,
-		Port:       board2.Port,
+		Port:       rpcPort2,
 	}
 
 	platformReq := &rpc.PlatformListRequest{
 		Instance: instance,
 		All:      true,
+	}
+
+	boardReq := &rpc.BoardListRequest{
+		Instance: instance,
 	}
 
 	boardItem1 := &rpc.BoardListItem{
@@ -80,13 +90,13 @@ func TestCompileAndUploadCommand(t *testing.T) {
 	}
 
 	port1 := &rpc.DetectedPort{
-		Address: board1.Port,
-		Boards:  []*rpc.BoardListItem{boardItem1},
+		Port:           rpcPort1,
+		MatchingBoards: []*rpc.BoardListItem{boardItem1},
 	}
 
 	port2 := &rpc.DetectedPort{
-		Address: board2.Port,
-		Boards:  []*rpc.BoardListItem{boardItem2},
+		Port:           rpcPort2,
+		MatchingBoards: []*rpc.BoardListItem{boardItem2},
 	}
 
 	detectedPorts1 := []*rpc.DetectedPort{port1}
@@ -128,8 +138,8 @@ func TestCompileAndUploadCommand(t *testing.T) {
 		env.RunProjectInit()
 
 		expectUsual(env)
-		env.ArduinoCli.EXPECT().Compile(gomock.Any(), compileReq1, gomock.Any(), gomock.Any(), gomock.Any())
-		env.ArduinoCli.EXPECT().ConnectedBoards(instance.GetId()).Return(detectedPorts1, nil)
+		env.ArduinoCli.EXPECT().Compile(gomock.Any(), compileReq1, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any())
+		env.ArduinoCli.EXPECT().ConnectedBoards(boardReq).Return(detectedPorts1, nil)
 		env.ArduinoCli.EXPECT().Upload(gomock.Any(), uploadReq1, gomock.Any(), gomock.Any())
 
 		addBuild1(env)
@@ -144,8 +154,8 @@ func TestCompileAndUploadCommand(t *testing.T) {
 		env.RunProjectInit()
 
 		expectUsual(env)
-		env.ArduinoCli.EXPECT().Compile(gomock.Any(), compileReq2, gomock.Any(), gomock.Any(), gomock.Any())
-		env.ArduinoCli.EXPECT().ConnectedBoards(instance.GetId()).Return(detectedPorts2, nil)
+		env.ArduinoCli.EXPECT().Compile(gomock.Any(), compileReq2, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any())
+		env.ArduinoCli.EXPECT().ConnectedBoards(boardReq).Return(detectedPorts2, nil)
 		env.ArduinoCli.EXPECT().Upload(gomock.Any(), uploadReq2, gomock.Any(), gomock.Any())
 
 		addBuild2(env)
@@ -161,8 +171,8 @@ func TestCompileAndUploadCommand(t *testing.T) {
 		env.RunProjectInit()
 
 		expectUsual(env)
-		env.ArduinoCli.EXPECT().Compile(gomock.Any(), compileReq2, gomock.Any(), gomock.Any(), gomock.Any())
-		env.ArduinoCli.EXPECT().ConnectedBoards(instance.GetId()).Return(detectedPorts2, nil)
+		env.ArduinoCli.EXPECT().Compile(gomock.Any(), compileReq2, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any())
+		env.ArduinoCli.EXPECT().ConnectedBoards(boardReq).Return(detectedPorts2, nil)
 		env.ArduinoCli.EXPECT().Upload(gomock.Any(), uploadReq2, gomock.Any(), gomock.Any())
 
 		addBuild1(env)
@@ -190,7 +200,7 @@ func TestCompileAndUploadCommand(t *testing.T) {
 	testutil.RunMockIntegrationTest("errors if no board is connected and fqbn is missing", t, func(env *testutil.MockIntegrationTestEnv) {
 		env.RunProjectInit()
 		expectUsual(env)
-		env.ArduinoCli.EXPECT().ConnectedBoards(instance.GetId()).Return([]*rpc.DetectedPort{}, nil)
+		env.ArduinoCli.EXPECT().ConnectedBoards(boardReq).Return([]*rpc.DetectedPort{}, nil)
 		args := []string{"compile-and-upload", sketchDir1}
 		err := env.Execute(args)
 		assert.Error(env.T, err)
@@ -204,8 +214,8 @@ func TestCompileAndUploadCommand(t *testing.T) {
 		env.RunProjectInit()
 
 		expectUsual(env)
-		env.ArduinoCli.EXPECT().Compile(gomock.Any(), compileReq1, gomock.Any(), gomock.Any(), gomock.Any())
-		env.ArduinoCli.EXPECT().ConnectedBoards(instance.GetId()).Return(detectedPorts1, nil)
+		env.ArduinoCli.EXPECT().Compile(gomock.Any(), compileReq1, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any())
+		env.ArduinoCli.EXPECT().ConnectedBoards(boardReq).Return(detectedPorts1, nil)
 		env.ArduinoCli.EXPECT().Upload(gomock.Any(), uploadReq1, gomock.Any(), gomock.Any())
 
 		args := []string{"compile-and-upload"}
@@ -217,8 +227,8 @@ func TestCompileAndUploadCommand(t *testing.T) {
 		env.RunProjectInit()
 
 		expectUsual(env)
-		env.ArduinoCli.EXPECT().Compile(gomock.Any(), compileReq1, gomock.Any(), gomock.Any(), gomock.Any())
-		env.ArduinoCli.EXPECT().ConnectedBoards(instance.GetId()).Return(detectedPorts1, nil)
+		env.ArduinoCli.EXPECT().Compile(gomock.Any(), compileReq1, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any())
+		env.ArduinoCli.EXPECT().ConnectedBoards(boardReq).Return(detectedPorts1, nil)
 		env.ArduinoCli.EXPECT().Upload(gomock.Any(), uploadReq1, gomock.Any(), gomock.Any())
 
 		args := []string{"compile-and-upload", sketchPath1}
@@ -230,7 +240,7 @@ func TestCompileAndUploadCommand(t *testing.T) {
 		env.RunProjectInit()
 
 		env.ArduinoCli.EXPECT().CreateInstance().Return(instance)
-		env.ArduinoCli.EXPECT().Compile(gomock.Any(), compileReq1, gomock.Any(), gomock.Any(), gomock.Any())
+		env.ArduinoCli.EXPECT().Compile(gomock.Any(), compileReq1, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any())
 		env.ArduinoCli.EXPECT().Upload(gomock.Any(), uploadReq1, gomock.Any(), gomock.Any())
 
 		args := []string{"compile-and-upload", sketchPath1, "--fqbn", fqbn1, "--port", board1.Port}
@@ -250,8 +260,8 @@ func TestCompileAndUploadCommand(t *testing.T) {
 		dummyErr := errors.New("dummyErr")
 
 		expectUsual(env)
-		env.ArduinoCli.EXPECT().ConnectedBoards(instance.GetId()).Return(detectedPorts1, nil)
-		env.ArduinoCli.EXPECT().Compile(gomock.Any(), compileReq1, gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, dummyErr)
+		env.ArduinoCli.EXPECT().ConnectedBoards(boardReq).Return(detectedPorts1, nil)
+		env.ArduinoCli.EXPECT().Compile(gomock.Any(), compileReq1, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, dummyErr)
 		addBuild1(env)
 
 		args := []string{"compile-and-upload", buildName1}
@@ -266,8 +276,8 @@ func TestCompileAndUploadCommand(t *testing.T) {
 		dummyErr := errors.New("dummyErr")
 
 		expectUsual(env)
-		env.ArduinoCli.EXPECT().Compile(gomock.Any(), compileReq1, gomock.Any(), gomock.Any(), gomock.Any())
-		env.ArduinoCli.EXPECT().ConnectedBoards(instance.GetId()).Return(detectedPorts1, nil)
+		env.ArduinoCli.EXPECT().Compile(gomock.Any(), compileReq1, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any())
+		env.ArduinoCli.EXPECT().ConnectedBoards(boardReq).Return(detectedPorts1, nil)
 		env.ArduinoCli.EXPECT().Upload(gomock.Any(), uploadReq1, gomock.Any(), gomock.Any()).Return(nil, dummyErr)
 
 		addBuild1(env)

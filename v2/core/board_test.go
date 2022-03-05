@@ -19,10 +19,12 @@ func TestBoardCore(t *testing.T) {
 			Instance: instance,
 			All:      true,
 		}
-
+		boardReq := &rpc.BoardListRequest{
+			Instance: instance,
+		}
 		env.ArduinoCli.EXPECT().CreateInstance().Return(instance).AnyTimes()
 		env.ArduinoCli.EXPECT().GetPlatforms(platformReq)
-		env.ArduinoCli.EXPECT().ConnectedBoards(instance.GetId()).Times(1)
+		env.ArduinoCli.EXPECT().ConnectedBoards(boardReq).Times(1)
 
 		board, err := env.ArdiCore.Cli.GetTargetBoard(fqbn, "", false)
 		assert.NoError(env.T, err)
@@ -33,16 +35,22 @@ func TestBoardCore(t *testing.T) {
 		boardName := "someboardname"
 		fqbn := "someboardfqbn"
 		connectedBoard := testutil.GenerateRPCBoard(boardName, fqbn)
+		rpcPort := &rpc.Port{
+			Address: connectedBoard.Port,
+		}
 
 		instance := &rpc.Instance{Id: int32(1)}
+		boardReq := &rpc.BoardListRequest{
+			Instance: instance,
+		}
 		platformReq := &rpc.PlatformListRequest{
 			Instance: instance,
 			All:      true,
 		}
 		detectedPorts := []*rpc.DetectedPort{
 			{
-				Address: connectedBoard.Port,
-				Boards: []*rpc.BoardListItem{
+				Port: rpcPort,
+				MatchingBoards: []*rpc.BoardListItem{
 					{
 						Name: connectedBoard.Name,
 						Fqbn: connectedBoard.FQBN,
@@ -53,7 +61,7 @@ func TestBoardCore(t *testing.T) {
 
 		env.ArduinoCli.EXPECT().CreateInstance().Return(instance).AnyTimes()
 		env.ArduinoCli.EXPECT().GetPlatforms(platformReq)
-		env.ArduinoCli.EXPECT().ConnectedBoards(instance.GetId()).Return(detectedPorts, nil)
+		env.ArduinoCli.EXPECT().ConnectedBoards(boardReq).Return(detectedPorts, nil)
 
 		board, err := env.ArdiCore.Cli.GetTargetBoard(fqbn, "", true)
 		assert.NoError(env.T, err)
@@ -68,10 +76,12 @@ func TestBoardCore(t *testing.T) {
 			Instance: instance,
 			All:      true,
 		}
-
+		boardReq := &rpc.BoardListRequest{
+			Instance: instance,
+		}
 		env.ArduinoCli.EXPECT().CreateInstance().Return(instance).AnyTimes()
 		env.ArduinoCli.EXPECT().GetPlatforms(platformReq)
-		env.ArduinoCli.EXPECT().ConnectedBoards(instance.GetId())
+		env.ArduinoCli.EXPECT().ConnectedBoards(boardReq)
 
 		board, err := env.ArdiCore.Cli.GetTargetBoard(fqbn, "", true)
 		assert.Error(env.T, err)
@@ -82,16 +92,22 @@ func TestBoardCore(t *testing.T) {
 		boardName := "somboardname"
 		boardFQBN := "someboardfqbn"
 		connectedBoard := testutil.GenerateRPCBoard(boardName, boardFQBN)
+		rpcPort := &rpc.Port{
+			Address: connectedBoard.Port,
+		}
 
 		instance := &rpc.Instance{Id: int32(1)}
 		platformReq := &rpc.PlatformListRequest{
 			Instance: instance,
 			All:      true,
 		}
+		boardReq := &rpc.BoardListRequest{
+			Instance: instance,
+		}
 		detectedPorts := []*rpc.DetectedPort{
 			{
-				Address: connectedBoard.Port,
-				Boards: []*rpc.BoardListItem{
+				Port: rpcPort,
+				MatchingBoards: []*rpc.BoardListItem{
 					{
 						Name: connectedBoard.Name,
 						Fqbn: connectedBoard.FQBN,
@@ -102,7 +118,7 @@ func TestBoardCore(t *testing.T) {
 
 		env.ArduinoCli.EXPECT().CreateInstance().Return(instance).AnyTimes()
 		env.ArduinoCli.EXPECT().GetPlatforms(platformReq)
-		env.ArduinoCli.EXPECT().ConnectedBoards(instance.GetId()).Return(detectedPorts, nil)
+		env.ArduinoCli.EXPECT().ConnectedBoards(boardReq).Return(detectedPorts, nil)
 
 		board, err := env.ArdiCore.Cli.GetTargetBoard("", "", false)
 		assert.NoError(env.T, err)
@@ -118,15 +134,26 @@ func TestBoardCore(t *testing.T) {
 		connectedBoard1 := testutil.GenerateRPCBoard(board1Name, board1FQBN)
 		connectedBoard2 := testutil.GenerateRPCBoard(board2Name, board2FQBN)
 
+		rpcPort1 := &rpc.Port{
+			Address: connectedBoard1.Port,
+		}
+
+		rpcPort2 := &rpc.Port{
+			Address: connectedBoard2.Port,
+		}
+
 		instance := &rpc.Instance{Id: int32(1)}
 		platformReq := &rpc.PlatformListRequest{
 			Instance: instance,
 			All:      true,
 		}
+		boardReq := &rpc.BoardListRequest{
+			Instance: instance,
+		}
 		detectedPorts := []*rpc.DetectedPort{
 			{
-				Address: connectedBoard1.Port,
-				Boards: []*rpc.BoardListItem{
+				Port: rpcPort1,
+				MatchingBoards: []*rpc.BoardListItem{
 					{
 						Name: connectedBoard1.Name,
 						Fqbn: connectedBoard1.FQBN,
@@ -134,8 +161,8 @@ func TestBoardCore(t *testing.T) {
 				},
 			},
 			{
-				Address: connectedBoard2.Port,
-				Boards: []*rpc.BoardListItem{
+				Port: rpcPort2,
+				MatchingBoards: []*rpc.BoardListItem{
 					{
 						Name: connectedBoard2.Name,
 						Fqbn: connectedBoard2.FQBN,
@@ -146,7 +173,7 @@ func TestBoardCore(t *testing.T) {
 
 		env.ArduinoCli.EXPECT().CreateInstance().Return(instance).AnyTimes()
 		env.ArduinoCli.EXPECT().GetPlatforms(platformReq)
-		env.ArduinoCli.EXPECT().ConnectedBoards(instance.GetId()).Return(detectedPorts, nil)
+		env.ArduinoCli.EXPECT().ConnectedBoards(boardReq).Return(detectedPorts, nil)
 
 		env.ClearStdout()
 		board, err := env.ArdiCore.Cli.GetTargetBoard("", "", false)
@@ -168,7 +195,9 @@ func TestBoardCore(t *testing.T) {
 			Instance: instance,
 			All:      true,
 		}
-
+		boardReq := &rpc.BoardListRequest{
+			Instance: instance,
+		}
 		platforms := []*rpc.Platform{
 			{
 				Id: "test:platform",
@@ -183,7 +212,7 @@ func TestBoardCore(t *testing.T) {
 
 		env.ArduinoCli.EXPECT().CreateInstance().Return(instance).AnyTimes()
 		env.ArduinoCli.EXPECT().GetPlatforms(platformReq).Return(platforms, nil)
-		env.ArduinoCli.EXPECT().ConnectedBoards(instance.GetId())
+		env.ArduinoCli.EXPECT().ConnectedBoards(boardReq)
 
 		env.ClearStdout()
 		board, err := env.ArdiCore.Cli.GetTargetBoard("", "", false)
@@ -204,7 +233,9 @@ func TestBoardCore(t *testing.T) {
 			Instance: instance,
 			All:      true,
 		}
-
+		boardReq := &rpc.BoardListRequest{
+			Instance: instance,
+		}
 		platforms := []*rpc.Platform{
 			{
 				Id: "test:platform",
@@ -223,7 +254,7 @@ func TestBoardCore(t *testing.T) {
 
 		env.ArduinoCli.EXPECT().CreateInstance().Return(instance).AnyTimes()
 		env.ArduinoCli.EXPECT().GetPlatforms(platformReq).Return(platforms, nil)
-		env.ArduinoCli.EXPECT().ConnectedBoards(instance.GetId())
+		env.ArduinoCli.EXPECT().ConnectedBoards(boardReq)
 
 		env.ClearStdout()
 		board, err := env.ArdiCore.Cli.GetTargetBoard("", "", true)

@@ -27,9 +27,9 @@ type Cli interface {
 	PlatformUninstall(context.Context, *rpc.PlatformUninstallRequest, func(curr *rpc.TaskProgress)) (*rpc.PlatformUninstallResponse, error)
 	GetPlatforms(*rpc.PlatformListRequest) ([]*rpc.Platform, error)
 	PlatformSearch(*rpc.PlatformSearchRequest) (*rpc.PlatformSearchResponse, error)
-	ConnectedBoards(instanceID int32) (r []*rpc.DetectedPort, e error)
+	ConnectedBoards(*rpc.BoardListRequest) (r []*rpc.DetectedPort, e error)
 	Upload(context.Context, *rpc.UploadRequest, io.Writer, io.Writer) (*rpc.UploadResponse, error)
-	Compile(context.Context, *rpc.CompileRequest, io.Writer, io.Writer, bool) (*rpc.CompileResponse, error)
+	Compile(context.Context, *rpc.CompileRequest, io.Writer, io.Writer, commands.TaskProgressCB, bool) (*rpc.CompileResponse, error)
 	LibrarySearch(context.Context, *rpc.LibrarySearchRequest) (*rpc.LibrarySearchResponse, error)
 	LibraryInstall(context.Context, *rpc.LibraryInstallRequest, commands.DownloadProgressCB, commands.TaskProgressCB) error
 	LibraryUninstall(context.Context, *rpc.LibraryUninstallRequest, commands.TaskProgressCB) error
@@ -86,8 +86,8 @@ func (c *ArduinoCli) PlatformSearch(req *rpc.PlatformSearchRequest) (*rpc.Platfo
 }
 
 // ConnectedBoards wrapper around arduino-cli board.List
-func (c *ArduinoCli) ConnectedBoards(instanceID int32) (r []*rpc.DetectedPort, e error) {
-	return board.List(instanceID)
+func (c *ArduinoCli) ConnectedBoards(req *rpc.BoardListRequest) (r []*rpc.DetectedPort, e error) {
+	return board.List(req)
 }
 
 // Upload wrapper around arduino-cli Upload
@@ -96,8 +96,8 @@ func (c *ArduinoCli) Upload(ctx context.Context, req *rpc.UploadRequest, out io.
 }
 
 // Compile wrapper around arduino-cli Compile
-func (c *ArduinoCli) Compile(ctx context.Context, req *rpc.CompileRequest, out io.Writer, err io.Writer, verbose bool) (*rpc.CompileResponse, error) {
-	return compile.Compile(ctx, req, out, err, verbose)
+func (c *ArduinoCli) Compile(ctx context.Context, req *rpc.CompileRequest, out io.Writer, err io.Writer, cb commands.TaskProgressCB, verbose bool) (*rpc.CompileResponse, error) {
+	return compile.Compile(ctx, req, out, err, cb, verbose)
 }
 
 // LibrarySearch wrapper around arduino-cli LibrarySearch

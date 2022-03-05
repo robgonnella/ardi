@@ -20,6 +20,9 @@ func TestAttachAndWatchCommand(t *testing.T) {
 	sketch := path.Join(sketchDir, "blink.ino")
 	sketchCopy := path.Join(testutil.BlinkCopyProjectDir(), "blink2.ino")
 	fqbn := testutil.ArduinoMegaFQBN()
+	rpcPort := &rpc.Port{
+		Address: board.Port,
+	}
 
 	instance := &rpc.Instance{Id: int32(1)}
 
@@ -27,13 +30,17 @@ func TestAttachAndWatchCommand(t *testing.T) {
 		Instance:   instance,
 		Fqbn:       fqbn,
 		SketchPath: sketchDir,
-		Port:       board.Port,
+		Port:       rpcPort,
 	}
 
 	platformReq := &rpc.PlatformListRequest{
 		Instance:      instance,
 		UpdatableOnly: false,
 		All:           true,
+	}
+
+	boardReq := &rpc.BoardListRequest{
+		Instance: instance,
 	}
 
 	compileReq := &rpc.CompileRequest{
@@ -51,8 +58,8 @@ func TestAttachAndWatchCommand(t *testing.T) {
 	}
 
 	port := &rpc.DetectedPort{
-		Address: board.Port,
-		Boards:  []*rpc.BoardListItem{boardItem},
+		Port:           rpcPort,
+		MatchingBoards: []*rpc.BoardListItem{boardItem},
 	}
 
 	detectedPorts := []*rpc.DetectedPort{port}
@@ -73,8 +80,8 @@ func TestAttachAndWatchCommand(t *testing.T) {
 		env.SerialPort.EXPECT().Close().AnyTimes()
 
 		env.ArduinoCli.EXPECT().CreateInstance().Return(instance).AnyTimes()
-		env.ArduinoCli.EXPECT().Compile(gomock.Any(), compileReq, gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
-		env.ArduinoCli.EXPECT().ConnectedBoards(instance.GetId()).Return(detectedPorts, nil)
+		env.ArduinoCli.EXPECT().Compile(gomock.Any(), compileReq, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+		env.ArduinoCli.EXPECT().ConnectedBoards(boardReq).Return(detectedPorts, nil)
 		env.ArduinoCli.EXPECT().GetPlatforms(platformReq)
 		env.ArduinoCli.EXPECT().Upload(gomock.Any(), uploadReq, gomock.Any(), gomock.Any()).AnyTimes()
 
@@ -110,8 +117,8 @@ func TestAttachAndWatchCommand(t *testing.T) {
 		env.SerialPort.EXPECT().Close().AnyTimes()
 
 		env.ArduinoCli.EXPECT().CreateInstance().Return(instance).AnyTimes()
-		env.ArduinoCli.EXPECT().Compile(gomock.Any(), compileReq, gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
-		env.ArduinoCli.EXPECT().ConnectedBoards(instance.GetId()).Return(detectedPorts, nil)
+		env.ArduinoCli.EXPECT().Compile(gomock.Any(), compileReq, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+		env.ArduinoCli.EXPECT().ConnectedBoards(boardReq).Return(detectedPorts, nil)
 		env.ArduinoCli.EXPECT().GetPlatforms(platformReq)
 		env.ArduinoCli.EXPECT().Upload(gomock.Any(), uploadReq, gomock.Any(), gomock.Any()).AnyTimes()
 
@@ -146,8 +153,8 @@ func TestAttachAndWatchCommand(t *testing.T) {
 		env.SerialPort.EXPECT().Close().AnyTimes()
 
 		env.ArduinoCli.EXPECT().CreateInstance().Return(instance).AnyTimes()
-		env.ArduinoCli.EXPECT().Compile(gomock.Any(), compileReq, gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
-		env.ArduinoCli.EXPECT().ConnectedBoards(instance.GetId()).Return(detectedPorts, nil)
+		env.ArduinoCli.EXPECT().Compile(gomock.Any(), compileReq, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+		env.ArduinoCli.EXPECT().ConnectedBoards(boardReq).Return(detectedPorts, nil)
 		env.ArduinoCli.EXPECT().GetPlatforms(platformReq)
 		env.ArduinoCli.EXPECT().Upload(gomock.Any(), uploadReq, gomock.Any(), gomock.Any()).AnyTimes()
 

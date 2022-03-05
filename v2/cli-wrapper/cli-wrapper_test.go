@@ -210,10 +210,18 @@ func TestCliWrapperTest(t *testing.T) {
 	runCliTest("returns connected boards", t, func(env cliTestEnv, st *testing.T) {
 		inst := &rpc.Instance{Id: int32(1)}
 
+		boardReq := &rpc.BoardListRequest{
+			Instance: inst,
+		}
+
+		port := &rpc.Port{
+			Address: "/dev/null",
+		}
 		resp := []*rpc.DetectedPort{
 			{
-				Address: "/dev/null",
-				Boards: []*rpc.BoardListItem{
+
+				Port: port,
+				MatchingBoards: []*rpc.BoardListItem{
 					{
 						Name: "some-board-name",
 						Fqbn: "some:fqbn",
@@ -224,14 +232,14 @@ func TestCliWrapperTest(t *testing.T) {
 
 		expectBoards := []*cli.BoardWithPort{
 			{
-				FQBN: resp[0].Boards[0].Fqbn,
-				Name: resp[0].Boards[0].Name,
-				Port: resp[0].Address,
+				FQBN: resp[0].GetMatchingBoards()[0].Fqbn,
+				Name: resp[0].GetMatchingBoards()[0].Name,
+				Port: resp[0].GetPort().Address,
 			},
 		}
 
 		env.ArduinoCli.EXPECT().CreateInstance().Return(inst).AnyTimes()
-		env.ArduinoCli.EXPECT().ConnectedBoards(inst.GetId()).Return(resp, nil)
+		env.ArduinoCli.EXPECT().ConnectedBoards(boardReq).Return(resp, nil)
 
 		boards := env.CliWrapper.ConnectedBoards()
 		assert.Equal(st, expectBoards, boards)
@@ -278,11 +286,15 @@ func TestCliWrapperTest(t *testing.T) {
 		resolvedSketchDir, _ := filepath.Abs(sketchDir)
 		device := "/dev/null"
 
+		port := &rpc.Port{
+			Address: device,
+		}
+
 		req := &rpc.UploadRequest{
 			Instance:   inst,
 			Fqbn:       fqbn,
 			SketchPath: resolvedSketchDir,
-			Port:       device,
+			Port:       port,
 			Verbose:    false,
 		}
 
@@ -300,11 +312,15 @@ func TestCliWrapperTest(t *testing.T) {
 		resolvedSketchDir, _ := filepath.Abs(sketchDir)
 		device := "/dev/null"
 
+		port := &rpc.Port{
+			Address: device,
+		}
+
 		req := &rpc.UploadRequest{
 			Instance:   inst,
 			Fqbn:       fqbn,
 			SketchPath: resolvedSketchDir,
-			Port:       device,
+			Port:       port,
 			Verbose:    true,
 		}
 
@@ -341,7 +357,7 @@ func TestCliWrapperTest(t *testing.T) {
 		}
 
 		env.ArduinoCli.EXPECT().CreateInstance().Return(inst).AnyTimes()
-		env.ArduinoCli.EXPECT().Compile(gomock.Any(), req, gomock.Any(), gomock.Any(), gomock.Any())
+		env.ArduinoCli.EXPECT().Compile(gomock.Any(), req, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any())
 
 		err := env.CliWrapper.Compile(opts)
 		assert.NoError(st, err)
@@ -373,7 +389,7 @@ func TestCliWrapperTest(t *testing.T) {
 		}
 
 		env.ArduinoCli.EXPECT().CreateInstance().Return(inst).AnyTimes()
-		env.ArduinoCli.EXPECT().Compile(gomock.Any(), req, gomock.Any(), gomock.Any(), gomock.Any())
+		env.ArduinoCli.EXPECT().Compile(gomock.Any(), req, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any())
 
 		err := env.CliWrapper.Compile(opts)
 		assert.NoError(st, err)
@@ -498,12 +514,20 @@ func TestCliWrapperTest(t *testing.T) {
 	runCliTest("returns connected board match", t, func(env cliTestEnv, st *testing.T) {
 		inst := &rpc.Instance{Id: int32(1)}
 
+		boardReq := &rpc.BoardListRequest{
+			Instance: inst,
+		}
+
 		fqbn := "some:fqbn"
+
+		port := &rpc.Port{
+			Address: "/dev/null",
+		}
 
 		resp := []*rpc.DetectedPort{
 			{
-				Address: "/dev/null",
-				Boards: []*rpc.BoardListItem{
+				Port: port,
+				MatchingBoards: []*rpc.BoardListItem{
 					{
 						Name: "some-board-name",
 						Fqbn: fqbn,
@@ -513,13 +537,13 @@ func TestCliWrapperTest(t *testing.T) {
 		}
 
 		expectedBoard := &cli.BoardWithPort{
-			FQBN: resp[0].Boards[0].Fqbn,
-			Name: resp[0].Boards[0].Name,
-			Port: resp[0].Address,
+			FQBN: resp[0].GetMatchingBoards()[0].Fqbn,
+			Name: resp[0].GetMatchingBoards()[0].Name,
+			Port: resp[0].GetPort().Address,
 		}
 
 		env.ArduinoCli.EXPECT().CreateInstance().Return(inst).AnyTimes()
-		env.ArduinoCli.EXPECT().ConnectedBoards(inst.GetId()).Return(resp, nil)
+		env.ArduinoCli.EXPECT().ConnectedBoards(boardReq).Return(resp, nil)
 		env.ArduinoCli.EXPECT().GetPlatforms(gomock.Any())
 
 		board, err := env.CliWrapper.GetTargetBoard(fqbn, "", true)
@@ -529,9 +553,12 @@ func TestCliWrapperTest(t *testing.T) {
 
 	runCliTest("returns error if no match for provided fqbn and onlyConnected=true", t, func(env cliTestEnv, st *testing.T) {
 		inst := &rpc.Instance{Id: int32(1)}
+		boardReq := &rpc.BoardListRequest{
+			Instance: inst,
+		}
 		resp := []*rpc.DetectedPort{}
 		env.ArduinoCli.EXPECT().CreateInstance().Return(inst).AnyTimes()
-		env.ArduinoCli.EXPECT().ConnectedBoards(inst.GetId()).Return(resp, nil)
+		env.ArduinoCli.EXPECT().ConnectedBoards(boardReq).Return(resp, nil)
 		env.ArduinoCli.EXPECT().GetPlatforms(gomock.Any())
 
 		board, err := env.CliWrapper.GetTargetBoard("some:fqbn", "", true)
@@ -541,9 +568,12 @@ func TestCliWrapperTest(t *testing.T) {
 
 	runCliTest("returns board without port if fqbn provided and onlyConnected=false", t, func(env cliTestEnv, st *testing.T) {
 		inst := &rpc.Instance{Id: int32(1)}
+		boardReq := &rpc.BoardListRequest{
+			Instance: inst,
+		}
 		resp := []*rpc.DetectedPort{}
 		env.ArduinoCli.EXPECT().CreateInstance().Return(inst).AnyTimes()
-		env.ArduinoCli.EXPECT().ConnectedBoards(inst.GetId()).Return(resp, nil)
+		env.ArduinoCli.EXPECT().ConnectedBoards(boardReq).Return(resp, nil)
 		env.ArduinoCli.EXPECT().GetPlatforms(gomock.Any())
 
 		fqbn := "some:fqbn"
@@ -556,11 +586,13 @@ func TestCliWrapperTest(t *testing.T) {
 
 	runCliTest("returns error if fqbn empty and no boards connected and onlyConnected=true", t, func(env cliTestEnv, st *testing.T) {
 		inst := &rpc.Instance{Id: int32(1)}
-
+		boardReq := &rpc.BoardListRequest{
+			Instance: inst,
+		}
 		resp := []*rpc.DetectedPort{}
 
 		env.ArduinoCli.EXPECT().CreateInstance().Return(inst).AnyTimes()
-		env.ArduinoCli.EXPECT().ConnectedBoards(inst.GetId()).Return(resp, nil)
+		env.ArduinoCli.EXPECT().ConnectedBoards(boardReq).Return(resp, nil)
 		env.ArduinoCli.EXPECT().GetPlatforms(gomock.Any())
 
 		board, err := env.CliWrapper.GetTargetBoard("", "", true)
@@ -570,7 +602,9 @@ func TestCliWrapperTest(t *testing.T) {
 
 	runCliTest("returns error and prints list if fqbn empty and no boards connected and onlyConnected=false", t, func(env cliTestEnv, st *testing.T) {
 		inst := &rpc.Instance{Id: int32(1)}
-
+		boardReq := &rpc.BoardListRequest{
+			Instance: inst,
+		}
 		installed := []*rpc.Platform{
 			{
 				Id:        "some:platform",
@@ -584,7 +618,7 @@ func TestCliWrapperTest(t *testing.T) {
 			},
 		}
 		env.ArduinoCli.EXPECT().CreateInstance().Return(inst).AnyTimes()
-		env.ArduinoCli.EXPECT().ConnectedBoards(inst.GetId())
+		env.ArduinoCli.EXPECT().ConnectedBoards(boardReq)
 		env.ArduinoCli.EXPECT().GetPlatforms(gomock.Any()).Return(installed, nil)
 
 		env.ClearStdout()
@@ -599,11 +633,17 @@ func TestCliWrapperTest(t *testing.T) {
 
 	runCliTest("returns first connected board", t, func(env cliTestEnv, st *testing.T) {
 		inst := &rpc.Instance{Id: int32(1)}
+		boardReq := &rpc.BoardListRequest{
+			Instance: inst,
+		}
+		port := &rpc.Port{
+			Address: "/dev/null",
+		}
 
 		resp := []*rpc.DetectedPort{
 			{
-				Address: "/dev/null",
-				Boards: []*rpc.BoardListItem{
+				Port: port,
+				MatchingBoards: []*rpc.BoardListItem{
 					{
 						Name: "some-board-name",
 						Fqbn: "some:board:fqbn",
@@ -612,13 +652,13 @@ func TestCliWrapperTest(t *testing.T) {
 			},
 		}
 		env.ArduinoCli.EXPECT().CreateInstance().Return(inst).AnyTimes()
-		env.ArduinoCli.EXPECT().ConnectedBoards(inst.GetId()).Return(resp, nil).Times(2)
+		env.ArduinoCli.EXPECT().ConnectedBoards(boardReq).Return(resp, nil).Times(2)
 		env.ArduinoCli.EXPECT().GetPlatforms(gomock.Any()).Times(2)
 
 		expectedBoard := &cli.BoardWithPort{
-			FQBN: resp[0].Boards[0].Fqbn,
-			Name: resp[0].Boards[0].Name,
-			Port: resp[0].Address,
+			FQBN: resp[0].GetMatchingBoards()[0].Fqbn,
+			Name: resp[0].GetMatchingBoards()[0].Name,
+			Port: resp[0].GetPort().Address,
 		}
 
 		board, err := env.CliWrapper.GetTargetBoard("", "", false)
@@ -632,11 +672,17 @@ func TestCliWrapperTest(t *testing.T) {
 
 	runCliTest("prints connected boards if fqbn empty and more than one board connected", t, func(env cliTestEnv, st *testing.T) {
 		inst := &rpc.Instance{Id: int32(1)}
+		boardReq := &rpc.BoardListRequest{
+			Instance: inst,
+		}
+		port := &rpc.Port{
+			Address: "/dev/null",
+		}
 
 		resp := []*rpc.DetectedPort{
 			{
-				Address: "/dev/null",
-				Boards: []*rpc.BoardListItem{
+				Port: port,
+				MatchingBoards: []*rpc.BoardListItem{
 					{
 						Name: "some-board-name",
 						Fqbn: "some:board:fqbn",
@@ -649,7 +695,7 @@ func TestCliWrapperTest(t *testing.T) {
 			},
 		}
 		env.ArduinoCli.EXPECT().CreateInstance().Return(inst).AnyTimes()
-		env.ArduinoCli.EXPECT().ConnectedBoards(inst.GetId()).Return(resp, nil).Times(2)
+		env.ArduinoCli.EXPECT().ConnectedBoards(boardReq).Return(resp, nil).Times(2)
 		env.ArduinoCli.EXPECT().GetPlatforms(gomock.Any()).Times(2)
 
 		env.ClearStdout()
@@ -658,10 +704,10 @@ func TestCliWrapperTest(t *testing.T) {
 		assert.Nil(st, board)
 
 		output := env.Stdout.String()
-		assert.Contains(st, output, resp[0].Boards[0].Name)
-		assert.Contains(st, output, resp[0].Boards[0].Fqbn)
-		assert.Contains(st, output, resp[0].Boards[1].Name)
-		assert.Contains(st, output, resp[0].Boards[1].Fqbn)
+		assert.Contains(st, output, resp[0].GetMatchingBoards()[0].Name)
+		assert.Contains(st, output, resp[0].GetMatchingBoards()[0].Fqbn)
+		assert.Contains(st, output, resp[0].GetMatchingBoards()[1].Name)
+		assert.Contains(st, output, resp[0].GetMatchingBoards()[1].Fqbn)
 
 		env.ClearStdout()
 		board, err = env.CliWrapper.GetTargetBoard("", "", true)
@@ -669,10 +715,10 @@ func TestCliWrapperTest(t *testing.T) {
 		assert.Nil(st, board)
 
 		output = env.Stdout.String()
-		assert.Contains(st, output, resp[0].Boards[0].Name)
-		assert.Contains(st, output, resp[0].Boards[0].Fqbn)
-		assert.Contains(st, output, resp[0].Boards[1].Name)
-		assert.Contains(st, output, resp[0].Boards[1].Fqbn)
+		assert.Contains(st, output, resp[0].GetMatchingBoards()[0].Name)
+		assert.Contains(st, output, resp[0].GetMatchingBoards()[0].Fqbn)
+		assert.Contains(st, output, resp[0].GetMatchingBoards()[1].Name)
+		assert.Contains(st, output, resp[0].GetMatchingBoards()[1].Fqbn)
 	})
 
 	runCliTest("returns client version", t, func(env cliTestEnv, st *testing.T) {

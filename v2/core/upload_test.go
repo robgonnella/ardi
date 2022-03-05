@@ -14,13 +14,16 @@ import (
 func TestUploadCore(t *testing.T) {
 	testutil.RunUnitTest("returns nil on success ", t, func(env *testutil.UnitTestEnv) {
 		connectedBoard := testutil.GenerateRPCBoard("someboard", "somefqbn")
+		rpcPort := &rpc.Port{
+			Address: connectedBoard.Port,
+		}
 		projectDir := testutil.BlinkProjectDir()
 
 		instance := &rpc.Instance{Id: int32(1)}
 		req := &rpc.UploadRequest{
 			Instance:   instance,
 			Fqbn:       connectedBoard.FQBN,
-			Port:       connectedBoard.Port,
+			Port:       rpcPort,
 			SketchPath: projectDir,
 			Verbose:    true,
 		}
@@ -34,6 +37,9 @@ func TestUploadCore(t *testing.T) {
 
 	testutil.RunUnitTest("returns upload error", t, func(env *testutil.UnitTestEnv) {
 		board := testutil.GenerateRPCBoard("whatever", "fqbn")
+		rpcPort := &rpc.Port{
+			Address: board.Port,
+		}
 		dummyErr := errors.New("dummy error")
 		projectDir := testutil.BlinkProjectDir()
 
@@ -41,7 +47,7 @@ func TestUploadCore(t *testing.T) {
 		req := &rpc.UploadRequest{
 			Instance:   instance,
 			Fqbn:       board.FQBN,
-			Port:       board.Port,
+			Port:       rpcPort,
 			SketchPath: projectDir,
 			Verbose:    true,
 		}

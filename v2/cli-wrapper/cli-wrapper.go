@@ -203,17 +203,21 @@ func (w *Wrapper) ConnectedBoards() []*BoardWithPort {
 
 	boardList := []*BoardWithPort{}
 
-	ports, err := w.cli.ConnectedBoards(inst.GetId())
+	req := &rpc.BoardListRequest{
+		Instance: inst,
+	}
+
+	ports, err := w.cli.ConnectedBoards(req)
 	if err != nil {
 		return nil
 	}
 
 	for _, port := range ports {
-		for _, board := range port.GetBoards() {
+		for _, board := range port.GetMatchingBoards() {
 			boardWithPort := BoardWithPort{
 				FQBN: board.GetFqbn(),
 				Name: board.GetName(),
-				Port: port.GetAddress(),
+				Port: port.GetPort().Address,
 			}
 			boardList = append(boardList, &boardWithPort)
 		}
@@ -263,11 +267,15 @@ func (w *Wrapper) Upload(fqbn, sketchDir, device string) error {
 		return errors.New("could not resolve sketch directory")
 	}
 
+	port := &rpc.Port{
+		Address: device,
+	}
+
 	req := &rpc.UploadRequest{
 		Instance:   inst,
 		Fqbn:       fqbn,
 		SketchPath: resolvedSketch,
-		Port:       device,
+		Port:       port,
 		Verbose:    w.isVerbose(),
 	}
 
@@ -321,6 +329,7 @@ func (w *Wrapper) Compile(opts CompileOpts) error {
 		req,
 		os.Stdout,
 		os.Stderr,
+		w.getTaskProgressFn(),
 		w.isVerbose(),
 	)
 

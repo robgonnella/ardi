@@ -14,6 +14,9 @@ import (
 
 func TestUploadCommand(t *testing.T) {
 	board := testutil.GenerateRPCBoard("Arduino Mega", "arduino:avr:mega")
+	rpcPort := &rpc.Port{
+		Address: board.Port,
+	}
 	buildName := "blink"
 	sketchDir := testutil.BlinkProjectDir()
 	sketch := path.Join(sketchDir, "blink.ino")
@@ -28,14 +31,18 @@ func TestUploadCommand(t *testing.T) {
 		All:           true,
 	}
 
+	boardReq := &rpc.BoardListRequest{
+		Instance: instance,
+	}
+
 	boardItem := &rpc.BoardListItem{
 		Name: board.Name,
 		Fqbn: board.FQBN,
 	}
 
 	port := &rpc.DetectedPort{
-		Address: board.Port,
-		Boards:  []*rpc.BoardListItem{boardItem},
+		Port:           rpcPort,
+		MatchingBoards: []*rpc.BoardListItem{boardItem},
 	}
 
 	detectedPorts := []*rpc.DetectedPort{port}
@@ -63,9 +70,9 @@ func TestUploadCommand(t *testing.T) {
 			Instance:   instance,
 			SketchPath: sketchDir,
 			Fqbn:       fqbn,
-			Port:       board.Port,
+			Port:       rpcPort,
 		}
-		env.ArduinoCli.EXPECT().ConnectedBoards(instance.GetId()).Return(detectedPorts, nil).MaxTimes(1)
+		env.ArduinoCli.EXPECT().ConnectedBoards(boardReq).Return(detectedPorts, nil).MaxTimes(1)
 		env.ArduinoCli.EXPECT().Upload(gomock.Any(), req, gomock.Any(), gomock.Any()).MaxTimes(1)
 		args := []string{"upload", buildName}
 		err := env.Execute(args)
@@ -79,9 +86,9 @@ func TestUploadCommand(t *testing.T) {
 			Instance:   instance,
 			SketchPath: sketchDir,
 			Fqbn:       fqbn,
-			Port:       board.Port,
+			Port:       rpcPort,
 		}
-		env.ArduinoCli.EXPECT().ConnectedBoards(instance.GetId()).Return(detectedPorts, nil).MaxTimes(1)
+		env.ArduinoCli.EXPECT().ConnectedBoards(boardReq).Return(detectedPorts, nil).MaxTimes(1)
 		env.ArduinoCli.EXPECT().Upload(gomock.Any(), req, gomock.Any(), gomock.Any()).MaxTimes(1)
 		args := []string{"upload", "--fqbn", fqbn, sketch}
 		err := env.Execute(args)
@@ -108,10 +115,10 @@ func TestUploadCommand(t *testing.T) {
 			Instance:   instance,
 			Fqbn:       defaultFQBN,
 			SketchPath: defaultSketchDir,
-			Port:       board.Port,
+			Port:       rpcPort,
 		}
 
-		env.ArduinoCli.EXPECT().ConnectedBoards(instance.GetId()).Return(detectedPorts, nil).MaxTimes(1)
+		env.ArduinoCli.EXPECT().ConnectedBoards(boardReq).Return(detectedPorts, nil).MaxTimes(1)
 		env.ArduinoCli.EXPECT().Upload(gomock.Any(), defaultUploadReq, gomock.Any(), gomock.Any()).MaxTimes(1)
 
 		args = []string{"upload"}
@@ -126,9 +133,9 @@ func TestUploadCommand(t *testing.T) {
 			Instance:   instance,
 			SketchPath: sketchDir,
 			Fqbn:       fqbn,
-			Port:       board.Port,
+			Port:       rpcPort,
 		}
-		env.ArduinoCli.EXPECT().ConnectedBoards(instance.GetId()).Return(detectedPorts, nil).MaxTimes(1)
+		env.ArduinoCli.EXPECT().ConnectedBoards(boardReq).Return(detectedPorts, nil).MaxTimes(1)
 		env.ArduinoCli.EXPECT().Upload(gomock.Any(), req, gomock.Any(), gomock.Any()).MaxTimes(1)
 
 		args := []string{"upload"}
@@ -154,11 +161,11 @@ func TestUploadCommand(t *testing.T) {
 			Instance:   instance,
 			SketchPath: pixieDir,
 			Fqbn:       board.FQBN,
-			Port:       board.Port,
+			Port:       rpcPort,
 		}
 
 		expectUsuals(env)
-		env.ArduinoCli.EXPECT().ConnectedBoards(instance.GetId()).Return(detectedPorts, nil).MaxTimes(1)
+		env.ArduinoCli.EXPECT().ConnectedBoards(boardReq).Return(detectedPorts, nil).MaxTimes(1)
 		env.ArduinoCli.EXPECT().Upload(gomock.Any(), expectedReq, gomock.Any(), gomock.Any()).MaxTimes(1)
 
 		args := []string{"upload"}
@@ -174,9 +181,9 @@ func TestUploadCommand(t *testing.T) {
 			Instance:   instance,
 			SketchPath: sketchDir,
 			Fqbn:       fqbn,
-			Port:       board.Port,
+			Port:       rpcPort,
 		}
-		env.ArduinoCli.EXPECT().ConnectedBoards(instance.GetId()).Return(detectedPorts, nil).MaxTimes(1)
+		env.ArduinoCli.EXPECT().ConnectedBoards(boardReq).Return(detectedPorts, nil).MaxTimes(1)
 		env.ArduinoCli.EXPECT().Upload(gomock.Any(), req, gomock.Any(), gomock.Any()).Return(nil, dummyErr).MaxTimes(1)
 		args := []string{"upload", "--fqbn", fqbn, sketch}
 		err := env.Execute(args)
@@ -187,7 +194,7 @@ func TestUploadCommand(t *testing.T) {
 	testutil.RunMockIntegrationTest("errors if sketch not found", t, func(env *testutil.MockIntegrationTestEnv) {
 		addBuild(env)
 		expectUsuals(env)
-		env.ArduinoCli.EXPECT().ConnectedBoards(instance.GetId()).Return([]*rpc.DetectedPort{}, nil).MaxTimes(1)
+		env.ArduinoCli.EXPECT().ConnectedBoards(boardReq).Return([]*rpc.DetectedPort{}, nil).MaxTimes(1)
 		args := []string{"upload", "--fqbn", fqbn, bogusSketch}
 		err := env.Execute(args)
 		assert.Error(env.T, err)
@@ -196,7 +203,7 @@ func TestUploadCommand(t *testing.T) {
 	testutil.RunMockIntegrationTest("errors if no board connected", t, func(env *testutil.MockIntegrationTestEnv) {
 		addBuild(env)
 		expectUsuals(env)
-		env.ArduinoCli.EXPECT().ConnectedBoards(instance.GetId()).Return([]*rpc.DetectedPort{}, nil).MaxTimes(1)
+		env.ArduinoCli.EXPECT().ConnectedBoards(boardReq).Return([]*rpc.DetectedPort{}, nil).MaxTimes(1)
 		args := []string{"upload", buildName, "--attach"}
 		err := env.Execute(args)
 		assert.Error(env.T, err)

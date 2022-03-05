@@ -22,6 +22,9 @@ func TestWatchCore(t *testing.T) {
 	fqbn := testutil.ArduinoMegaFQBN()
 	buildProps := []string{}
 	board := testutil.GenerateRPCBoard("arduino:avr:mega", fqbn)
+	rpcPort := &rpc.Port{
+		Address: board.Port,
+	}
 	compileOpts := cli.CompileOpts{
 		FQBN:       fqbn,
 		SketchDir:  sketchDir,
@@ -49,7 +52,7 @@ func TestWatchCore(t *testing.T) {
 			Instance:   instance,
 			Fqbn:       fqbn,
 			SketchPath: sketchDir,
-			Port:       board.Port,
+			Port:       rpcPort,
 			Verbose:    true,
 		}
 
@@ -65,7 +68,7 @@ func TestWatchCore(t *testing.T) {
 		env.SerialPort.EXPECT().Watch().AnyTimes()
 
 		env.ArduinoCli.EXPECT().CreateInstance().Return(instance).AnyTimes()
-		env.ArduinoCli.EXPECT().Compile(gomock.Any(), compileReq, gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+		env.ArduinoCli.EXPECT().Compile(gomock.Any(), compileReq, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 		env.ArduinoCli.EXPECT().Upload(gomock.Any(), uploadReq, gomock.Any(), gomock.Any()).AnyTimes()
 
 		env.ArdiCore.Watcher.SetTargets(targets)
@@ -103,7 +106,7 @@ func TestWatchCore(t *testing.T) {
 			Instance:   instance,
 			Fqbn:       fqbn,
 			SketchPath: sketchDir,
-			Port:       board.Port,
+			Port:       rpcPort,
 			Verbose:    true,
 		}
 
@@ -119,7 +122,7 @@ func TestWatchCore(t *testing.T) {
 		env.SerialPort.EXPECT().Watch().AnyTimes()
 
 		env.ArduinoCli.EXPECT().CreateInstance().Return(instance).AnyTimes()
-		env.ArduinoCli.EXPECT().Compile(gomock.Any(), compileReq, gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(nil, dummyErr)
+		env.ArduinoCli.EXPECT().Compile(gomock.Any(), compileReq, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(nil, dummyErr)
 		env.ArduinoCli.EXPECT().Upload(gomock.Any(), uploadReq, gomock.Any(), gomock.Any()).AnyTimes()
 
 		env.ArdiCore.Watcher.SetTargets(targets)
