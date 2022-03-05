@@ -20,14 +20,22 @@ func TestAttachCommand(t *testing.T) {
 		All:           true,
 	}
 
+	boardReq := &rpc.BoardListRequest{
+		Instance: instance,
+	}
+
 	boardItem := &rpc.BoardListItem{
 		Name: board.Name,
 		Fqbn: board.FQBN,
 	}
 
-	port := &rpc.DetectedPort{
+	rpcPort := &rpc.Port{
 		Address: board.Port,
-		Boards:  []*rpc.BoardListItem{boardItem},
+	}
+
+	port := &rpc.DetectedPort{
+		Port:           rpcPort,
+		MatchingBoards: []*rpc.BoardListItem{boardItem},
 	}
 
 	detectedPorts := []*rpc.DetectedPort{port}
@@ -39,7 +47,7 @@ func TestAttachCommand(t *testing.T) {
 		env.SerialPort.EXPECT().Close().MaxTimes(1)
 
 		env.ArduinoCli.EXPECT().CreateInstance().Return(instance).MaxTimes(1)
-		env.ArduinoCli.EXPECT().ConnectedBoards(instance.GetId()).Return(detectedPorts, nil).MaxTimes(1)
+		env.ArduinoCli.EXPECT().ConnectedBoards(boardReq).Return(detectedPorts, nil).MaxTimes(1)
 		env.ArduinoCli.EXPECT().GetPlatforms(platformReq).MaxTimes(1)
 
 		args := []string{"attach"}

@@ -38,22 +38,22 @@ func (m *MockCli) EXPECT() *MockCliMockRecorder {
 }
 
 // Compile mocks base method.
-func (m *MockCli) Compile(arg0 context.Context, arg1 *commands0.CompileRequest, arg2, arg3 io.Writer, arg4 bool) (*commands0.CompileResponse, error) {
+func (m *MockCli) Compile(arg0 context.Context, arg1 *commands0.CompileRequest, arg2, arg3 io.Writer, arg4 commands.TaskProgressCB, arg5 bool) (*commands0.CompileResponse, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Compile", arg0, arg1, arg2, arg3, arg4)
+	ret := m.ctrl.Call(m, "Compile", arg0, arg1, arg2, arg3, arg4, arg5)
 	ret0, _ := ret[0].(*commands0.CompileResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Compile indicates an expected call of Compile.
-func (mr *MockCliMockRecorder) Compile(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
+func (mr *MockCliMockRecorder) Compile(arg0, arg1, arg2, arg3, arg4, arg5 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Compile", reflect.TypeOf((*MockCli)(nil).Compile), arg0, arg1, arg2, arg3, arg4)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Compile", reflect.TypeOf((*MockCli)(nil).Compile), arg0, arg1, arg2, arg3, arg4, arg5)
 }
 
 // ConnectedBoards mocks base method.
-func (m *MockCli) ConnectedBoards(arg0 int32) ([]*commands0.DetectedPort, error) {
+func (m *MockCli) ConnectedBoards(arg0 *commands0.BoardListRequest) ([]*commands0.DetectedPort, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ConnectedBoards", arg0)
 	ret0, _ := ret[0].([]*commands0.DetectedPort)

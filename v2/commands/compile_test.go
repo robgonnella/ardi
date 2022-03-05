@@ -32,9 +32,13 @@ func TestCompileCommand(t *testing.T) {
 		All:      true,
 	}
 
+	boardReq := &rpc.BoardListRequest{
+		Instance: instance,
+	}
+
 	expectUsual := func(env *testutil.MockIntegrationTestEnv) {
 		env.ArduinoCli.EXPECT().CreateInstance().Return(instance)
-		env.ArduinoCli.EXPECT().ConnectedBoards(instance.GetId())
+		env.ArduinoCli.EXPECT().ConnectedBoards(boardReq)
 		env.ArduinoCli.EXPECT().GetPlatforms(platformReq)
 	}
 
@@ -51,7 +55,7 @@ func TestCompileCommand(t *testing.T) {
 		}
 
 		expectUsual(env)
-		env.ArduinoCli.EXPECT().Compile(gomock.Any(), req, gomock.Any(), gomock.Any(), gomock.Any())
+		env.ArduinoCli.EXPECT().Compile(gomock.Any(), req, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any())
 
 		args := []string{"add", "build", "-n", buildName1, "-f", fqbn1, "-s", sketchDir1}
 		err := env.Execute(args)
@@ -86,8 +90,8 @@ func TestCompileCommand(t *testing.T) {
 		}
 
 		expectUsual(env)
-		env.ArduinoCli.EXPECT().Compile(gomock.Any(), req1, gomock.Any(), gomock.Any(), gomock.Any()).MaxTimes(1)
-		env.ArduinoCli.EXPECT().Compile(gomock.Any(), req2, gomock.Any(), gomock.Any(), gomock.Any()).MaxTimes(1)
+		env.ArduinoCli.EXPECT().Compile(gomock.Any(), req1, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).MaxTimes(1)
+		env.ArduinoCli.EXPECT().Compile(gomock.Any(), req2, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).MaxTimes(1)
 
 		args := []string{"add", "build", "-n", buildName1, "-f", fqbn1, "-s", sketchDir1}
 		err := env.Execute(args)
@@ -116,7 +120,7 @@ func TestCompileCommand(t *testing.T) {
 		}
 
 		expectUsual(env)
-		env.ArduinoCli.EXPECT().Compile(gomock.Any(), req, gomock.Any(), gomock.Any(), gomock.Any())
+		env.ArduinoCli.EXPECT().Compile(gomock.Any(), req, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any())
 
 		args := []string{"add", "build", "-n", buildName1, "-f", fqbn1, "-s", sketchDir1, "--build-prop", buildProps[0], "--build-prop", buildProps[1]}
 		err := env.Execute(args)
@@ -142,7 +146,7 @@ func TestCompileCommand(t *testing.T) {
 		}
 
 		expectUsual(env)
-		env.ArduinoCli.EXPECT().Compile(gomock.Any(), req1, gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, dummyErr)
+		env.ArduinoCli.EXPECT().Compile(gomock.Any(), req1, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, dummyErr)
 
 		args := []string{"add", "build", "-n", buildName1, "-f", fqbn1, "-s", sketchDir1}
 		err := env.Execute(args)
@@ -198,8 +202,8 @@ func TestCompileCommand(t *testing.T) {
 		}
 
 		expectUsual(env)
-		env.ArduinoCli.EXPECT().Compile(gomock.Any(), req1, gomock.Any(), gomock.Any(), gomock.Any()).MaxTimes(1)
-		env.ArduinoCli.EXPECT().Compile(gomock.Any(), req2, gomock.Any(), gomock.Any(), gomock.Any()).MaxTimes(1)
+		env.ArduinoCli.EXPECT().Compile(gomock.Any(), req1, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).MaxTimes(1)
+		env.ArduinoCli.EXPECT().Compile(gomock.Any(), req2, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).MaxTimes(1)
 
 		args := []string{"add", "build", "-n", buildName1, "-f", fqbn1, "-s", sketchDir1}
 		err := env.Execute(args)
@@ -267,16 +271,16 @@ func TestCompileCommand(t *testing.T) {
 		}
 
 		port := &rpc.DetectedPort{
-			Address: "/dev/null",
-			Boards:  []*rpc.BoardListItem{boardItem},
+			Port:           &rpc.Port{Address: "/dev/null"},
+			MatchingBoards: []*rpc.BoardListItem{boardItem},
 		}
 
 		detectedPorts := []*rpc.DetectedPort{port}
 
 		env.ArduinoCli.EXPECT().CreateInstance().Return(instance)
-		env.ArduinoCli.EXPECT().ConnectedBoards(instance.GetId()).Return(detectedPorts, nil)
+		env.ArduinoCli.EXPECT().ConnectedBoards(boardReq).Return(detectedPorts, nil)
 		env.ArduinoCli.EXPECT().GetPlatforms(platformReq)
-		env.ArduinoCli.EXPECT().Compile(gomock.Any(), req, gomock.Any(), gomock.Any(), gomock.Any())
+		env.ArduinoCli.EXPECT().Compile(gomock.Any(), req, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any())
 
 		args := []string{"compile", "--fqbn", fqbn1}
 		err := env.Execute(args)
