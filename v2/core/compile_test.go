@@ -152,10 +152,13 @@ func TestCompileCore(t *testing.T) {
 	})
 
 	testutil.RunUnitTest("stops watching file for changes", t, func(env *testutil.UnitTestEnv) {
-		sketch, _ := filepath.Abs("test_compilation_file.ino")
+		sketch, err := filepath.Abs("test_compilation_file.ino")
+		assert.NoError(env.T, err)
+
 		sketchDir := filepath.Dir(sketch)
 		file, err := os.OpenFile(sketch, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 		assert.NoError(env.T, err)
+
 		defer func() {
 			file.Close()
 			os.RemoveAll(sketch)

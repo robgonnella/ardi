@@ -12,6 +12,69 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+type compileReqMatcher struct {
+	expectedReq *rpc.CompileRequest
+}
+
+func (m *compileReqMatcher) String() string {
+	return "Matches CompileRequests"
+}
+
+func (m *compileReqMatcher) Matches(x interface{}) bool {
+	req, ok := x.(*rpc.CompileRequest)
+
+	if !ok {
+		return false
+	}
+
+	if req.Instance != m.expectedReq.Instance {
+		return false
+	}
+
+	if req.Fqbn != m.expectedReq.Fqbn {
+		return false
+	}
+
+	if req.SketchPath != m.expectedReq.SketchPath {
+		return false
+	}
+
+	if req.ShowProperties != m.expectedReq.ShowProperties {
+		return false
+	}
+
+	if req.ExportDir != m.expectedReq.ExportDir {
+		return false
+	}
+
+	anyOrder := gomock.InAnyOrder(m.expectedReq.BuildProperties)
+	return anyOrder.Matches(req.BuildProperties)
+}
+
+type oneOfCompileReqMatcher struct {
+	expectedReqs []*rpc.CompileRequest
+}
+
+func (m *oneOfCompileReqMatcher) String() string {
+	return "Matches one of a list of expected CompileRequests"
+}
+
+func (m *oneOfCompileReqMatcher) Matches(x interface{}) bool {
+	req, ok := x.(*rpc.CompileRequest)
+
+	if !ok {
+		return false
+	}
+
+	for _, r := range m.expectedReqs {
+		matcher := &compileReqMatcher{expectedReq: r}
+		if matcher.Matches(req) {
+			return true
+		}
+	}
+	return false
+}
+
 func TestCompileCommand(t *testing.T) {
 	instance := &rpc.Instance{Id: 1}
 
@@ -89,9 +152,13 @@ func TestCompileCommand(t *testing.T) {
 			ExportDir:       buildDir2,
 		}
 
+		oneOfReqMatcher := &oneOfCompileReqMatcher{
+			expectedReqs: []*rpc.CompileRequest{req1, req2},
+		}
+
 		expectUsual(env)
-		env.ArduinoCli.EXPECT().Compile(gomock.Any(), req1, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).MaxTimes(1)
-		env.ArduinoCli.EXPECT().Compile(gomock.Any(), req2, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).MaxTimes(1)
+		env.ArduinoCli.EXPECT().Compile(gomock.Any(), oneOfReqMatcher, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).MaxTimes(1)
+		env.ArduinoCli.EXPECT().Compile(gomock.Any(), oneOfReqMatcher, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).MaxTimes(1)
 
 		args := []string{"add", "build", "-n", buildName1, "-f", fqbn1, "-s", sketchDir1}
 		err := env.Execute(args)
@@ -110,6 +177,7 @@ func TestCompileCommand(t *testing.T) {
 		env.RunProjectInit()
 
 		buildProps := []string{"some.buildProp=true", "test.anotherProps=1"}
+
 		req := &rpc.CompileRequest{
 			Instance:        instance,
 			Fqbn:            fqbn1,
@@ -119,8 +187,12 @@ func TestCompileCommand(t *testing.T) {
 			ExportDir:       buildDir1,
 		}
 
+		var reqMatcher gomock.Matcher = &compileReqMatcher{
+			expectedReq: req,
+		}
+
 		expectUsual(env)
-		env.ArduinoCli.EXPECT().Compile(gomock.Any(), req, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any())
+		env.ArduinoCli.EXPECT().Compile(gomock.Any(), reqMatcher, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any())
 
 		args := []string{"add", "build", "-n", buildName1, "-f", fqbn1, "-s", sketchDir1, "--build-prop", buildProps[0], "--build-prop", buildProps[1]}
 		err := env.Execute(args)
@@ -201,9 +273,13 @@ func TestCompileCommand(t *testing.T) {
 			ExportDir:       buildDir2,
 		}
 
+		oneOfReqMatcher := &oneOfCompileReqMatcher{
+			expectedReqs: []*rpc.CompileRequest{req1, req2},
+		}
+
 		expectUsual(env)
-		env.ArduinoCli.EXPECT().Compile(gomock.Any(), req1, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).MaxTimes(1)
-		env.ArduinoCli.EXPECT().Compile(gomock.Any(), req2, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).MaxTimes(1)
+		env.ArduinoCli.EXPECT().Compile(gomock.Any(), oneOfReqMatcher, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any())
+		env.ArduinoCli.EXPECT().Compile(gomock.Any(), oneOfReqMatcher, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any())
 
 		args := []string{"add", "build", "-n", buildName1, "-f", fqbn1, "-s", sketchDir1}
 		err := env.Execute(args)
