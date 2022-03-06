@@ -125,7 +125,7 @@ func TestSearchPlatformCommand(t *testing.T) {
 
 		searchReq := &rpc.PlatformSearchRequest{
 			Instance:    instance,
-			AllVersions: true,
+			AllVersions: false,
 		}
 
 		searchResp := &rpc.PlatformSearchResponse{
@@ -150,7 +150,7 @@ func TestSearchPlatformCommand(t *testing.T) {
 		env.RunProjectInit()
 		searchReq := &rpc.PlatformSearchRequest{
 			Instance:    instance,
-			AllVersions: true,
+			AllVersions: false,
 		}
 
 		dummyErr := errors.New("dummy error")

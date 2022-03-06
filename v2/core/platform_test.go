@@ -53,7 +53,7 @@ func TestPlatformCore(t *testing.T) {
 		instance := &rpc.Instance{Id: int32(1)}
 		req := &rpc.PlatformSearchRequest{
 			Instance:    instance,
-			AllVersions: true,
+			AllVersions: false,
 		}
 		resp := &rpc.PlatformSearchResponse{
 			SearchOutput: platforms,

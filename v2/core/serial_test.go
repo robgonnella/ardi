@@ -64,4 +64,42 @@ func TestSerialPort(t *testing.T) {
 		port.Close()
 		assert.False(st, port.Streaming())
 	})
+
+	t.Run("errors if device isn't set", func(st *testing.T) {
+		device := ""
+		baud := 9600
+		logger := logrus.New()
+		b := new(bytes.Buffer)
+
+		logger.SetOutput(b)
+		port := core.NewArdiSerialPort(logger)
+		port.SetTargets(device, baud)
+
+		st.Cleanup(func() {
+			port.Close()
+			port = nil
+		})
+
+		err := port.Watch()
+		assert.Error(st, err)
+	})
+
+	t.Run("errors if baud isn't set", func(st *testing.T) {
+		device := getPort()
+		baud := 0
+		logger := logrus.New()
+		b := new(bytes.Buffer)
+
+		logger.SetOutput(b)
+		port := core.NewArdiSerialPort(logger)
+		port.SetTargets(device, baud)
+
+		st.Cleanup(func() {
+			port.Close()
+			port = nil
+		})
+
+		err := port.Watch()
+		assert.Error(st, err)
+	})
 }
