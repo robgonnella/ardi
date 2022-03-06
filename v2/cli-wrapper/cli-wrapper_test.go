@@ -183,7 +183,7 @@ func TestCliWrapperTest(t *testing.T) {
 
 		searchReq := &rpc.PlatformSearchRequest{
 			Instance:    inst,
-			AllVersions: true,
+			AllVersions: false,
 		}
 
 		expectedResp := &rpc.PlatformSearchResponse{

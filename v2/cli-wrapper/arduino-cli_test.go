@@ -176,7 +176,7 @@ func TestArduinoCli(t *testing.T) {
 
 		req := &rpc.PlatformSearchRequest{
 			Instance:    rpcInst,
-			AllVersions: true,
+			AllVersions: false,
 			SearchArgs:  "arduino:avr",
 		}
 

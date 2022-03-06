@@ -189,7 +189,7 @@ func (w *Wrapper) SearchPlatforms() ([]*rpc.Platform, error) {
 
 	req := &rpc.PlatformSearchRequest{
 		Instance:    inst,
-		AllVersions: true,
+		AllVersions: false,
 	}
 
 	resp, err := w.cli.PlatformSearch(req)

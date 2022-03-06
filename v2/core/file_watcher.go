@@ -36,9 +36,9 @@ func NewFileWatcher(file string, logger *log.Logger) (*FileWatcher, error) {
 	return &FileWatcher{
 		file:      file,
 		watcher:   watcher,
-		stop:      make(chan bool, 1),
-		close:     make(chan bool, 1),
-		restart:   make(chan bool, 1),
+		stop:      make(chan bool),
+		close:     make(chan bool),
+		restart:   make(chan bool),
 		listeners: []Listener{},
 		logger:    logger,
 	}, nil
@@ -85,7 +85,7 @@ func (f *FileWatcher) Watch() error {
 				if removeEvt {
 					if err := f.watcher.Add(f.file); err != nil {
 						f.logger.WithError(err).Error("file watcher error")
-						f.close <- true
+						f.Close()
 						return
 					}
 				}
@@ -95,13 +95,13 @@ func (f *FileWatcher) Watch() error {
 				}
 			case err := <-f.watcher.Errors:
 				f.logger.WithError(err).Error("Watch error")
-				f.close <- true
+				f.Close()
 				return
 			}
 		}
 	}()
 
-	// Block and wait for requests
+	// Block and wait for signals
 	for {
 		select {
 		case <-f.stop:
@@ -120,6 +120,7 @@ func (f *FileWatcher) Watch() error {
 				f.watcher.Close()
 				f.watcher = nil
 			}
+			f.close <- true
 			return nil
 		}
 	}

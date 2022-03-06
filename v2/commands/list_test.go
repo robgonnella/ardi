@@ -69,7 +69,7 @@ func TestListBoardInfoCommands(t *testing.T) {
 
 	platformReq := &rpc.PlatformSearchRequest{
 		Instance:    instance,
-		AllVersions: true,
+		AllVersions: false,
 	}
 
 	board := &rpc.Board{

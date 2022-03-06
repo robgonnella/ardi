@@ -181,4 +181,10 @@ func TestAttachAndWatchCommand(t *testing.T) {
 		err := env.Execute(args)
 		assert.Error(env.T, err)
 	})
+
+	testutil.RunMockIntegrationTest("errors if project not initialized", t, func(env *testutil.MockIntegrationTestEnv) {
+		args := []string{"attach-and-watch"}
+		err := env.Execute(args)
+		assert.Error(env.T, err)
+	})
 }
