@@ -1,0 +1,88 @@
+name: V3Deploy
+
+on:
+  push:
+    tags:
+      - 'v3.[0-9]+.[0-9]+'
+
+jobs:
+  build_linux:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+        working-directory: v3
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v2
+        with:
+          go-version: '^1.18.0'
+      - name: Build Linux
+        run: 'make release'
+      - name: Upload Linux Build
+        uses: actions/upload-artifact@v2
+        with:
+          name: linux_build_${{ github.run_id }}
+          path: v3/build
+  build_darwin:
+    runs-on: macos-latest
+    defaults:
+      run:
+        shell: bash
+        working-directory: v3
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v2
+        with:
+          go-version: '^1.18.0'
+      - name: Build Darwin
+        run: 'make release'
+      - name: Upload Darwin Build
+        uses: actions/upload-artifact@v2
+        with:
+          name: darwin_build_${{ github.run_id }}
+          path: v3/build
+  release:
+    runs-on: ubuntu-latest
+    needs: [build_linux, build_darwin]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+      - name: Download Linux Build
+        uses: actions/download-artifact@v2
+        with:
+          name: linux_build_${{ github.run_id }}
+      - name: Download Darwin Build
+        uses: actions/download-artifact@v2
+        with:
+          name: darwin_build_${{ github.run_id }}
+      - name: Upload Release Assets
+        id: upload_release_assets
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: '*.zip'
+          tag: ${{ github.ref }}
+          overwrite: true
+          file_glob: true
+  update_latest:
+    runs-on: ubuntu-latest
+    needs: [release]
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/setup-go@v2
+        with:
+          go-version: '^1.18.0'
+      - name: Update go package to latest
+        run: GO111MODULE=on go get github.com/robgonnella/ardi/v3@"${GITHUB_REF#refs/tags/}"
