@@ -121,7 +121,7 @@ func RunIntegrationTest(name string, t *testing.T, f func(env *IntegrationTestEn
 
 // RunProjectInit initializes and ardi project directory
 func (e *IntegrationTestEnv) RunProjectInit() error {
-	projectInitArgs := []string{"project-init"}
+	projectInitArgs := []string{"init"}
 	return e.Execute(projectInitArgs)
 }
 
@@ -210,7 +210,7 @@ func RunMockIntegrationTest(name string, t *testing.T, f func(env *MockIntegrati
 
 // RunProjectInit initializes and ardi project directory in mock cli test
 func (e *MockIntegrationTestEnv) RunProjectInit() error {
-	projectInitArgs := []string{"project-init"}
+	projectInitArgs := []string{"init"}
 	return e.Execute(projectInitArgs)
 }
 

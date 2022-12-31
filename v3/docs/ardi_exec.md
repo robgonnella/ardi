@@ -7,6 +7,10 @@ Execute arduino-cli command
 
 Executes an arudion-cli command. All arduino-cli options are supported
 
+```
+ardi exec [flags]
+```
+
 ### Options
 
 ```
@@ -23,5 +27,4 @@ Executes an arudion-cli command. All arduino-cli options are supported
 ### SEE ALSO
 
 * [ardi](ardi.md)	 - Ardi is a command line build manager for arduino projects.
-* [ardi exec arduino-cli](ardi_exec_arduino-cli.md)	 - Execute arduino-cli command
 

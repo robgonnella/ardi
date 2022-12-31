@@ -18,7 +18,7 @@ ESP8266=https://arduino.esp8266.com/stable/package_esp8266com_index.json
 
 go install ${top}
 
-ardi project-init
+ardi init
 
 ardi add platforms arduino:avr
 ardi add lib "Adafruit Pixie"

@@ -3,9 +3,9 @@
 
 # Ardi
 
-Ardi is a command-line tool for ardiuno that enables you to properly version and
-manage project builds, and provides tools to help facilitate the development
-process.
+Ardi is a command-line tool built around ardiuno-cli that enables you to
+properly version and manage project dependencies, and provides a simple
+interface, similar to npm, for creating repeatable builds
 
 Things ardi can fo for you:
 
@@ -13,10 +13,7 @@ Things ardi can fo for you:
 - Store user defined build configurations with a mechanism for easily running
   consistent and repeatable builds.
 - Enable running your builds in a CI pipeline
-- Compile and upload to an auto discovered connected board
-- Watch a sketch for changes and auto recompile / reupload to a connected board
-- Print various info about platforms and boards
-- Search and print available libraries and versions
+- All features supported by arudino-cli
 
 Ardi should work for all boards and platforms supported by [arduino-cli].
 
@@ -27,19 +24,18 @@ Use "ardi help [command]" for more information about a command.
 Ardi can be installed with golang's `go get` for versions of go >= 1.12
 
 ```bash
-## go version >= 1.12
+## go version >= 1.12 < 1.18
+GO111MODULE=on go get github.com/robgonnella/ardi/v3@latest
 
-# From outside of a module directory
-GO111MODULE=on go get github.com/robgonnella/ardi/v2@latest
-
-# From inside of a module directory
-go get github.com/robgonnella/ardi/v2@latest
+## go version >= 1.18
+go install github.com/robgonnella/ardi/v3@latest
 ```
 
 You can also download and install the pre-built binaries
 [here](https://github.com/robgonnella/ardi/releases)
 
 **Note: Linux users may need to add their user to the `dialout` group**
+
 ```
 sudo usermod -aG dialout $(whoami)
 ```
@@ -54,7 +50,7 @@ for multiple projects.
 To initialize an ardi project directory run:
 
 ```bash
-ardi project-init
+ardi init
 ```
 
 ## Storing Builds in ardi.json
@@ -78,13 +74,11 @@ To run stored builds
 
 ```bash
 # Compile single build in ardi.json
-ardi compile <build_name>
+ardi build <build_name>
 # Compile multiple builds in ardi.json
-ardi compile <build_name1> <build_name2> <build_name3>
-# Compile all builds in ardi.json
-ardi compile --all
-# Upload only (skips building/compiling)
-ardi upload <name>
+ardi build <build1> <build2>
+# Compile all
+ardi build --all
 ```
 
 Documentation for all commands can be found in [docs directory][docs]

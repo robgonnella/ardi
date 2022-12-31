@@ -60,7 +60,7 @@ func setLogger(env *CommandEnv) {
 
 func requireProjectInit() error {
 	if !util.IsProjectDirectory() {
-		return errors.New("not an ardi project directory, run 'ardi project-init' first")
+		return errors.New("not an ardi project directory, run 'ardi init' first")
 	}
 	return nil
 }
