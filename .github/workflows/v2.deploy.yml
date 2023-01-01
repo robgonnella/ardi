@@ -85,4 +85,4 @@ jobs:
         with:
           go-version: '^1.14.0'
       - name: Update go package to latest
-        run: GO111MODULE=on go get github.com/robgonnella/ardi/v2@"${GITHUB_REF#refs/tags/}"
+        run: GO111MODULE=on go install github.com/robgonnella/ardi/v2@"${GITHUB_REF#refs/tags/}"
