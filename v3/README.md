@@ -112,5 +112,21 @@ ardi exec -- arduino-cli upload --help
 
 Documentation for all commands can be found in [docs directory][docs]
 
+
+# A Note about V2
+
+Ardi V2 supported more features than V3; however, some of those features have
+been, or are being, incorported in aruidno-cli. In an effort to reduce the
+scope of this project, and complement arduino-cli without conflict, V3 has
+been paired down to only focus on management of platorm and library versions,
+and build configurations. All other features are supported by proxing
+arduino-cli via `ardi exec -- arduino-cli ...`
+
+I will do my best to continue to support V2 in terms of bug fixes but I do not
+intend to add any additional features to V2.
+
+All V2 docs and info can be found [here][docsV2].
+
 [arduino-cli]: https://github.com/arduino/arduino-cli
 [docs]: ./docs/ardi.md
+[docsV2]: ../v2/docs/ardi.md
