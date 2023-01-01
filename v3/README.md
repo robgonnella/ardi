@@ -128,5 +128,5 @@ intend to add any additional features to V2.
 All V2 docs and info can be found [here][docsV2].
 
 [arduino-cli]: https://github.com/arduino/arduino-cli
-[docs]: ./docs/ardi.md
-[docsV2]: ../v2/docs/ardi.md
+[docs]: ./v3/docs/ardi.md
+[docsV2]: ./v2/docs/ardi.md
