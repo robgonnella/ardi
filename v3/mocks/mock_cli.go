@@ -6,6 +6,7 @@ package mocks
 
 import (
 	context "context"
+	io "io"
 	reflect "reflect"
 
 	commands "github.com/arduino/arduino-cli/rpc/cc/arduino/cli/commands/v1"
@@ -33,6 +34,21 @@ func NewMockCli(ctrl *gomock.Controller) *MockCli {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockCli) EXPECT() *MockCliMockRecorder {
 	return m.recorder
+}
+
+// Compile mocks base method.
+func (m *MockCli) Compile(arg0 context.Context, arg1 *commands.CompileRequest, arg2, arg3 io.Writer, arg4 commands.TaskProgressCB, arg5 bool) (*commands.CompileResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Compile", arg0, arg1, arg2, arg3, arg4, arg5)
+	ret0, _ := ret[0].(*commands.CompileResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Compile indicates an expected call of Compile.
+func (mr *MockCliMockRecorder) Compile(arg0, arg1, arg2, arg3, arg4, arg5 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Compile", reflect.TypeOf((*MockCli)(nil).Compile), arg0, arg1, arg2, arg3, arg4, arg5)
 }
 
 // CreateInstance mocks base method.

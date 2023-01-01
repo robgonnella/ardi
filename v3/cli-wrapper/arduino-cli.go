@@ -2,10 +2,12 @@ package cli
 
 import (
 	"context"
+	"io"
 
 	"github.com/arduino/arduino-cli/cli/globals"
 	"github.com/arduino/arduino-cli/cli/instance"
 	"github.com/arduino/arduino-cli/commands"
+	"github.com/arduino/arduino-cli/commands/compile"
 	"github.com/arduino/arduino-cli/commands/core"
 	"github.com/arduino/arduino-cli/commands/lib"
 	"github.com/arduino/arduino-cli/configuration"
@@ -27,6 +29,7 @@ type Cli interface {
 	LibraryInstall(context.Context, *rpc.LibraryInstallRequest, rpc.DownloadProgressCB, rpc.TaskProgressCB) error
 	LibraryUninstall(context.Context, *rpc.LibraryUninstallRequest, rpc.TaskProgressCB) error
 	LibraryList(context.Context, *rpc.LibraryListRequest) (*rpc.LibraryListResponse, error)
+	Compile(context.Context, *rpc.CompileRequest, io.Writer, io.Writer, rpc.TaskProgressCB, bool) (*rpc.CompileResponse, error)
 	Version() string
 }
 
@@ -96,6 +99,11 @@ func (c *ArduinoCli) LibraryUninstall(ctx context.Context, req *rpc.LibraryUnins
 // LibraryList wrapper around arduino-cli LibraryList
 func (c *ArduinoCli) LibraryList(ctx context.Context, req *rpc.LibraryListRequest) (*rpc.LibraryListResponse, error) {
 	return lib.LibraryList(ctx, req)
+}
+
+// Compile wrapper around arduino-cli Compile
+func (c *ArduinoCli) Compile(ctx context.Context, req *rpc.CompileRequest, out io.Writer, err io.Writer, cb rpc.TaskProgressCB, verbose bool) (*rpc.CompileResponse, error) {
+	return compile.Compile(ctx, req, out, err, cb, verbose)
 }
 
 // Version wrapper around arduino-cli global version

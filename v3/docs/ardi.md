@@ -24,6 +24,7 @@ Ardi is a build tool that allows you to completely manage your arduino project f
 ### SEE ALSO
 
 * [ardi add](ardi_add.md)	 - Add project dependencies
+* [ardi build](ardi_build.md)	 - Compiles builds defined in ardi.json
 * [ardi clean](ardi_clean.md)	 - Delete project data directory
 * [ardi exec](ardi_exec.md)	 - Execute arduino-cli command
 * [ardi init](ardi_init.md)	 - Initialize directory as an ardi project

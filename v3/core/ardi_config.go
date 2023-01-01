@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"sync"
 
+	cli "github.com/robgonnella/ardi/v3/cli-wrapper"
 	"github.com/robgonnella/ardi/v3/types"
 	"github.com/robgonnella/ardi/v3/util"
 	log "github.com/sirupsen/logrus"
@@ -58,7 +59,7 @@ func (a *ArdiConfig) AddBuild(name, sketch, fqbn string, baud int, buildProps []
 }
 
 // GetCompileOpts returns appropriate compile options for an ardi build
-func (a *ArdiConfig) GetCompileOpts(buildName string) (*CompileOpts, error) {
+func (a *ArdiConfig) GetCompileOpts(buildName string) (*cli.CompileOpts, error) {
 	build, ok := a.config.Builds[buildName]
 	if !ok {
 		return nil, fmt.Errorf("no builds found for %s", buildName)
@@ -66,7 +67,7 @@ func (a *ArdiConfig) GetCompileOpts(buildName string) (*CompileOpts, error) {
 
 	buildProps := util.GeneratePropsArray(build.Props)
 
-	compileOpts := &CompileOpts{
+	compileOpts := &cli.CompileOpts{
 		FQBN:       build.FQBN,
 		SketchDir:  build.Directory,
 		SketchPath: build.Sketch,

@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"path"
+	"path/filepath"
 	"testing"
 
 	rpc "github.com/arduino/arduino-cli/rpc/cc/arduino/cli/commands/v1"
@@ -335,6 +337,68 @@ func TestCliWrapperTest(t *testing.T) {
 		libs, err := env.CliWrapper.GetInstalledLibs()
 		assert.NoError(st, err)
 		assert.Equal(st, resp.InstalledLibraries, libs)
+	})
+
+	runCliTest("compiles sketches", t, func(env cliTestEnv, st *testing.T) {
+		inst := &rpc.Instance{Id: int32(1)}
+		sketchDir := "."
+		resolvedSketchDir, _ := filepath.Abs(sketchDir)
+		resolvedSketchPath := path.Join(resolvedSketchDir, "some_sketch.ino")
+		resolvedBuildDir := path.Join(resolvedSketchDir, "build")
+
+		opts := cli.CompileOpts{
+			FQBN:       "some:fqbn",
+			SketchDir:  sketchDir,
+			SketchPath: "./some_sketch.ino",
+		}
+
+		req := &rpc.CompileRequest{
+			Instance:        inst,
+			Fqbn:            opts.FQBN,
+			SketchPath:      resolvedSketchPath,
+			ExportDir:       resolvedBuildDir,
+			BuildProperties: opts.BuildProps,
+			ShowProperties:  opts.ShowProps,
+			Verbose:         false,
+		}
+
+		env.ArduinoCli.EXPECT().CreateInstance().Return(inst).AnyTimes()
+		env.ArduinoCli.EXPECT().Compile(gomock.Any(), req, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any())
+
+		err := env.CliWrapper.Compile(opts)
+		assert.NoError(st, err)
+	})
+
+	runCliTest("compiles sketches verbosely", t, func(env cliTestEnv, st *testing.T) {
+		inst := &rpc.Instance{Id: int32(1)}
+		sketchDir := "."
+		resolvedSketchDir, _ := filepath.Abs(sketchDir)
+		resolvedSketchPath := path.Join(resolvedSketchDir, "some_sketch.ino")
+		resolvedBuildDir := path.Join(resolvedSketchDir, "build")
+
+		env.Logger.SetLevel(logrus.DebugLevel)
+
+		opts := cli.CompileOpts{
+			FQBN:       "some:fqbn",
+			SketchDir:  sketchDir,
+			SketchPath: "./some_sketch.ino",
+		}
+
+		req := &rpc.CompileRequest{
+			Instance:        inst,
+			Fqbn:            opts.FQBN,
+			SketchPath:      resolvedSketchPath,
+			ExportDir:       resolvedBuildDir,
+			BuildProperties: opts.BuildProps,
+			ShowProperties:  opts.ShowProps,
+			Verbose:         true,
+		}
+
+		env.ArduinoCli.EXPECT().CreateInstance().Return(inst).AnyTimes()
+		env.ArduinoCli.EXPECT().Compile(gomock.Any(), req, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any())
+
+		err := env.CliWrapper.Compile(opts)
+		assert.NoError(st, err)
 	})
 
 	runCliTest("returns client version", t, func(env cliTestEnv, st *testing.T) {

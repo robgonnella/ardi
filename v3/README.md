@@ -36,16 +36,15 @@ You can also download and install the pre-built binaries
 
 **Note: Linux users may need to add their user to the `dialout` group**
 
-```
+```bash
 sudo usermod -aG dialout $(whoami)
 ```
 
 # Usage
 
 Ardi requires certain packages to be downloaded before it can properly compile
-sketches, detect connected boards, and perform other tasks. These packages are
-stored in a project data directory to isolate version specific dependencies
-for multiple projects.
+sketches. These packages are stored in a project data directory to isolate
+version specific dependencies for multiple projects.
 
 To initialize an ardi project directory run:
 
@@ -53,11 +52,26 @@ To initialize an ardi project directory run:
 ardi init
 ```
 
+## Adding Project Platforms
+
+```bash
+ardi add platform arduino:avr
+# add specific version
+ardi add platform arduino:avr@<version>
+```
+
+## Adding Project Libraries
+
+```bash
+ardi add library "Adfruit Pixie"
+# add specific version
+ardi add library "Adafruit Pixie"@<version>
+```
+
 ## Storing Builds in ardi.json
 
 Ardi enables you to store custom build details in ardi.json which you can
-then easily run via the `ardi compile`, and `ardi upload`
-commands.
+then easily run via the `ardi build` command.
 
 To add a build either manually modify ardi.json or use `ardi add build`
 
@@ -81,7 +95,22 @@ ardi build <build1> <build2>
 ardi build --all
 ```
 
+## Executing arduino-cli commands
+
+Ardi wraps arduino-cli via an "exec" command. This allows you to run any
+arduino-cli command using the specific libraries and version defined in
+`ardi.json`
+
+```bash
+ardi exec -- arduino-cli upload <build_dir>
+
+# for help on all arduino-cli commands
+ardi exec -- arduino-cli help
+# help on specific arduino-cli command
+ardi exec -- arduino-cli upload --help
+```
+
 Documentation for all commands can be found in [docs directory][docs]
 
 [arduino-cli]: https://github.com/arduino/arduino-cli
-[docs]: ./v2/docs/ardi.md
+[docs]: ./docs/ardi.md

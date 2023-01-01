@@ -89,6 +89,7 @@ func NewRootCmd(env *CommandEnv) *cobra.Command {
 	rootCmd.AddCommand(
 		newAddCmd(env),
 		newCleanCmd(env),
+		newBuildCmd(env),
 		newExecCmd(env),
 		newInstallCmd(env),
 		newListCmd(env),

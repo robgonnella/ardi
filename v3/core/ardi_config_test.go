@@ -4,7 +4,7 @@ import (
 	"path"
 	"testing"
 
-	"github.com/robgonnella/ardi/v3/core"
+	cli "github.com/robgonnella/ardi/v3/cli-wrapper"
 	"github.com/robgonnella/ardi/v3/testutil"
 	"github.com/robgonnella/ardi/v3/util"
 	"github.com/stretchr/testify/assert"
@@ -204,7 +204,7 @@ func TestArdiConfigCompileOpts(t *testing.T) {
 		dir := testutil.BlinkProjectDir()
 		fqbn := "somefqbn"
 		buildProps := []string{"someprop=somevalue"}
-		expectedOpts := &core.CompileOpts{
+		expectedOpts := &cli.CompileOpts{
 			SketchDir:  dir,
 			SketchPath: path.Join(dir, "blink.ino"),
 			FQBN:       fqbn,

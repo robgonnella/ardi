@@ -11,6 +11,7 @@ import (
 	"github.com/arduino/arduino-cli/configuration"
 	rpc "github.com/arduino/arduino-cli/rpc/cc/arduino/cli/commands/v1"
 	"github.com/robgonnella/ardi/v3/cli-wrapper"
+	"github.com/robgonnella/ardi/v3/testutil"
 	"github.com/robgonnella/ardi/v3/types"
 	"github.com/robgonnella/ardi/v3/util"
 	"github.com/stretchr/testify/assert"
@@ -244,6 +245,57 @@ func TestArduinoCli(t *testing.T) {
 
 		libs, _ = arduinoCli.LibraryList(ctx, listReq)
 		assert.Equal(st, len(libs.InstalledLibraries), 0)
+	})
+
+	t.Run("compiles sketch", func(st *testing.T) {
+		arduinoCli := setUp(st)
+		rpcInst := arduinoCli.CreateInstance()
+
+		installReq := &rpc.PlatformInstallRequest{
+			Instance:        rpcInst,
+			PlatformPackage: "arduino",
+			Architecture:    "avr",
+		}
+		downloadCb := output.ProgressBar()
+		taskCb := output.TaskProgress()
+
+		_, err := arduinoCli.PlatformInstall(ctx, installReq, downloadCb, taskCb)
+		assert.NoError(st, err)
+
+		req := &rpc.CompileRequest{
+			Instance:   rpcInst,
+			Fqbn:       "arduino:avr:mega",
+			SketchPath: path.Join(testutil.BlinkProjectDir(), "blink.ino"),
+			ExportDir:  ".ardi/blink_build",
+		}
+		_, err = arduinoCli.Compile(ctx, req, os.Stdout, os.Stderr, taskCb, false)
+		assert.NoError(st, err)
+		assert.DirExists(st, ".ardi/blink_build")
+	})
+
+	t.Run("returns compilation error", func(st *testing.T) {
+		arduinoCli := setUp(st)
+		rpcInst := arduinoCli.CreateInstance()
+
+		installReq := &rpc.PlatformInstallRequest{
+			Instance:        rpcInst,
+			PlatformPackage: "arduino",
+			Architecture:    "avr",
+		}
+		downloadCb := output.ProgressBar()
+		taskCb := output.TaskProgress()
+
+		_, err := arduinoCli.PlatformInstall(ctx, installReq, downloadCb, taskCb)
+		assert.NoError(st, err)
+
+		req := &rpc.CompileRequest{
+			Instance:   rpcInst,
+			Fqbn:       "arduino:avr:mega",
+			SketchPath: "noop.ino",
+			ExportDir:  ".ardi/blink_build",
+		}
+		_, err = arduinoCli.Compile(ctx, req, os.Stdout, os.Stderr, taskCb, false)
+		assert.Error(st, err)
 	})
 
 	t.Run("prints arduino-cli version", func(st *testing.T) {

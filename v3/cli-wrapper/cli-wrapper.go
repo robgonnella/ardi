@@ -2,7 +2,11 @@ package cli
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"os"
+	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/arduino/arduino-cli/cli/output"
@@ -302,6 +306,53 @@ func (w *Wrapper) GetInstalledLibs() ([]*rpc.InstalledLibrary, error) {
 	return res.GetInstalledLibraries(), err
 }
 
+// CompileOpts represents the options passed to the compile command
+type CompileOpts struct {
+	FQBN       string
+	SketchDir  string
+	SketchPath string
+	BuildProps []string
+	ShowProps  bool
+}
+
+// Compile the specified sketch
+func (w *Wrapper) Compile(opts CompileOpts) error {
+	inst := w.getRPCInstance()
+
+	resolvedSketchPath, err := filepath.Abs(opts.SketchPath)
+	if err != nil {
+		return errors.New("could not resolve sketch path")
+	}
+
+	resolvedSketchDir, err := filepath.Abs(opts.SketchDir)
+	if err != nil {
+		return errors.New("could not resolve sketch directory")
+	}
+
+	exportDir := path.Join(resolvedSketchDir, "build")
+
+	req := &rpc.CompileRequest{
+		Instance:        inst,
+		Fqbn:            opts.FQBN,
+		SketchPath:      resolvedSketchPath,
+		ExportDir:       exportDir,
+		BuildProperties: opts.BuildProps,
+		ShowProperties:  opts.ShowProps,
+		Verbose:         w.isVerbose(),
+	}
+
+	_, err = w.cli.Compile(
+		w.ctx,
+		req,
+		os.Stdout,
+		os.Stderr,
+		w.getTaskProgressFn(),
+		w.isVerbose(),
+	)
+
+	return err
+}
+
 // ClientVersion returns version of arduino-cli
 func (w *Wrapper) ClientVersion() string {
 	return w.cli.Version()
@@ -326,7 +377,6 @@ func (w *Wrapper) getTaskProgressFn() rpc.TaskProgressCB {
 	return noTaskOutput
 }
 
-// private methods
 func (w *Wrapper) getRPCInstance() *rpc.Instance {
 	if w.inst == nil {
 		w.inst = w.cli.CreateInstance()

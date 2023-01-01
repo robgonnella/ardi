@@ -9,15 +9,6 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// CompileOpts represents the options passed to the compile command
-type CompileOpts struct {
-	FQBN       string
-	SketchDir  string
-	SketchPath string
-	BuildProps []string
-	ShowProps  bool
-}
-
 // ArdiCore represents the core package of ardi
 type ArdiCore struct {
 	Cli             *cli.Wrapper
@@ -25,6 +16,7 @@ type ArdiCore struct {
 	CliConfig       *ArdiYAML
 	Lib             *LibCore
 	Platform        *PlatformCore
+	Compiler        *CompileCore
 	ctx             context.Context
 	cliSettingsPath string
 	logger          *log.Logger
@@ -73,5 +65,8 @@ func WithArduinoCli(arduinoCli cli.Cli) func(c *ArdiCore) {
 
 		withPlatformCliWrapper := WithPlatformCliWrapper(c.Cli)
 		c.Platform = NewPlatformCore(c.logger, withPlatformCliWrapper)
+
+		withCompileCliWrapper := WithCompileCoreCliWrapper(c.Cli)
+		c.Compiler = NewCompileCore(c.logger, withCompileCliWrapper)
 	}
 }
