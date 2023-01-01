@@ -1,0 +1,120 @@
+package commands
+
+import "github.com/spf13/cobra"
+
+func newRemovePlatformCmd(env *CommandEnv) *cobra.Command {
+	removeCmd := &cobra.Command{
+		Use:     "platforms",
+		Long:    "\nRemove platform(s) from project",
+		Short:   "Remove platform(s) from project",
+		Aliases: []string{"platform"},
+		Args:    cobra.MinimumNArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := requireProjectInit(); err != nil {
+				return err
+			}
+			for _, p := range args {
+				env.Logger.Infof("Removing platform: %s", p)
+				removed, err := env.ArdiCore.Platform.Remove(p)
+				if err != nil {
+					return err
+				}
+				env.Logger.Infof("Removed %s", removed)
+				if err := env.ArdiCore.Config.RemovePlatform(removed); err != nil {
+					return err
+				}
+				env.Logger.Info("Udated config")
+			}
+			return nil
+		},
+	}
+	return removeCmd
+}
+
+func newRemoveBuildCmd(env *CommandEnv) *cobra.Command {
+	removeCmd := &cobra.Command{
+		Use:     "builds",
+		Long:    "\nRemove build config from project",
+		Short:   "Remove build config from project",
+		Aliases: []string{"build"},
+		Args:    cobra.MinimumNArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := requireProjectInit(); err != nil {
+				return err
+			}
+			for _, b := range args {
+				if err := env.ArdiCore.Config.RemoveBuild(b); err != nil {
+					return err
+				}
+			}
+			return nil
+		},
+	}
+	return removeCmd
+}
+
+func newRemoveLibCmd(env *CommandEnv) *cobra.Command {
+	removeCmd := &cobra.Command{
+		Use:     "libraries",
+		Long:    "\nRemove libraries from project",
+		Short:   "Remove libraries from project",
+		Aliases: []string{"libs", "lib", "library"},
+		Args:    cobra.MinimumNArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := requireProjectInit(); err != nil {
+				return err
+			}
+			for _, l := range args {
+				env.Logger.Infof("Removing library: %s", l)
+				if err := env.ArdiCore.Lib.Remove(l); err != nil {
+					return err
+				}
+				env.Logger.Infof("Removed %s", l)
+				if err := env.ArdiCore.Config.RemoveLibrary(l); err != nil {
+					return err
+				}
+				env.Logger.Info("Updated config")
+			}
+			return nil
+		},
+	}
+	return removeCmd
+}
+
+func newRemoveBoardURLCmd(env *CommandEnv) *cobra.Command {
+	removeCmd := &cobra.Command{
+		Use:     "board-urls",
+		Long:    "\nRemove board urls from project",
+		Short:   "Remove board urls from project",
+		Aliases: []string{"board-url"},
+		Args:    cobra.MinimumNArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := requireProjectInit(); err != nil {
+				return err
+			}
+			for _, url := range args {
+				if err := env.ArdiCore.Config.RemoveBoardURL(url); err != nil {
+					return err
+				}
+				if err := env.ArdiCore.CliConfig.RemoveBoardURL(url); err != nil {
+					return err
+				}
+			}
+			return nil
+		},
+	}
+	return removeCmd
+}
+
+func newRemoveCmd(env *CommandEnv) *cobra.Command {
+	removeCmd := &cobra.Command{
+		Use:   "remove",
+		Short: "Remove project dependencies",
+		Long:  "\nRemove project dependencies",
+	}
+	removeCmd.AddCommand(newRemovePlatformCmd(env))
+	removeCmd.AddCommand(newRemoveBuildCmd(env))
+	removeCmd.AddCommand(newRemoveLibCmd(env))
+	removeCmd.AddCommand(newRemoveBoardURLCmd(env))
+	return removeCmd
+}

@@ -1,6 +1,6 @@
 ## ardi attach-and-watch
 
-Compile, upload, watch board logs, and watch for sketch changes
+Compile, upload, attach, and watch for changes
 
 ### Synopsis
 
